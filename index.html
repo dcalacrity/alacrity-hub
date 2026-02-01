@@ -5244,32 +5244,53 @@ Total: ${strip.totalPages || '0'} pages, ${strip.scenes || '0'} scenes
     const btnLogin = document.getElementById('btn-login');
     const statusText = document.getElementById('login-status');
 
-    btnLogin.addEventListener('click', () => {
-        statusText.textContent = "CONTACTING SATELLITE...";
-        signInWithPopup(auth, provider)
-            .then((result) => {
-                const user = result.user;
-                if (ALLOWED_EMAILS.includes(user.email)) {
-                    statusText.style.color = "#00f0ff";
-                    statusText.textContent = `IDENTITY CONFIRMED: ${user.displayName.toUpperCase()}`;
-                    setTimeout(() => {
-                        loginOverlay.style.opacity = '0';
-                        setTimeout(() => loginOverlay.style.display = 'none', 500);
-                    }, 800);
-                } else {
-                    statusText.textContent = `ACCESS DENIED: ${user.email} NOT AUTHORIZED`;
-                    auth.signOut();
-                }
-            })
-            .catch((error) => statusText.textContent = "ERROR: " + error.message);
-    });
+    console.log("Setting up authentication...");
+    console.log("Login button:", btnLogin);
+    console.log("Allowed emails:", ALLOWED_EMAILS);
+    
+    if (btnLogin) {
+        btnLogin.addEventListener('click', () => {
+            console.log("Login button clicked!");
+            if (statusText) statusText.textContent = "CONTACTING SATELLITE...";
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log("Sign in successful! User:", user.email);
+                    if (ALLOWED_EMAILS.includes(user.email)) {
+                        if (statusText) {
+                            statusText.style.color = "#00f0ff";
+                            statusText.textContent = `IDENTITY CONFIRMED: ${user.displayName ? user.displayName.toUpperCase() : user.email.toUpperCase()}`;
+                        }
+                        setTimeout(() => {
+                            if (loginOverlay) loginOverlay.style.opacity = '0';
+                            setTimeout(() => {
+                                if (loginOverlay) loginOverlay.style.display = 'none';
+                            }, 500);
+                        }, 800);
+                    } else {
+                        console.log("Email not authorized:", user.email);
+                        if (statusText) statusText.textContent = `ACCESS DENIED: ${user.email} NOT AUTHORIZED`;
+                        auth.signOut();
+                    }
+                })
+                .catch((error) => {
+                    console.error("Authentication error:", error);
+                    if (statusText) statusText.textContent = "ERROR: " + error.message;
+                });
+        });
+    } else {
+        console.error("Login button not found! Check if element ID is correct.");
+    }
 
     onAuthStateChanged(auth, (user) => {
+        console.log("Auth state changed. User:", user ? user.email : "none");
         if (user && ALLOWED_EMAILS.includes(user.email)) {
-            loginOverlay.style.display = 'none';
+            console.log("User authorized, hiding login overlay");
+            if (loginOverlay) loginOverlay.style.display = 'none';
             Core.init(user);
         } else {
-            loginOverlay.style.display = 'flex';
+            console.log("No authorized user, showing login overlay");
+            if (loginOverlay) loginOverlay.style.display = 'flex';
         }
     });
 
