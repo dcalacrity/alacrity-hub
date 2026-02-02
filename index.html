@@ -35,6 +35,12 @@
             --neon-pink: #ec4899;
             --neon-orange: #f97316;
             
+            /* ─── MODE COLORS ─── */
+            --mode-demo: #f97316;
+            --mode-cloud: #10b981;
+            --mode-global: #a855f7;
+            --mode-production: #00f0ff;
+            
             /* ─── TEXT HIERARCHY ─── */
             --text-100: #ffffff;
             --text-90: #f1f5f9;
@@ -110,6 +116,79 @@
         /* ═══════════════════════════════════════════════════════════════════════
            LOGIN OVERLAY
            ═══════════════════════════════════════════════════════════════════════ */
+        .mode-banner {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 36px;
+            background: linear-gradient(90deg, var(--surface-2), var(--void-deep));
+            border-bottom: 2px solid var(--border-strong);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-lg);
+            z-index: 100;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+        .mode-banner.demo-mode {
+            border-bottom-color: var(--mode-demo);
+            background: linear-gradient(90deg, rgba(249, 115, 22, 0.08), var(--void-deep));
+        }
+        .mode-banner.cloud-mode {
+            border-bottom-color: var(--mode-cloud);
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), var(--void-deep));
+        }
+        .mode-status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+        .mode-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 9px;
+        }
+        .mode-badge.demo {
+            background: rgba(249, 115, 22, 0.15);
+            color: var(--mode-demo);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+        .mode-badge.cloud {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--mode-cloud);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .mode-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .view-indicator {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 9px;
+        }
+        .view-indicator.global {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--mode-global);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        .view-indicator.production {
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--mode-production);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
         .login-overlay {
             position: fixed;
             inset: 0;
@@ -120,49 +199,167 @@
             justify-content: center;
             z-index: 9999;
             transition: opacity 0.5s ease;
+            overflow: hidden;
+        }
+        .login-overlay::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 30% 20%, rgba(0, 240, 255, 0.08), transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(168, 85, 247, 0.06), transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.03), transparent 70%);
+            animation: pulseGlow 8s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
         }
         .login-overlay.hidden { opacity: 0; pointer-events: none; }
         .login-brand {
             font-family: var(--font-display);
-            font-size: 48px;
-            letter-spacing: 8px;
+            font-size: 96px;
+            letter-spacing: 16px;
             margin-bottom: var(--space-md);
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 80px rgba(0, 240, 255, 0.5);
         }
-        .login-brand span:first-child { color: var(--neon-cyan); }
-        .login-brand span:last-child { color: var(--text-100); }
+        .login-brand span:first-child { 
+            color: var(--neon-cyan);
+            animation: glowCyan 3s ease-in-out infinite;
+        }
+        .login-brand span:last-child { 
+            color: var(--text-100);
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+        }
+        @keyframes glowCyan {
+            0%, 100% { filter: brightness(1); text-shadow: 0 0 80px rgba(0, 240, 255, 0.5); }
+            50% { filter: brightness(1.3); text-shadow: 0 0 120px rgba(0, 240, 255, 0.8); }
+        }
         .login-tagline {
             font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--text-50);
-            letter-spacing: 3px;
+            font-size: 12px;
+            color: var(--text-70);
+            letter-spacing: 6px;
             margin-bottom: var(--space-2xl);
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+        .login-tagline::before,
+        .login-tagline::after {
+            content: '━━━━━';
+            color: var(--neon-cyan);
+            margin: 0 var(--space-lg);
+            opacity: 0.3;
+        }
+        .login-options {
+            display: flex;
+            gap: var(--space-2xl);
+            margin-bottom: var(--space-lg);
+            position: relative;
+            z-index: 1;
         }
         .login-btn {
-            padding: var(--space-md) var(--space-xl);
-            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-violet));
-            border: none;
-            border-radius: 8px;
-            color: var(--void-pure);
+            padding: var(--space-xl) var(--space-2xl);
+            border: 2px solid;
+            border-radius: 16px;
             font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 2px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 3px;
             cursor: pointer;
-            transition: all 0.3s var(--ease-out-expo);
+            transition: all 0.4s var(--ease-out-expo);
+            min-width: 280px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        .login-btn:hover::before {
+            transform: translateX(100%);
         }
         .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-glow-cyan);
+            transform: translateY(-8px) scale(1.02);
+        }
+        .login-btn.demo {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+            border-color: var(--mode-demo);
+            color: var(--mode-demo);
+            box-shadow: 0 8px 32px rgba(249, 115, 22, 0.2);
+        }
+        .login-btn.demo:hover {
+            background: linear-gradient(135deg, var(--mode-demo), #ea580c);
+            color: var(--void-pure);
+            box-shadow: 0 16px 64px rgba(249, 115, 22, 0.5), 0 0 80px rgba(249, 115, 22, 0.3);
+            border-color: transparent;
+        }
+        .login-btn.cloud {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+            border-color: var(--mode-cloud);
+            color: var(--mode-cloud);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+        }
+        .login-btn.cloud:hover {
+            background: linear-gradient(135deg, var(--mode-cloud), #059669);
+            color: var(--void-pure);
+            box-shadow: 0 16px 64px rgba(16, 185, 129, 0.5), 0 0 80px rgba(16, 185, 129, 0.3);
+            border-color: transparent;
+        }
+        .login-btn-subtitle {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin-top: var(--space-sm);
+            opacity: 0.7;
+        }
+        .login-info {
+            max-width: 700px;
+            text-align: center;
+            margin-top: var(--space-xl);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-50);
+            line-height: 1.8;
+            padding: var(--space-xl);
+            background: rgba(15, 19, 24, 0.6);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 1;
+        }
+        .login-info strong {
+            color: var(--text-90);
+            font-weight: 700;
+            letter-spacing: 1px;
         }
         .login-status {
             margin-top: var(--space-lg);
             font-family: var(--font-mono);
             font-size: 11px;
             color: var(--text-50);
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 1;
         }
-        .login-status.error { color: var(--neon-rose); }
-        .login-status.success { color: var(--neon-cyan); }
+        .login-status.error { 
+            color: var(--neon-rose);
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+        }
+        .login-status.success { 
+            color: var(--neon-emerald);
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
 
         /* ═══════════════════════════════════════════════════════════════════════
            LAYOUT
@@ -249,6 +446,28 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             padding: 0 var(--space-lg) var(--space-sm);
+            transition: all 0.3s ease;
+        }
+        .nav-label.crm-global {
+            color: var(--neon-gold);
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5), 0 0 30px rgba(168, 85, 247, 0.3);
+            font-weight: 800;
+            position: relative;
+        }
+        .nav-label.crm-global::after {
+            content: '';
+            position: absolute;
+            left: var(--space-lg);
+            bottom: 0;
+            width: calc(100% - calc(var(--space-lg) * 2));
+            height: 2px;
+            background: linear-gradient(90deg, var(--neon-gold), var(--neon-violet));
+            opacity: 0.5;
+        }
+        .nav-label.standard {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.6), 0 0 30px rgba(0, 240, 255, 0.3);
+            font-weight: 700;
         }
         .nav-item {
             display: flex;
@@ -353,6 +572,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            padding-top: 36px; /* Account for mode banner */
         }
         .command-bar {
             display: flex;
@@ -367,6 +587,25 @@
             font-size: 28px;
             letter-spacing: 4px;
             color: var(--text-100);
+            text-shadow: 
+                0 0 30px rgba(0, 240, 255, 0.6),
+                0 0 50px rgba(168, 85, 247, 0.4),
+                0 0 70px rgba(0, 240, 255, 0.3);
+            animation: titleGlow 4s ease-in-out infinite;
+        }
+        @keyframes titleGlow {
+            0%, 100% { 
+                text-shadow: 
+                    0 0 30px rgba(0, 240, 255, 0.6),
+                    0 0 50px rgba(168, 85, 247, 0.4),
+                    0 0 70px rgba(0, 240, 255, 0.3);
+            }
+            50% { 
+                text-shadow: 
+                    0 0 40px rgba(0, 240, 255, 0.8),
+                    0 0 60px rgba(168, 85, 247, 0.6),
+                    0 0 80px rgba(0, 240, 255, 0.4);
+            }
         }
         .status-group { display: flex; gap: var(--space-md); }
         .status-pill {
@@ -1023,8 +1262,12 @@
         .dialer-queue-item.active { background: rgba(0, 240, 255, 0.1); border: 1px solid var(--neon-cyan); }
 
         /* ═══════════════════════════════════════════════════════════════════════
-           BUSINESS CRM BADGE
+           BUSINESS CRM BADGE & STYLING
            ═══════════════════════════════════════════════════════════════════════ */
+        .business-crm-header {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(168, 85, 247, 0.05));
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
         .business-crm-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -1035,8 +1278,8 @@
             font-weight: 700;
             color: var(--void-pure);
             letter-spacing: 1px;
+            text-transform: uppercase;
         }
-        .business-crm-header { border: 1px solid var(--neon-gold); }
 
         /* Interest colors for kanban cards */
         .interest-cinema { border-left: 3px solid var(--neon-pink); }
@@ -1048,6 +1291,163 @@
         .interest-vendor { border-left: 3px solid var(--neon-cyan); }
         .interest-sponsor { border-left: 3px solid var(--neon-gold); }
         .interest-investor { border-left: 3px solid var(--neon-emerald); }
+        
+        /* ─── KANBAN BOARD ─── */
+        .kanban-wrapper {
+            display: flex;
+            gap: var(--space-lg);
+            height: calc(100vh - 250px);
+            overflow-x: auto;
+            padding-bottom: var(--space-lg);
+        }
+        .kanban-column {
+            min-width: 300px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+        .kanban-column-header {
+            padding: var(--space-md) var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .kanban-column-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-100);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .kanban-column-count {
+            background: var(--surface-3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-50);
+        }
+        .kanban-column-body {
+            flex: 1;
+            padding: var(--space-md);
+            overflow-y: auto;
+            min-height: 100px;
+        }
+        .kanban-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+            cursor: grab;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .kanban-card:active {
+            cursor: grabbing;
+        }
+        .kanban-card:hover { 
+            border-color: var(--border-strong); 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .kanban-card.dragging { 
+            opacity: 0.5; 
+            transform: rotate(2deg);
+        }
+        .kanban-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            border-radius: 8px 0 0 8px;
+        }
+        .kanban-card.interest-cinema::before { background: var(--neon-pink); }
+        .kanban-card.interest-vr::before { background: var(--neon-cyan); }
+        .kanban-card.interest-cyber::before { background: var(--neon-violet); }
+        .kanban-card.interest-video::before { background: var(--neon-emerald); }
+        .kanban-card.interest-custom::before { background: var(--neon-gold); }
+        /* Production CRM interest types */
+        .kanban-card.interest-talent::before { background: var(--neon-pink); }
+        .kanban-card.interest-vendor::before { background: var(--neon-blue); }
+        .kanban-card.interest-sponsor::before { background: var(--neon-gold); }
+        .kanban-card.interest-investor::before { background: var(--neon-emerald); }
+        .kanban-card-name { font-weight: 600; color: var(--text-100); margin-bottom: 4px; }
+        .kanban-card-phone { 
+            font-family: var(--font-mono); 
+            font-size: 11px; 
+            color: var(--text-50); 
+            margin-bottom: 8px; 
+        }
+        .kanban-card-value { 
+            font-family: var(--font-mono); 
+            font-size: 14px; 
+            font-weight: 700; 
+            color: var(--neon-emerald); 
+        }
+        .kanban-card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .kanban-card:hover .kanban-card-actions { opacity: 1; }
+        .kanban-card-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: none;
+            background: var(--surface-3);
+            color: var(--text-70);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kanban-card-btn:hover {
+            background: var(--surface-4);
+            color: var(--text-100);
+        }
+        .kanban-card-btn.call:hover {
+            background: var(--neon-cyan);
+            color: var(--void-pure);
+        }
+        .kanban-card-btn.del:hover {
+            background: var(--neon-rose);
+            color: var(--text-100);
+        }
+        
+        /* ─── CRM VIEW DISTINCTION ─── */
+        #view-biz-pipeline .card,
+        #view-biz-dialer .card,
+        #view-biz-intel .card {
+            border-top: 3px solid var(--mode-global);
+            background: linear-gradient(180deg, rgba(168, 85, 247, 0.03) 0%, var(--surface-1) 100%);
+        }
+        #view-prod-pipeline .card,
+        #view-prod-dialer .card,
+        #view-prod-intel .card {
+            border-top: 3px solid var(--mode-production);
+            background: linear-gradient(180deg, rgba(0, 240, 255, 0.03) 0%, var(--surface-1) 100%);
+        }
+        #view-biz-pipeline .kanban-column,
+        #view-biz-dialer .kanban-column {
+            border-top: 3px solid var(--mode-global);
+        }
+        #view-prod-pipeline .kanban-column,
+        #view-prod-dialer .kanban-column {
+            border-top: 3px solid var(--mode-production);
+        }
 
         /* ═══════════════════════════════════════════════════════════════════════
            PRODUCTION DOCUMENTS
@@ -1188,22 +1588,42 @@
         <div class="login-brand">
             <span>DC</span><span>ALACRITY</span>
         </div>
-        <div class="login-tagline">PRODUCTION COMMAND SYSTEM</div>
-        <button class="login-btn" id="login-btn" onclick="Auth.login()">
-            AUTHENTICATE IDENTITY
-        </button>
-        <div style="margin-top: 16px;">
-            <button class="login-btn" id="demo-btn" onclick="Auth.demoMode()" style="background: linear-gradient(135deg, #10b981, #059669); font-size: 11px; padding: 12px 24px;">
-                DEMO MODE (No Login)
+        <div class="login-tagline">PRODUCTION COMMAND SYSTEM V7</div>
+        
+        <div class="login-options">
+            <button class="login-btn demo" onclick="Auth.demoMode()">
+                💾 DEMO MODE
+                <div class="login-btn-subtitle">Local Storage Only</div>
+            </button>
+            <button class="login-btn cloud" onclick="Auth.login()">
+                ☁️ SIGN IN
+                <div class="login-btn-subtitle">Cloud Sync</div>
             </button>
         </div>
-        <div class="login-status" id="login-status">Click to authenticate or try Demo Mode</div>
+        
+        <div class="login-info">
+            <strong>DEMO MODE:</strong> All data saved locally in your browser. Perfect for testing and single-device use. Data won't sync across devices.<br><br>
+            <strong>CLOUD MODE:</strong> Sign in with Google to sync your data across devices and access from anywhere. Requires authentication.
+        </div>
+        
+        <div class="login-status" id="login-status">Choose your mode to get started</div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          MAIN APPLICATION
          ═══════════════════════════════════════════════════════════════════════ -->
     <div class="app" id="app" style="display: none;">
+        <!-- MODE BANNER -->
+        <div class="mode-banner" id="mode-banner">
+            <div class="mode-status">
+                <div class="mode-badge" id="mode-badge">💾 DEMO MODE</div>
+                <div class="view-indicator" id="view-indicator">🎬 PRODUCTION</div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-50);">
+                <span id="mode-sync-status">Saving locally</span>
+            </div>
+        </div>
+        
         <!-- SIDEBAR -->
         <aside class="sidebar">
             <div class="brand">
@@ -1216,7 +1636,7 @@
 
             <nav class="nav">
                 <div class="nav-section">
-                    <div class="nav-label">Command</div>
+                    <div class="nav-label standard">Command</div>
                     <div class="nav-item active" onclick="Core.navigate('dashboard')">
                         <span class="nav-icon">📊</span>
                         <span class="nav-text">Dashboard</span>
@@ -1228,7 +1648,7 @@
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-label">Production</div>
+                    <div class="nav-label standard">Production</div>
                     <div class="nav-item" onclick="Core.navigate('schedule')">
                         <span class="nav-icon">🎬</span>
                         <span class="nav-text">Schedule / Stripboard</span>
@@ -1256,7 +1676,7 @@
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-label">Documents</div>
+                    <div class="nav-label standard">Documents</div>
                     <div class="nav-item" onclick="Core.navigate('documents')">
                         <span class="nav-icon">📄</span>
                         <span class="nav-text">Production Documents</span>
@@ -1268,7 +1688,7 @@
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-label">Production CRM</div>
+                    <div class="nav-label standard">Production CRM</div>
                     <div class="nav-item" onclick="Core.navigate('prod-pipeline')">
                         <span class="nav-icon">🎯</span>
                         <span class="nav-text">Pipeline</span>
@@ -1284,7 +1704,7 @@
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-label">Business CRM</div>
+                    <div class="nav-label crm-global">Business CRM</div>
                     <div class="nav-item business-crm-item" onclick="Core.navigate('biz-pipeline')">
                         <span class="nav-icon">🎯</span>
                         <span class="nav-text">Pipeline</span>
@@ -1300,7 +1720,7 @@
                 </div>
 
                 <div class="nav-section">
-                    <div class="nav-label">Tools</div>
+                    <div class="nav-label standard">Tools</div>
                     <div class="nav-item" onclick="Core.navigate('script-import')">
                         <span class="nav-icon">📝</span>
                         <span class="nav-text">Script Import</span>
@@ -1375,52 +1795,79 @@
             <div class="workspace">
                 <!-- DASHBOARD VIEW -->
                 <div id="view-dashboard" class="view active">
-                    <div class="grid grid-4 mb-lg">
+                    <div class="grid grid-6 mb-lg">
                         <div class="card stat-card cyan">
                             <div class="stat-label">Shoot Days</div>
                             <div class="stat-value" id="stat-days">0</div>
                             <div class="stat-sub">Scheduled</div>
                         </div>
                         <div class="card stat-card violet">
-                            <div class="stat-label">Equipment</div>
-                            <div class="stat-value" id="stat-tech">0</div>
-                            <div class="stat-sub">Items Logged</div>
+                            <div class="stat-label">Vault Assets</div>
+                            <div class="stat-value" id="stat-vault">0</div>
+                            <div class="stat-sub">Files Logged</div>
                         </div>
                         <div class="card stat-card emerald">
-                            <div class="stat-label">Media Assets</div>
-                            <div class="stat-value" id="stat-vault">0</div>
-                            <div class="stat-sub">Files Tracked</div>
+                            <div class="stat-label">Tech Items</div>
+                            <div class="stat-value" id="stat-tech">0</div>
+                            <div class="stat-sub">Equipment</div>
                         </div>
                         <div class="card stat-card gold">
-                            <div class="stat-label">Scenes</div>
-                            <div class="stat-value" id="stat-scenes">0</div>
-                            <div class="stat-sub">In Schedule</div>
+                            <div class="stat-label">Budget Left</div>
+                            <div class="stat-value" id="stat-budget">$0</div>
+                            <div class="stat-sub">Available</div>
+                        </div>
+                        <div class="card stat-card pink">
+                            <div class="stat-label">Prod Pipeline</div>
+                            <div class="stat-value" id="stat-prod-pipeline">$0</div>
+                            <div class="stat-sub">Potential</div>
+                        </div>
+                        <div class="card stat-card rose" id="over-budget-card" style="display: none;">
+                            <div class="stat-label">Over Budget</div>
+                            <div class="stat-value" id="stat-over">$0</div>
+                            <div class="stat-sub">Categories</div>
                         </div>
                     </div>
 
                     <div class="grid grid-2 mb-lg">
-                        <div class="card">
+                        <div class="card" id="hot-cost-card">
                             <div class="card-header">
-                                <div class="card-title">Quick Actions</div>
+                                <div class="card-title">Hot Cost Summary</div>
+                                <span id="hot-cost-badge"></span>
                             </div>
                             <div class="card-body">
-                                <div class="grid grid-2">
-                                    <button class="btn" onclick="Core.navigate('schedule')">📋 View Schedule</button>
-                                    <button class="btn" onclick="Core.navigate('breakdown')">📝 Breakdown Sheets</button>
-                                    <button class="btn" onclick="Core.navigate('documents')">📄 Export Documents</button>
-                                    <button class="btn" onclick="Core.navigate('gantt')">📈 Gantt Charts</button>
+                                <div class="grid grid-3">
+                                    <div>
+                                        <div class="stat-label">Total Budget</div>
+                                        <div class="stat-value" style="font-size: 24px;" id="hot-budget">$0</div>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Spent + Committed</div>
+                                        <div class="stat-value text-gold" style="font-size: 24px;" id="hot-spent">$0</div>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Payroll Cost</div>
+                                        <div class="stat-value text-violet" style="font-size: 24px;" id="hot-payroll">$0</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card">
+                        <div class="card business-crm-header">
                             <div class="card-header">
-                                <div class="card-title">Activity Log</div>
+                                <div class="card-title">Business CRM <span class="business-crm-badge">GLOBAL</span></div>
                             </div>
                             <div class="card-body">
-                                <div class="log-container" id="activity-log">
-                                    <div class="log-entry">
-                                        <span class="log-time">--:--</span>
-                                        <span class="log-msg">System initialized</span>
+                                <div class="grid grid-3">
+                                    <div>
+                                        <div class="stat-label">Pipeline Value</div>
+                                        <div class="stat-value text-gold" style="font-size: 24px;" id="biz-pipeline-value">$0</div>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Total Revenue</div>
+                                        <div class="stat-value text-emerald" style="font-size: 24px;" id="biz-revenue-value">$0</div>
+                                    </div>
+                                    <div>
+                                        <div class="stat-label">Active Leads</div>
+                                        <div class="stat-value text-cyan" style="font-size: 24px;" id="biz-leads-count">0</div>
                                     </div>
                                 </div>
                             </div>
@@ -1429,20 +1876,15 @@
 
                     <div class="card">
                         <div class="card-header">
-                            <div class="card-title">Upcoming Shoot Days</div>
+                            <div class="card-title">Activity Log</div>
                         </div>
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Call Time</th>
-                                        <th>Location</th>
-                                        <th>Notes</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="dashboard-upcoming"></tbody>
-                            </table>
+                        <div class="card-body">
+                            <div class="log-container" id="activity-log">
+                                <div class="log-entry">
+                                    <span class="log-time">--:--</span>
+                                    <span class="log-msg">System initialized</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1899,10 +2341,10 @@
                 <div id="view-biz-pipeline" class="view">
                     <div class="mb-lg" style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span class="business-crm-badge">BUSINESS CRM</span>
-                            <span class="text-muted ml-md">VR, Cinema, General Video, Freelance</span>
+                            <span class="tag tag-violet">BUSINESS CRM</span>
+                            <span class="text-muted ml-md">Cinema, VR, General Video, Cyber</span>
                         </div>
-                        <button class="btn btn-gold" onclick="BizCRM.showLeadModal()">+ Add Lead</button>
+                        <button class="btn btn-primary" onclick="BizCRM.showLeadModal()">+ Add Lead</button>
                     </div>
                     <div class="kanban-wrapper" id="biz-kanban-board"></div>
                 </div>
@@ -2686,15 +3128,27 @@ Rain pours down as SARAH runs through the streets."></textarea>
         ];
 
         /* ═══════════════════════════════════════════════════════════════════════
+           CRM STAGES CONFIGURATION
+           ═══════════════════════════════════════════════════════════════════════ */
+        const CRM_STAGES = [
+            { id: 'new', name: 'New' },
+            { id: 'contacted', name: 'Contacted' },
+            { id: 'pitched', name: 'Pitched' },
+            { id: 'negotiating', name: 'Negotiating' },
+            { id: 'done', name: 'Closed' }
+        ];
+
+        /* ═══════════════════════════════════════════════════════════════════════
            AUTHENTICATION MODULE
            ═══════════════════════════════════════════════════════════════════════ */
         const Auth = {
             user: null,
             unsubscribe: null,
+            isDemoMode: false,
 
             async init() {
                 const statusEl = document.getElementById('login-status');
-                statusEl.textContent = 'Initializing...';
+                statusEl.textContent = 'Ready to start...';
 
                 // Wait for Firebase to be ready
                 if (!window.firebaseReady) {
@@ -2703,19 +3157,19 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     });
                 }
 
-                statusEl.textContent = 'Checking authentication...';
+                statusEl.textContent = 'Choose your mode';
 
                 // Listen for auth state changes
                 window.firebaseOnAuthStateChanged(window.firebaseAuth, async (user) => {
-                    if (user) {
+                    if (user && !this.isDemoMode) {
                         this.user = user;
                         statusEl.textContent = 'Authenticated. Loading...';
                         statusEl.className = 'login-status success';
                         
                         // Initialize app
                         await this.onLogin();
-                    } else {
-                        statusEl.textContent = 'Click to authenticate';
+                    } else if (!this.isDemoMode) {
+                        statusEl.textContent = 'Choose Demo Mode or Sign In';
                         statusEl.className = 'login-status';
                     }
                 });
@@ -2723,20 +3177,22 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             async login() {
                 const statusEl = document.getElementById('login-status');
-                const btn = document.getElementById('login-btn');
+                const btn = document.querySelector('.login-btn.cloud');
                 
                 try {
-                    btn.disabled = true;
+                    if (btn) btn.disabled = true;
                     statusEl.textContent = 'Opening authentication...';
+                    statusEl.className = 'login-status';
                     
                     const result = await window.firebaseSignInWithPopup(window.firebaseAuth, window.firebaseProvider);
                     this.user = result.user;
+                    this.isDemoMode = false;
                     
                 } catch (error) {
                     console.error('Login error:', error);
                     statusEl.textContent = 'Authentication failed: ' + error.message;
                     statusEl.className = 'login-status error';
-                    btn.disabled = false;
+                    if (btn) btn.disabled = false;
                 }
             },
 
@@ -2746,10 +3202,31 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 document.getElementById('app').style.display = 'grid';
                 
                 // Update user display
-                document.getElementById('user-email').textContent = this.user.email;
+                document.getElementById('user-email').textContent = this.user.email || this.user.displayName;
+                
+                // Update mode banner
+                this.updateModeBanner();
                 
                 // Initialize Core with user data
                 await Core.init();
+            },
+
+            updateModeBanner() {
+                const banner = document.getElementById('mode-banner');
+                const badge = document.getElementById('mode-badge');
+                const syncStatus = document.getElementById('mode-sync-status');
+                
+                if (this.isDemoMode) {
+                    banner.className = 'mode-banner demo-mode';
+                    badge.className = 'mode-badge demo';
+                    badge.innerHTML = '💾 DEMO MODE';
+                    if (syncStatus) syncStatus.textContent = 'Saving locally';
+                } else {
+                    banner.className = 'mode-banner cloud-mode';
+                    badge.className = 'mode-badge cloud';
+                    badge.innerHTML = '☁️ CLOUD MODE';
+                    if (syncStatus) syncStatus.textContent = 'Synced to cloud';
+                }
             },
 
             async logout() {
@@ -2759,22 +3236,21 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 if (!this.isDemoMode) {
                     await window.firebaseSignOut(window.firebaseAuth);
                 }
+                this.isDemoMode = false;
                 location.reload();
             },
-
-            isDemoMode: false,
 
             demoMode() {
                 // Enter demo mode without authentication
                 this.isDemoMode = true;
                 this.user = {
                     uid: 'demo_user',
-                    email: 'demo@alacrity.app',
+                    email: 'demo@local',
                     displayName: 'Demo User'
                 };
                 
                 const statusEl = document.getElementById('login-status');
-                statusEl.textContent = 'Entering Demo Mode...';
+                statusEl.textContent = 'Entering Demo Mode - All data saved locally';
                 statusEl.className = 'login-status success';
                 
                 setTimeout(() => {
@@ -2957,21 +3433,25 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             updateSyncStatus(status) {
                 const pill = document.getElementById('sync-status');
+                const modeSyncStatus = document.getElementById('mode-sync-status');
                 const text = document.getElementById('sync-text');
-                const dot = pill.querySelector('.dot');
+                const dot = pill ? pill.querySelector('.dot') : null;
                 
                 switch(status) {
                     case 'saving':
-                        text.textContent = 'SAVING...';
-                        pill.classList.add('warning');
+                        if (text) text.textContent = 'SAVING...';
+                        if (modeSyncStatus) modeSyncStatus.textContent = Auth.isDemoMode ? 'Saving locally...' : 'Syncing to cloud...';
+                        if (pill) pill.classList.add('warning');
                         break;
                     case 'synced':
-                        text.textContent = 'SYNCED';
-                        pill.classList.remove('warning');
+                        if (text) text.textContent = 'SYNCED';
+                        if (modeSyncStatus) modeSyncStatus.textContent = Auth.isDemoMode ? 'Saved locally' : 'Synced to cloud';
+                        if (pill) pill.classList.remove('warning');
                         break;
                     case 'error':
-                        text.textContent = 'SYNC ERROR';
-                        pill.classList.add('warning');
+                        if (text) text.textContent = 'SYNC ERROR';
+                        if (modeSyncStatus) modeSyncStatus.textContent = 'Sync failed - saved locally';
+                        if (pill) pill.classList.add('warning');
                         break;
                 }
             },
@@ -3008,26 +3488,31 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 document.getElementById('stat-tech').textContent = (this.data.tech || []).length;
                 document.getElementById('stat-vault').textContent = (this.data.vault || []).length;
                 
-                const scenes = (this.data.schedule?.strips || []).filter(s => s.type === 'scene');
-                document.getElementById('stat-scenes').textContent = scenes.length;
+                // Budget stats
+                const totalBudget = parseFloat(this.data.budget?.total || 0);
+                const categories = this.data.budget?.categories || [];
+                let totalSpent = 0;
+                categories.forEach(cat => {
+                    totalSpent += parseFloat(cat.spent || 0);
+                });
+                const budgetLeft = totalBudget - totalSpent;
+                document.getElementById('stat-budget').textContent = '$' + budgetLeft.toLocaleString();
+                document.getElementById('hot-budget').textContent = '$' + totalBudget.toLocaleString();
+                document.getElementById('hot-spent').textContent = '$' + totalSpent.toLocaleString();
+                document.getElementById('hot-payroll').textContent = '$0'; // Placeholder
                 
-                // Upcoming days
-                const upcoming = document.getElementById('dashboard-upcoming');
-                const sortedDays = [...(this.data.days || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
-                const futureDays = sortedDays.filter(d => new Date(d.date) >= new Date());
+                // Production CRM pipeline value
+                const prodLeads = this.data.crm?.leads || [];
+                const prodPipelineValue = prodLeads.reduce((sum, lead) => sum + parseFloat(lead.value || 0), 0);
+                document.getElementById('stat-prod-pipeline').textContent = '$' + prodPipelineValue.toLocaleString();
                 
-                if (futureDays.length === 0) {
-                    upcoming.innerHTML = '<tr><td colspan="4" class="table-empty">No upcoming shoot days</td></tr>';
-                } else {
-                    upcoming.innerHTML = futureDays.slice(0, 5).map(d => `
-                        <tr>
-                            <td class="font-mono font-bold">${d.date}</td>
-                            <td class="font-mono">${d.call || '-'}</td>
-                            <td>${d.location || '-'}</td>
-                            <td class="text-muted">${d.notes || '-'}</td>
-                        </tr>
-                    `).join('');
-                }
+                // Business CRM stats (global)
+                const bizLeads = this.bizData?.leads || [];
+                const bizPipelineValue = bizLeads.reduce((sum, lead) => sum + parseFloat(lead.value || 0), 0);
+                const bizRevenue = this.bizData?.income?.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0) || 0;
+                document.getElementById('biz-pipeline-value').textContent = '$' + bizPipelineValue.toLocaleString();
+                document.getElementById('biz-revenue-value').textContent = '$' + bizRevenue.toLocaleString();
+                document.getElementById('biz-leads-count').textContent = bizLeads.length;
             },
 
             navigate(viewId) {
@@ -3059,6 +3544,18 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     'notes': 'PRODUCTION NOTES'
                 };
                 document.getElementById('page-title').textContent = titles[viewId] || viewId.toUpperCase();
+                
+                // Update view indicator (Global vs Production)
+                const viewIndicator = document.getElementById('view-indicator');
+                if (viewIndicator) {
+                    if (viewId.startsWith('biz-')) {
+                        viewIndicator.className = 'view-indicator global';
+                        viewIndicator.textContent = '🌐 GLOBAL BUSINESS';
+                    } else {
+                        viewIndicator.className = 'view-indicator production';
+                        viewIndicator.textContent = '🎬 ' + (this.currentProduction || 'PRODUCTION');
+                    }
+                }
                 
                 // Show/hide views
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -4132,37 +4629,88 @@ Rain pours down as SARAH runs through the streets."></textarea>
            PRODUCTION CRM MODULE
            ═══════════════════════════════════════════════════════════════════════ */
         const ProdCRM = {
-            editingLead: null,
+            draggedLead: null,
 
             renderPipeline() {
                 if (!Core.data.crm) Core.data.crm = { leads: [], ledger: [] };
-                const leads = Core.data.crm.leads || [];
-                const tbody = document.getElementById('prod-pipeline-table');
+                const board = document.getElementById('prod-kanban-board');
+                if (!board) return;
                 
-                if (leads.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No contacts yet</td></tr>';
-                    return;
+                board.innerHTML = CRM_STAGES.map(stage => {
+                    const leads = (Core.data.crm.leads || []).filter(l => l.status === stage.id);
+                    return `
+                        <div class="kanban-column" data-stage="${stage.id}">
+                            <div class="kanban-column-header">
+                                <span class="kanban-column-title">${stage.name}</span>
+                                <span class="kanban-column-count">${leads.length}</span>
+                            </div>
+                            <div class="kanban-column-body" ondragover="ProdCRM.allowDrop(event)" ondrop="ProdCRM.drop(event, '${stage.id}')">
+                                ${leads.map(l => this.renderLeadCard(l)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderLeadCard(lead) {
+                const interestClass = {
+                    'Talent': 'interest-talent',
+                    'Vendor': 'interest-vendor',
+                    'Sponsor': 'interest-sponsor',
+                    'Investor': 'interest-investor'
+                }[lead.interest] || 'interest-custom';
+                
+                return `
+                    <div class="kanban-card ${interestClass}" draggable="true" ondragstart="ProdCRM.dragStart(event, ${lead.id})" data-id="${lead.id}">
+                        <div class="kanban-card-actions">
+                            <button class="kanban-card-btn call" onclick="ProdCRM.loadToDialer(${lead.id}); event.stopPropagation();" title="Load to Dialer">📞</button>
+                            <button class="kanban-card-btn" onclick="ProdCRM.editLead(${lead.id}); event.stopPropagation();" title="Edit">✎</button>
+                            <button class="kanban-card-btn del" onclick="ProdCRM.deleteLead(${lead.id}); event.stopPropagation();" title="Delete">×</button>
+                        </div>
+                        <div class="kanban-card-name">${lead.name}</div>
+                        <div class="kanban-card-phone">${lead.phone || 'No phone'}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                            <span class="tag tag-${interestClass === 'interest-talent' ? 'pink' : interestClass === 'interest-vendor' ? 'cyan' : interestClass === 'interest-sponsor' ? 'gold' : interestClass === 'interest-investor' ? 'emerald' : 'violet'}">${lead.interest}</span>
+                            <span class="kanban-card-value">$${Number(lead.value || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            },
+
+            dragStart(e, id) {
+                this.draggedLead = id;
+                e.target.classList.add('dragging');
+            },
+
+            allowDrop(e) { 
+                e.preventDefault(); 
+            },
+
+            drop(e, newStatus) {
+                e.preventDefault();
+                if (this.draggedLead) {
+                    const lead = Core.data.crm.leads.find(l => l.id === this.draggedLead);
+                    if (lead) {
+                        lead.status = newStatus;
+                        Core.save();
+                        this.renderPipeline();
+                        Core.log(`Contact "${lead.name}" moved to ${newStatus}`);
+                    }
                 }
-                
-                tbody.innerHTML = leads.map((lead, i) => `
-                    <tr>
-                        <td class="font-bold">${lead.name}</td>
-                        <td class="font-mono">${lead.phone || '-'}</td>
-                        <td>${lead.email || '-'}</td>
-                        <td><span class="tag tag-cyan">${lead.interest || '-'}</span></td>
-                        <td class="font-mono">${lead.value ? '$' + Number(lead.value).toLocaleString() : '-'}</td>
-                        <td><span class="tag tag-${lead.status === 'Confirmed' ? 'emerald' : lead.status === 'Declined' ? 'rose' : 'amber'}">${lead.status || 'Pending'}</span></td>
-                        <td>
-                            <button class="btn btn-sm" onclick="ProdCRM.editLead(${i})">✎</button>
-                            <button class="delete-btn" onclick="ProdCRM.deleteLead(${i})">×</button>
-                        </td>
-                    </tr>
-                `).join('');
+                this.draggedLead = null;
+                document.querySelectorAll('.kanban-card').forEach(card => card.classList.remove('dragging'));
+            },
+
+            loadToDialer(id) {
+                Core.navigate('prod-dialer');
+                // The dialer will show all contacts
             },
 
             renderDialer() {
                 const leads = Core.data.crm?.leads || [];
-                const container = document.getElementById('prod-dialer-list');
+                const container = document.getElementById('prod-dialer-queue');
+                
+                if (!container) return;
                 
                 if (leads.length === 0) {
                     container.innerHTML = '<div class="text-muted" style="text-align: center; padding: var(--space-2xl);">No contacts to call</div>';
@@ -4198,62 +4746,73 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const confirmed = leads.filter(l => l.status === 'Confirmed');
                 const confirmedValue = confirmed.reduce((sum, l) => sum + (Number(l.value) || 0), 0);
                 const totalIncome = ledger.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                const conversion = leads.length > 0 ? ((confirmed.length / leads.length) * 100).toFixed(0) : 0;
                 
-                document.getElementById('prod-intel-total').textContent = '$' + totalValue.toLocaleString();
-                document.getElementById('prod-intel-confirmed').textContent = '$' + confirmedValue.toLocaleString();
-                document.getElementById('prod-intel-income').textContent = '$' + totalIncome.toLocaleString();
+                const pipelineEl = document.getElementById('prod-intel-pipeline');
+                const revenueEl = document.getElementById('prod-intel-revenue');
+                const conversionEl = document.getElementById('prod-intel-conversion');
                 
-                const tbody = document.getElementById('prod-ledger-table');
+                if (pipelineEl) pipelineEl.textContent = '$' + totalValue.toLocaleString();
+                if (revenueEl) revenueEl.textContent = '$' + confirmedValue.toLocaleString();
+                if (conversionEl) conversionEl.textContent = conversion + '%';
+                
+                const tbody = document.getElementById('prod-table-ledger');
+                if (!tbody) return;
+                
                 if (ledger.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="table-empty">No transactions</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No transactions</td></tr>';
                 } else {
                     tbody.innerHTML = ledger.map((t, i) => `
                         <tr>
+                            <td class="font-mono">${t.date || ''}</td>
                             <td>${t.source}</td>
+                            <td>${t.type || 'Income'}</td>
                             <td class="font-mono font-bold" style="color: var(--neon-emerald);">$${Number(t.amount).toLocaleString()}</td>
-                            <td class="font-mono">${t.date}</td>
                             <td><button class="delete-btn" onclick="ProdCRM.deleteIncome(${i})">×</button></td>
                         </tr>
                     `).join('');
                 }
             },
 
-            showLeadModal() {
-                this.editingLead = null;
-                document.getElementById('prod-lead-modal-title').textContent = 'Add Contact';
-                document.getElementById('prod-lead-id').value = '';
-                document.getElementById('prod-lead-name').value = '';
-                document.getElementById('prod-lead-phone').value = '';
-                document.getElementById('prod-lead-email').value = '';
-                document.getElementById('prod-lead-interest').value = 'Talent';
-                document.getElementById('prod-lead-value').value = '';
-                document.getElementById('prod-lead-notes').value = '';
-                document.getElementById('prod-custom-interest-group').classList.add('hidden');
+            showLeadModal(id = null) {
                 document.getElementById('modal-prod-lead').classList.add('active');
+                document.getElementById('prod-lead-modal-title').textContent = id ? 'Edit Contact' : 'Add Contact';
+                document.getElementById('prod-lead-id').value = id || '';
+                
+                if (id) {
+                    const lead = Core.data.crm.leads.find(l => l.id === id);
+                    if (lead) {
+                        document.getElementById('prod-lead-name').value = lead.name || '';
+                        document.getElementById('prod-lead-phone').value = lead.phone || '';
+                        document.getElementById('prod-lead-email').value = lead.email || '';
+                        
+                        const standardTypes = ['Talent', 'Vendor', 'Sponsor', 'Investor'];
+                        if (standardTypes.includes(lead.interest)) {
+                            document.getElementById('prod-lead-interest').value = lead.interest;
+                            document.getElementById('prod-custom-interest-group').classList.add('hidden');
+                        } else {
+                            document.getElementById('prod-lead-interest').value = 'Custom';
+                            document.getElementById('prod-lead-custom-interest').value = lead.interest || '';
+                            document.getElementById('prod-custom-interest-group').classList.remove('hidden');
+                        }
+                        
+                        document.getElementById('prod-lead-value').value = lead.value || '';
+                        document.getElementById('prod-lead-notes').value = lead.notes || '';
+                    }
+                } else {
+                    document.getElementById('prod-lead-name').value = '';
+                    document.getElementById('prod-lead-phone').value = '';
+                    document.getElementById('prod-lead-email').value = '';
+                    document.getElementById('prod-lead-interest').value = 'Talent';
+                    document.getElementById('prod-lead-custom-interest').value = '';
+                    document.getElementById('prod-custom-interest-group').classList.add('hidden');
+                    document.getElementById('prod-lead-value').value = '';
+                    document.getElementById('prod-lead-notes').value = '';
+                }
             },
 
-            editLead(index) {
-                this.editingLead = index;
-                const lead = Core.data.crm.leads[index];
-                document.getElementById('prod-lead-modal-title').textContent = 'Edit Contact';
-                document.getElementById('prod-lead-id').value = index;
-                document.getElementById('prod-lead-name').value = lead.name || '';
-                document.getElementById('prod-lead-phone').value = lead.phone || '';
-                document.getElementById('prod-lead-email').value = lead.email || '';
-                
-                const standardInterests = ['Talent', 'Vendor', 'Sponsor', 'Investor'];
-                if (standardInterests.includes(lead.interest)) {
-                    document.getElementById('prod-lead-interest').value = lead.interest;
-                    document.getElementById('prod-custom-interest-group').classList.add('hidden');
-                } else {
-                    document.getElementById('prod-lead-interest').value = 'Custom';
-                    document.getElementById('prod-lead-custom-interest').value = lead.interest || '';
-                    document.getElementById('prod-custom-interest-group').classList.remove('hidden');
-                }
-                
-                document.getElementById('prod-lead-value').value = lead.value || '';
-                document.getElementById('prod-lead-notes').value = lead.notes || '';
-                document.getElementById('modal-prod-lead').classList.add('active');
+            editLead(id) { 
+                this.showLeadModal(id); 
             },
 
             toggleCustomInterest() {
@@ -4267,6 +4826,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             saveLead() {
+                const id = document.getElementById('prod-lead-id').value;
                 const name = document.getElementById('prod-lead-name').value.trim();
                 if (!name) { alert('Name is required'); return; }
                 
@@ -4281,16 +4841,23 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     email: document.getElementById('prod-lead-email').value.trim(),
                     interest,
                     value: document.getElementById('prod-lead-value').value,
-                    notes: document.getElementById('prod-lead-notes').value.trim(),
-                    status: 'Pending'
+                    notes: document.getElementById('prod-lead-notes').value.trim()
                 };
                 
-                if (this.editingLead !== null) {
-                    leadData.status = Core.data.crm.leads[this.editingLead].status;
-                    Core.data.crm.leads[this.editingLead] = leadData;
-                    Core.log(`Updated contact: ${name}`);
+                if (id) {
+                    // Edit existing lead
+                    const lead = Core.data.crm.leads.find(l => l.id === parseInt(id));
+                    if (lead) {
+                        Object.assign(lead, leadData);
+                        Core.log(`Updated contact: ${name}`);
+                    }
                 } else {
-                    Core.data.crm.leads.push(leadData);
+                    // Add new lead
+                    Core.data.crm.leads.push({ 
+                        id: Date.now(), 
+                        status: 'new', 
+                        ...leadData 
+                    });
                     Core.log(`Added contact: ${name}`);
                 }
                 
@@ -4301,21 +4868,27 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 this.renderIntel();
             },
 
-            deleteLead(index) {
+            deleteLead(id) {
                 if (confirm('Delete this contact?')) {
-                    Core.data.crm.leads.splice(index, 1);
-                    Core.save();
-                    this.renderPipeline();
-                    this.renderDialer();
-                    this.renderIntel();
+                    const index = Core.data.crm.leads.findIndex(l => l.id === id);
+                    if (index !== -1) {
+                        Core.data.crm.leads.splice(index, 1);
+                        Core.save();
+                        this.renderPipeline();
+                        this.renderDialer();
+                        this.renderIntel();
+                    }
                 }
             },
 
-            updateStatus(index, status) {
-                Core.data.crm.leads[index].status = status;
-                Core.save();
-                this.renderPipeline();
-                this.renderIntel();
+            updateStatus(id, status) {
+                const lead = Core.data.crm.leads.find(l => l.id === id);
+                if (lead) {
+                    lead.status = status;
+                    Core.save();
+                    this.renderPipeline();
+                    this.renderIntel();
+                }
             },
 
             showIncomeModal() {
@@ -4358,36 +4931,88 @@ Rain pours down as SARAH runs through the streets."></textarea>
            BUSINESS CRM MODULE
            ═══════════════════════════════════════════════════════════════════════ */
         const BizCRM = {
-            editingLead: null,
+            draggedLead: null,
 
             renderPipeline() {
-                const leads = Core.bizData?.leads || [];
-                const tbody = document.getElementById('biz-pipeline-table');
+                if (!Core.bizData) Core.bizData = { leads: [], ledger: [] };
+                const board = document.getElementById('biz-kanban-board');
+                if (!board) return;
                 
-                if (leads.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No leads yet</td></tr>';
-                    return;
+                board.innerHTML = CRM_STAGES.map(stage => {
+                    const leads = (Core.bizData.leads || []).filter(l => l.status === stage.id);
+                    return `
+                        <div class="kanban-column" data-stage="${stage.id}">
+                            <div class="kanban-column-header">
+                                <span class="kanban-column-title">${stage.name}</span>
+                                <span class="kanban-column-count">${leads.length}</span>
+                            </div>
+                            <div class="kanban-column-body" ondragover="BizCRM.allowDrop(event)" ondrop="BizCRM.drop(event, '${stage.id}')">
+                                ${leads.map(l => this.renderLeadCard(l)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderLeadCard(lead) {
+                const interestClass = {
+                    'Cinema': 'interest-cinema',
+                    'VR': 'interest-vr',
+                    'General Video': 'interest-video',
+                    'Cyber': 'interest-cyber'
+                }[lead.interest] || 'interest-custom';
+                
+                return `
+                    <div class="kanban-card ${interestClass}" draggable="true" ondragstart="BizCRM.dragStart(event, ${lead.id})" data-id="${lead.id}">
+                        <div class="kanban-card-actions">
+                            <button class="kanban-card-btn call" onclick="BizCRM.loadToDialer(${lead.id}); event.stopPropagation();" title="Load to Dialer">📞</button>
+                            <button class="kanban-card-btn" onclick="BizCRM.editLead(${lead.id}); event.stopPropagation();" title="Edit">✎</button>
+                            <button class="kanban-card-btn del" onclick="BizCRM.deleteLead(${lead.id}); event.stopPropagation();" title="Delete">×</button>
+                        </div>
+                        <div class="kanban-card-name">${lead.name}</div>
+                        <div class="kanban-card-phone">${lead.phone || 'No phone'}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                            <span class="tag tag-${interestClass === 'interest-cinema' ? 'pink' : interestClass === 'interest-vr' ? 'cyan' : interestClass === 'interest-video' ? 'emerald' : interestClass === 'interest-cyber' ? 'violet' : 'gold'}">${lead.interest}</span>
+                            <span class="kanban-card-value">$${Number(lead.value || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            },
+
+            dragStart(e, id) {
+                this.draggedLead = id;
+                e.target.classList.add('dragging');
+            },
+
+            allowDrop(e) { 
+                e.preventDefault(); 
+            },
+
+            drop(e, newStatus) {
+                e.preventDefault();
+                if (this.draggedLead) {
+                    const lead = Core.bizData.leads.find(l => l.id === this.draggedLead);
+                    if (lead) {
+                        lead.status = newStatus;
+                        Core.saveBizData();
+                        this.renderPipeline();
+                        Core.log(`Lead "${lead.name}" moved to ${newStatus}`);
+                    }
                 }
-                
-                tbody.innerHTML = leads.map((lead, i) => `
-                    <tr>
-                        <td class="font-bold">${lead.name}</td>
-                        <td class="font-mono">${lead.phone || '-'}</td>
-                        <td>${lead.email || '-'}</td>
-                        <td><span class="tag tag-gold">${lead.interest || '-'}</span></td>
-                        <td class="font-mono">${lead.value ? '$' + Number(lead.value).toLocaleString() : '-'}</td>
-                        <td><span class="tag tag-${lead.status === 'Won' ? 'emerald' : lead.status === 'Lost' ? 'rose' : 'amber'}">${lead.status || 'New'}</span></td>
-                        <td>
-                            <button class="btn btn-sm" onclick="BizCRM.editLead(${i})">✎</button>
-                            <button class="delete-btn" onclick="BizCRM.deleteLead(${i})">×</button>
-                        </td>
-                    </tr>
-                `).join('');
+                this.draggedLead = null;
+                document.querySelectorAll('.kanban-card').forEach(card => card.classList.remove('dragging'));
+            },
+
+            loadToDialer(id) {
+                Core.navigate('biz-dialer');
+                // The dialer will show all leads
             },
 
             renderDialer() {
                 const leads = Core.bizData?.leads || [];
-                const container = document.getElementById('biz-dialer-list');
+                const container = document.getElementById('biz-dialer-queue');
+                
+                if (!container) return;
                 
                 if (leads.length === 0) {
                     container.innerHTML = '<div class="text-muted" style="text-align: center; padding: var(--space-2xl);">No leads to call</div>';
@@ -4424,62 +5049,73 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const won = leads.filter(l => l.status === 'Won');
                 const wonValue = won.reduce((sum, l) => sum + (Number(l.value) || 0), 0);
                 const totalIncome = ledger.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                const conversion = leads.length > 0 ? ((won.length / leads.length) * 100).toFixed(0) : 0;
                 
-                document.getElementById('biz-intel-total').textContent = '$' + totalValue.toLocaleString();
-                document.getElementById('biz-intel-won').textContent = '$' + wonValue.toLocaleString();
-                document.getElementById('biz-intel-income').textContent = '$' + totalIncome.toLocaleString();
+                const pipelineEl = document.getElementById('biz-intel-pipeline');
+                const revenueEl = document.getElementById('biz-intel-revenue');
+                const conversionEl = document.getElementById('biz-intel-conversion');
                 
-                const tbody = document.getElementById('biz-ledger-table');
+                if (pipelineEl) pipelineEl.textContent = '$' + totalValue.toLocaleString();
+                if (revenueEl) revenueEl.textContent = '$' + wonValue.toLocaleString();
+                if (conversionEl) conversionEl.textContent = conversion + '%';
+                
+                const tbody = document.getElementById('biz-table-ledger');
+                if (!tbody) return;
+                
                 if (ledger.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="table-empty">No transactions</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="table-empty">No transactions</td></tr>';
                 } else {
                     tbody.innerHTML = ledger.map((t, i) => `
                         <tr>
+                            <td class="font-mono">${t.date || ''}</td>
                             <td>${t.source}</td>
+                            <td>${t.type || 'Income'}</td>
                             <td class="font-mono font-bold" style="color: var(--neon-gold);">$${Number(t.amount).toLocaleString()}</td>
-                            <td class="font-mono">${t.date}</td>
                             <td><button class="delete-btn" onclick="BizCRM.deleteIncome(${i})">×</button></td>
                         </tr>
                     `).join('');
                 }
             },
 
-            showLeadModal() {
-                this.editingLead = null;
-                document.getElementById('biz-lead-modal-title').textContent = 'Add Lead';
-                document.getElementById('biz-lead-id').value = '';
-                document.getElementById('biz-lead-name').value = '';
-                document.getElementById('biz-lead-phone').value = '';
-                document.getElementById('biz-lead-email').value = '';
-                document.getElementById('biz-lead-interest').value = 'Cinema';
-                document.getElementById('biz-lead-value').value = '';
-                document.getElementById('biz-lead-notes').value = '';
-                document.getElementById('biz-custom-interest-group').classList.add('hidden');
+            showLeadModal(id = null) {
                 document.getElementById('modal-biz-lead').classList.add('active');
+                document.getElementById('biz-lead-modal-title').textContent = id ? 'Edit Lead' : 'Add Lead';
+                document.getElementById('biz-lead-id').value = id || '';
+                
+                if (id) {
+                    const lead = Core.bizData.leads.find(l => l.id === id);
+                    if (lead) {
+                        document.getElementById('biz-lead-name').value = lead.name || '';
+                        document.getElementById('biz-lead-phone').value = lead.phone || '';
+                        document.getElementById('biz-lead-email').value = lead.email || '';
+                        
+                        const standardInterests = ['Cinema', 'VR', 'General Video', 'Cyber'];
+                        if (standardInterests.includes(lead.interest)) {
+                            document.getElementById('biz-lead-interest').value = lead.interest;
+                            document.getElementById('biz-custom-interest-group').classList.add('hidden');
+                        } else {
+                            document.getElementById('biz-lead-interest').value = 'Custom';
+                            document.getElementById('biz-lead-custom-interest').value = lead.interest || '';
+                            document.getElementById('biz-custom-interest-group').classList.remove('hidden');
+                        }
+                        
+                        document.getElementById('biz-lead-value').value = lead.value || '';
+                        document.getElementById('biz-lead-notes').value = lead.notes || '';
+                    }
+                } else {
+                    document.getElementById('biz-lead-name').value = '';
+                    document.getElementById('biz-lead-phone').value = '';
+                    document.getElementById('biz-lead-email').value = '';
+                    document.getElementById('biz-lead-interest').value = 'Cinema';
+                    document.getElementById('biz-lead-custom-interest').value = '';
+                    document.getElementById('biz-custom-interest-group').classList.add('hidden');
+                    document.getElementById('biz-lead-value').value = '';
+                    document.getElementById('biz-lead-notes').value = '';
+                }
             },
 
-            editLead(index) {
-                this.editingLead = index;
-                const lead = Core.bizData.leads[index];
-                document.getElementById('biz-lead-modal-title').textContent = 'Edit Lead';
-                document.getElementById('biz-lead-id').value = index;
-                document.getElementById('biz-lead-name').value = lead.name || '';
-                document.getElementById('biz-lead-phone').value = lead.phone || '';
-                document.getElementById('biz-lead-email').value = lead.email || '';
-                
-                const standardInterests = ['Cinema', 'VR', 'General Video', 'Cyber'];
-                if (standardInterests.includes(lead.interest)) {
-                    document.getElementById('biz-lead-interest').value = lead.interest;
-                    document.getElementById('biz-custom-interest-group').classList.add('hidden');
-                } else {
-                    document.getElementById('biz-lead-interest').value = 'Custom';
-                    document.getElementById('biz-lead-custom-interest').value = lead.interest || '';
-                    document.getElementById('biz-custom-interest-group').classList.remove('hidden');
-                }
-                
-                document.getElementById('biz-lead-value').value = lead.value || '';
-                document.getElementById('biz-lead-notes').value = lead.notes || '';
-                document.getElementById('modal-biz-lead').classList.add('active');
+            editLead(id) { 
+                this.showLeadModal(id); 
             },
 
             toggleCustomInterest() {
@@ -4493,6 +5129,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             saveLead() {
+                const id = document.getElementById('biz-lead-id').value;
                 const name = document.getElementById('biz-lead-name').value.trim();
                 if (!name) { alert('Name is required'); return; }
                 
@@ -4507,17 +5144,24 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     email: document.getElementById('biz-lead-email').value.trim(),
                     interest,
                     value: document.getElementById('biz-lead-value').value,
-                    notes: document.getElementById('biz-lead-notes').value.trim(),
-                    status: 'New'
+                    notes: document.getElementById('biz-lead-notes').value.trim()
                 };
                 
-                if (this.editingLead !== null) {
-                    leadData.status = Core.bizData.leads[this.editingLead].status;
-                    Core.bizData.leads[this.editingLead] = leadData;
-                    Core.log(`Updated lead: ${name}`);
+                if (id) {
+                    // Edit existing lead
+                    const lead = Core.bizData.leads.find(l => l.id === parseInt(id));
+                    if (lead) {
+                        Object.assign(lead, leadData);
+                        Core.log(`Updated lead: ${name}`);
+                    }
                 } else {
+                    // Add new lead
                     if (!Core.bizData.leads) Core.bizData.leads = [];
-                    Core.bizData.leads.push(leadData);
+                    Core.bizData.leads.push({ 
+                        id: Date.now(), 
+                        status: 'new', 
+                        ...leadData 
+                    });
                     Core.log(`Added lead: ${name}`);
                 }
                 
@@ -4528,21 +5172,27 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 this.renderIntel();
             },
 
-            deleteLead(index) {
+            deleteLead(id) {
                 if (confirm('Delete this lead?')) {
-                    Core.bizData.leads.splice(index, 1);
-                    Core.saveBizData();
-                    this.renderPipeline();
-                    this.renderDialer();
-                    this.renderIntel();
+                    const index = Core.bizData.leads.findIndex(l => l.id === id);
+                    if (index !== -1) {
+                        Core.bizData.leads.splice(index, 1);
+                        Core.saveBizData();
+                        this.renderPipeline();
+                        this.renderDialer();
+                        this.renderIntel();
+                    }
                 }
             },
 
-            updateStatus(index, status) {
-                Core.bizData.leads[index].status = status;
-                Core.saveBizData();
-                this.renderPipeline();
-                this.renderIntel();
+            updateStatus(id, status) {
+                const lead = Core.bizData.leads.find(l => l.id === id);
+                if (lead) {
+                    lead.status = status;
+                    Core.saveBizData();
+                    this.renderPipeline();
+                    this.renderIntel();
+                }
             },
 
             showIncomeModal() {
