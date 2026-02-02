@@ -2604,6 +2604,24 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     </div>
                 </div>
 
+                <!-- BUDGET TRACKER VIEW -->
+                <div id="view-budget" class="view"></div>
+
+                <!-- SHOT LIST VIEW -->
+                <div id="view-shotlist" class="view"></div>
+
+                <!-- CONTINUITY LOG VIEW -->
+                <div id="view-continuity" class="view"></div>
+
+                <!-- RISK ASSESSMENT VIEW -->
+                <div id="view-risk" class="view"></div>
+
+                <!-- CONTACT DIRECTORY VIEW -->
+                <div id="view-contacts" class="view"></div>
+
+                <!-- MILESTONES VIEW -->
+                <div id="view-milestones" class="view"></div>
+
             </div>
         </main>
     </div>
@@ -3295,7 +3313,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             unsubscribe: null,
             isDemoMode: false,
 
-                        async init() {
+            async init() {
                 console.log('🚀 DC ALACRITY Initializing...');
                 
                 // Load productions list (from Firebase if cloud mode)
@@ -3320,7 +3338,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 console.log('✅ System initialized');
                 this.log('System initialized');
-            },,
+            },
 
             async login() {
                 const statusEl = document.getElementById('login-status');
@@ -3447,7 +3465,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 console.log('✅ System initialized');
                 this.log('System initialized');
-            },,
+            },
 
             async loadProductionsList() {
                 // Try to load productions list from Firebase first (if cloud mode)
@@ -3528,7 +3546,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 // Ensure productions list includes this one
                 this.createProduction(name);
-            },,
+            },
 
             async loadBizData() {
                 if (Auth.user && !Auth.isDemoMode) {
@@ -3695,7 +3713,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 });
                 
                 this.log('Real-time sync enabled');
-            },,
+            },
 
             updateSyncStatus(status) {
                 const pill = document.getElementById('sync-status');
