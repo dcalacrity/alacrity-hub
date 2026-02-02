@@ -629,6 +629,22 @@
         }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         .status-pill.warning .dot { background: var(--neon-rose); animation: warningPulse 1s ease-in-out infinite; }
+        .status-pill.off-budget { 
+            background: rgba(244, 63, 94, 0.15); 
+            border-color: rgba(244, 63, 94, 0.3);
+            color: var(--neon-rose);
+        }
+        .status-pill.off-budget .dot { background: var(--neon-rose); }
+        .status-pill.on-budget {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--neon-emerald);
+        }
+        .status-pill.on-budget .dot { background: var(--neon-emerald); }
+        .logout-btn:hover {
+            background: rgba(244, 63, 94, 0.25) !important;
+            transform: translateY(-1px);
+        }
         @keyframes warningPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
         .workspace {
@@ -1782,6 +1798,10 @@
             <div class="command-bar">
                 <h1 class="page-title" id="page-title">DASHBOARD</h1>
                 <div class="status-group">
+                    <div class="status-pill" id="budget-status">
+                        <span class="dot"></span>
+                        <span id="budget-text">ON BUDGET</span>
+                    </div>
                     <div class="status-pill" id="sync-status">
                         <span class="dot"></span>
                         <span id="sync-text">SYNCED</span>
@@ -1789,6 +1809,9 @@
                     <div class="status-pill" id="user-pill">
                         <span id="user-email">Loading...</span>
                     </div>
+                    <button class="status-pill logout-btn" id="logout-btn" onclick="Auth.logout()" style="cursor: pointer; background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #f43f5e;">
+                        LOGOUT
+                    </button>
                 </div>
             </div>
 
@@ -3066,49 +3089,77 @@ Rain pours down as SARAH runs through the streets."></textarea>
     <!-- ═══════════════════════════════════════════════════════════════════════
          FIREBASE SDK - Using Realtime Database
          ═══════════════════════════════════════════════════════════════════════ -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+      <script type="module">
+    // 1. IMPORTS: Standard Firebase + App Check Security
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js";
 
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyC80xtHEQ1rDd9meozTsPQTm-MuLA7eRkc",
-            authDomain: "alacrity-hub.firebaseapp.com",
-            databaseURL: "https://alacrity-hub-default-rtdb.firebaseio.com",
-            projectId: "alacrity-hub",
-            storageBucket: "alacrity-hub.firebasestorage.app",
-            messagingSenderId: "17649437105",
-            appId: "1:17649437105:web:ed206fa2f2de373ac1d590"
-        };
+    // 2. CONFIGURATION
+    const firebaseConfig = {
+        apiKey: "AIzaSyC80xtHEQ1rDd9meozTsPQTm-MuLA7eRkc",
+        authDomain: "alacrity-hub.firebaseapp.com",
+        databaseURL: "https://alacrity-hub-default-rtdb.firebaseio.com",
+        projectId: "alacrity-hub",
+        storageBucket: "alacrity-hub.firebasestorage.app",
+        messagingSenderId: "17649437105",
+        appId: "1:17649437105:web:ed206fa2f2de373ac1d590"
+    };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-        const provider = new GoogleAuthProvider();
+    // 3. INITIALIZATION
+    const app = initializeApp(firebaseConfig);
 
-        // Expose to global scope
-        window.firebaseAuth = auth;
-        window.firebaseDb = db;
-        window.firebaseProvider = provider;
-        window.firebaseSignInWithPopup = signInWithPopup;
-        window.firebaseOnAuthStateChanged = onAuthStateChanged;
-        window.firebaseSignOut = signOut;
-        window.firebaseRef = ref;
-        window.firebaseSet = set;
-        window.firebaseGet = get;
-        window.firebaseOnValue = onValue;
+    // 4. APP CHECK (The New Security Layer)
+    // CRITICAL: You must replace 'YOUR_RECAPTCHA_SITE_KEY' with the actual key 
+    // you generate in the Firebase Console -> App Check -> Register.
+    const appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider('6Lcodl4sAAAAAIRBhjZ17Fo5gPxRliFDKTqW4fY0'),
+        isTokenAutoRefreshEnabled: true 
+    });
 
-        // Signal that Firebase is ready
-        window.firebaseReady = true;
-        document.dispatchEvent(new Event('firebaseReady'));
-    </script>
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    // 5. EXPOSE TO GLOBAL SCOPE (Restored from V1)
+    // This ensures your other scripts can actually "see" and use Firebase.
+    window.firebaseAuth = auth;
+    window.firebaseDb = db;
+    window.firebaseProvider = provider;
+    window.firebaseSignInWithPopup = signInWithPopup;
+    window.firebaseOnAuthStateChanged = onAuthStateChanged;
+    window.firebaseSignOut = signOut;
+    window.firebaseRef = ref;
+    window.firebaseSet = set;
+    window.firebaseGet = get;
+    window.firebaseOnValue = onValue;
+
+    // Signal that Firebase is ready
+    window.firebaseReady = true;
+    document.dispatchEvent(new Event('firebaseReady'));
+    
+    console.log("Firebase V3 (Secured + Connected) Initialized");
+</script>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          MAIN APPLICATION JAVASCRIPT
          ═══════════════════════════════════════════════════════════════════════ -->
     <script>
+        /* ═══════════════════════════════════════════════════════════════════════
+           XSS PROTECTION - SECURITY FUNCTION
+           ═══════════════════════════════════════════════════════════════════════ */
+        // SAFETY TOOL: Converts dangerous code into safe text
+        const clean = (text) => {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        };
+
         /* ═══════════════════════════════════════════════════════════════════════
            BREAKDOWN CATEGORIES CONFIGURATION
            ═══════════════════════════════════════════════════════════════════════ */
@@ -3203,6 +3254,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 // Update user display
                 document.getElementById('user-email').textContent = this.user.email || this.user.displayName;
+                
+                // Show/hide logout button based on mode
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.style.display = this.isDemoMode ? 'none' : 'flex';
+                }
                 
                 // Update mode banner
                 this.updateModeBanner();
@@ -3397,13 +3454,16 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 if (!Auth.user || Auth.isDemoMode) return;
                 
                 try {
+                    this.isSyncing = true;
                     const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
                     await window.firebaseSet(dbRef, this.data);
                     this.updateSyncStatus('synced');
                     this.log('Synced to cloud');
+                    setTimeout(() => { this.isSyncing = false; }, 1000);
                 } catch (e) {
                     console.error('Sync failed:', e);
                     this.updateSyncStatus('error');
+                    this.isSyncing = false;
                 }
             },
 
@@ -3421,12 +3481,22 @@ Rain pours down as SARAH runs through the streets."></textarea>
             setupRealtimeSync() {
                 if (!Auth.user || Auth.isDemoMode) return;
                 
+                // Flag to prevent sync loop
+                this.isSyncing = false;
+                
                 // Listen for changes to current production using Realtime Database
                 const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
                 Auth.unsubscribe = window.firebaseOnValue(dbRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        this.data = snapshot.val();
-                        this.renderAll();
+                    if (snapshot.exists() && !this.isSyncing) {
+                        const cloudData = snapshot.val();
+                        // Only update if cloud data is different
+                        if (JSON.stringify(cloudData) !== JSON.stringify(this.data)) {
+                            this.data = cloudData;
+                            // Save to localStorage so all devices have the same data
+                            localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, JSON.stringify(this.data));
+                            this.renderAll();
+                            this.log('Synced from cloud');
+                        }
                     }
                 });
             },
@@ -3453,6 +3523,26 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         if (modeSyncStatus) modeSyncStatus.textContent = 'Sync failed - saved locally';
                         if (pill) pill.classList.add('warning');
                         break;
+                }
+            },
+
+            updateBudgetIndicator(totalBudget, totalSpent) {
+                const pill = document.getElementById('budget-status');
+                const text = document.getElementById('budget-text');
+                
+                if (!pill || !text) return;
+                
+                const isOnBudget = totalSpent <= totalBudget;
+                
+                // Remove both classes first
+                pill.classList.remove('on-budget', 'off-budget');
+                
+                if (isOnBudget) {
+                    pill.classList.add('on-budget');
+                    text.textContent = 'ON BUDGET';
+                } else {
+                    pill.classList.add('off-budget');
+                    text.textContent = 'OVER BUDGET';
                 }
             },
 
@@ -3500,6 +3590,9 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 document.getElementById('hot-budget').textContent = '$' + totalBudget.toLocaleString();
                 document.getElementById('hot-spent').textContent = '$' + totalSpent.toLocaleString();
                 document.getElementById('hot-payroll').textContent = '$0'; // Placeholder
+                
+                // Update budget indicator
+                this.updateBudgetIndicator(totalBudget, totalSpent);
                 
                 // Production CRM pipeline value
                 const prodLeads = this.data.crm?.leads || [];
@@ -3641,7 +3734,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             delete() {
                 const productions = Core.getProductions();
                 if (productions.length <= 1) { alert('Cannot delete the only production'); return; }
-                if (!confirm(`Delete "${Core.currentProduction}"? This cannot be undone.`)) return;
+                if (!confirm(`Delete "${clean(Core.currentProduction)}"? This cannot be undone.`)) return;
                 
                 localStorage.removeItem('dc_alacrity_prod_' + Core.currentProduction);
                 const idx = productions.indexOf(Core.currentProduction);
@@ -3703,7 +3796,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
             exportCSV() {
                 let csv = 'Date,Call,Wrap,Location,Notes\n';
-                Core.data.days.forEach(d => csv += `"${d.date}","${d.call}","${d.wrap}","${d.location}","${d.notes}"\n`);
+                Core.data.days.forEach(d => csv += `"${d.date}","${d.call}","${d.wrap}","${clean(d.location)}","${clean(d.notes)}"\n`);
                 Core.download(csv, 'shoot_days.csv');
                 Core.log('Shoot days exported');
             }
@@ -3744,8 +3837,8 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 }
                 tbody.innerHTML = Core.data.tech.map(t => `
                     <tr>
-                        <td class="font-bold">${t.name}</td>
-                        <td><span class="tag tag-cyan">${t.category}</span></td>
+                        <td class="font-bold">${clean(t.name)}</td>
+                        <td><span class="tag tag-cyan">${clean(t.category)}</span></td>
                         <td class="font-mono">${t.serial || '-'}</td>
                         <td>${t.owner}</td>
                         <td><span class="tag tag-emerald">${t.status}</span></td>
@@ -3755,7 +3848,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
             exportCSV() {
                 let csv = 'Name,Category,Serial,Owner,Status\n';
-                Core.data.tech.forEach(t => csv += `"${t.name}","${t.category}","${t.serial}","${t.owner}","${t.status}"\n`);
+                Core.data.tech.forEach(t => csv += `"${clean(t.name)}","${clean(t.category)}","${t.serial}","${t.owner}","${t.status}"\n`);
                 Core.download(csv, 'tech_inventory.csv');
                 Core.log('Tech inventory exported');
             }
@@ -3811,7 +3904,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
             exportCSV() {
                 let csv = 'Filename,Scene,Camera,Storage,Notes\n';
-                Core.data.vault.forEach(v => csv += `"${v.filename}","${v.scene}","${v.camera}","${v.storage}","${v.notes}"\n`);
+                Core.data.vault.forEach(v => csv += `"${v.filename}","${clean(v.scene)}","${v.camera}","${v.storage}","${clean(v.notes)}"\n`);
                 Core.download(csv, 'media_vault.csv');
                 Core.log('Media vault exported');
             }
@@ -3847,11 +3940,11 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div style="flex: 1;">
                             <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-xs);">
                                 <span style="background: var(--neon-cyan); color: var(--void-pure); padding: 2px 8px; border-radius: 4px; font-family: var(--font-mono); font-size: 10px; font-weight: 700;">${member.id}</span>
-                                <span style="font-weight: 700; color: var(--text-100);">${member.name}</span>
+                                <span style="font-weight: 700; color: var(--text-100);">${clean(member.name)}</span>
                             </div>
                             <div style="font-size: 12px; color: var(--text-50);">${member.role || member.position || 'No role specified'}</div>
-                            ${member.phone ? `<div style="font-size: 11px; color: var(--text-50); font-family: var(--font-mono);">${member.phone}</div>` : ''}
-                            ${member.email ? `<div style="font-size: 11px; color: var(--neon-cyan);">${member.email}</div>` : ''}
+                            ${member.phone ? `<div style="font-size: 11px; color: var(--text-50); font-family: var(--font-mono);">${clean(member.phone)}</div>` : ''}
+                            ${member.email ? `<div style="font-size: 11px; color: var(--neon-cyan);">${clean(member.email)}</div>` : ''}
                         </div>
                         <div style="display: flex; gap: var(--space-xs);">
                             <button class="btn btn-sm" onclick="CastCrew.edit('${type}', '${key}')">✎</button>
@@ -3901,7 +3994,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 if (!Core.data.cast) return '';
                 return Object.values(Core.data.cast)
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .map(c => `<option value="${c.name}">${c.id}</option>`)
+                    .map(c => `<option value="${clean(c.name)}">${c.id}</option>`)
                     .join('');
             },
             
@@ -4058,7 +4151,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     } else if (strip.type === 'banner') {
                         return `
                             <div class="strip banner" style="padding: var(--space-md);">
-                                <span style="flex: 1;">${strip.text}</span>
+                                <span style="flex: 1;">${clean(strip.text)}</span>
                                 ${strip.duration ? `<span class="font-mono">${strip.duration} min</span>` : ''}
                                 <span style="cursor: pointer; margin-left: var(--space-md);" onclick="Schedule.deleteStrip(${index})">×</span>
                             </div>
@@ -4076,7 +4169,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                 if (items.length > 0) {
                                     breakdownHTML += `
                                         <div class="strip-breakdown-category">
-                                            <div class="strip-breakdown-label">${cat.icon} ${cat.name}</div>
+                                            <div class="strip-breakdown-label">${cat.icon} ${clean(cat.name)}</div>
                                             <div class="strip-breakdown-items">${items.join(', ')}</div>
                                         </div>
                                     `;
@@ -4192,11 +4285,11 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div style="text-align: center; margin-bottom: var(--space-lg);">
                             <div style="font-size: 48px; margin-bottom: var(--space-sm);">👤</div>
                             <div style="font-family: var(--font-mono); background: var(--neon-cyan); color: var(--void-pure); padding: 4px 12px; border-radius: 4px; display: inline-block; margin-bottom: var(--space-sm);">${member.id}</div>
-                            <div style="font-size: 20px; font-weight: 700;">${member.name}</div>
+                            <div style="font-size: 20px; font-weight: 700;">${clean(member.name)}</div>
                             <div style="color: var(--text-50);">${member.role || 'No role specified'}</div>
                         </div>
-                        ${member.phone ? `<div style="margin-bottom: var(--space-sm);"><strong>Phone:</strong> <a href="tel:${member.phone}" style="color: var(--neon-cyan);">${member.phone}</a></div>` : ''}
-                        ${member.email ? `<div><strong>Email:</strong> <a href="mailto:${member.email}" style="color: var(--neon-cyan);">${member.email}</a></div>` : ''}
+                        ${member.phone ? `<div style="margin-bottom: var(--space-sm);"><strong>Phone:</strong> <a href="tel:${clean(member.phone)}" style="color: var(--neon-cyan);">${clean(member.phone)}</a></div>` : ''}
+                        ${member.email ? `<div><strong>Email:</strong> <a href="mailto:${clean(member.email)}" style="color: var(--neon-cyan);">${clean(member.email)}</a></div>` : ''}
                     `;
                 } else {
                     content.innerHTML = `
@@ -4273,10 +4366,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 if (sceneIndex !== '') {
                     const index = parseInt(sceneIndex);
                     Core.data.schedule.strips[index] = { ...Core.data.schedule.strips[index], ...sceneData };
-                    Core.log(`Scene ${sceneData.scene} updated`);
+                    Core.log(`Scene ${clean(sceneData.scene)} updated`);
                 } else {
                     Core.data.schedule.strips.push(sceneData);
-                    Core.log(`Scene ${sceneData.scene} added to schedule`);
+                    Core.log(`Scene ${clean(sceneData.scene)} added to schedule`);
                 }
                 
                 Core.save();
@@ -4394,7 +4487,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="card-body" style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md);">
                             <button class="btn btn-sm" onclick="Breakdown.prev()">◀ Prev Scene</button>
                             <div style="text-align: center;">
-                                <div style="font-weight: bold; color: var(--neon-cyan);">SCENE ${bd.scene}</div>
+                                <div style="font-weight: bold; color: var(--neon-cyan);">SCENE ${clean(bd.scene)}</div>
                                 <div style="font-size: 10px; color: var(--text-50);">Sheet ${this.currentIdx + 1} of ${Core.data.breakdowns.length}</div>
                             </div>
                             <button class="btn btn-sm" onclick="Breakdown.next()">Next Scene ▶</button>
@@ -4426,7 +4519,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="breakdown-category-header">
                             <div class="breakdown-category-title">
                                 <span class="breakdown-category-icon">${cat.icon}</span>
-                                <span class="breakdown-category-name">${cat.name}</span>
+                                <span class="breakdown-category-name">${clean(cat.name)}</span>
                             </div>
                         </div>
                         <div class="breakdown-elements" id="bd-elements-${cat.id}">
@@ -4565,7 +4658,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 let preview = `Detected ${scenes.length} scenes:\n\n`;
                 scenes.slice(0, 10).forEach(s => {
-                    preview += `Scene ${s.scene}: ${s.intext}. ${s.location} - ${s.daynight}\n`;
+                    preview += `Scene ${clean(s.scene)}: ${clean(s.intext)}. ${clean(s.location)} - ${clean(s.daynight)}\n`;
                     preview += `  Cast: ${s.cast.join(', ') || 'None detected'}\n\n`;
                 });
                 if (scenes.length > 10) preview += `... and ${scenes.length - 10} more scenes`;
@@ -4641,7 +4734,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     return `
                         <div class="kanban-column" data-stage="${stage.id}">
                             <div class="kanban-column-header">
-                                <span class="kanban-column-title">${stage.name}</span>
+                                <span class="kanban-column-title">${clean(stage.name)}</span>
                                 <span class="kanban-column-count">${leads.length}</span>
                             </div>
                             <div class="kanban-column-body" ondragover="ProdCRM.allowDrop(event)" ondrop="ProdCRM.drop(event, '${stage.id}')">
@@ -4667,7 +4760,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             <button class="kanban-card-btn" onclick="ProdCRM.editLead(${lead.id}); event.stopPropagation();" title="Edit">✎</button>
                             <button class="kanban-card-btn del" onclick="ProdCRM.deleteLead(${lead.id}); event.stopPropagation();" title="Delete">×</button>
                         </div>
-                        <div class="kanban-card-name">${lead.name}</div>
+                        <div class="kanban-card-name">${clean(lead.name)}</div>
                         <div class="kanban-card-phone">${lead.phone || 'No phone'}</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                             <span class="tag tag-${interestClass === 'interest-talent' ? 'pink' : interestClass === 'interest-vendor' ? 'cyan' : interestClass === 'interest-sponsor' ? 'gold' : interestClass === 'interest-investor' ? 'emerald' : 'violet'}">${lead.interest}</span>
@@ -4694,7 +4787,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         lead.status = newStatus;
                         Core.save();
                         this.renderPipeline();
-                        Core.log(`Contact "${lead.name}" moved to ${newStatus}`);
+                        Core.log(`Contact "${clean(lead.name)}" moved to ${newStatus}`);
                     }
                 }
                 this.draggedLead = null;
@@ -4720,13 +4813,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 container.innerHTML = leads.map((lead, i) => `
                     <div style="background: var(--surface-3); padding: var(--space-md); border-radius: 6px; margin-bottom: var(--space-sm); display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-weight: 700;">${lead.name}</div>
+                            <div style="font-weight: 700;">${clean(lead.name)}</div>
                             <div style="font-size: 12px; color: var(--text-50);">${lead.interest || 'No type'}</div>
                             ${lead.notes ? `<div style="font-size: 11px; color: var(--neon-cyan); margin-top: 4px;">📝 ${lead.notes.substring(0, 50)}${lead.notes.length > 50 ? '...' : ''}</div>` : ''}
                         </div>
                         <div style="display: flex; gap: var(--space-sm); align-items: center;">
-                            ${lead.phone ? `<a href="tel:${lead.phone}" class="btn btn-sm btn-primary">📞 Call</a>` : ''}
-                            ${lead.email ? `<a href="mailto:${lead.email}" class="btn btn-sm">✉ Email</a>` : ''}
+                            ${lead.phone ? `<a href="tel:${clean(lead.phone)}" class="btn btn-sm btn-primary">📞 Call</a>` : ''}
+                            ${lead.email ? `<a href="mailto:${clean(lead.email)}" class="btn btn-sm">✉ Email</a>` : ''}
                             <select class="form-select" style="width: auto; padding: 4px 8px;" onchange="ProdCRM.updateStatus(${i}, this.value)">
                                 <option value="Pending" ${lead.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 <option value="Contacted" ${lead.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
@@ -4943,7 +5036,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     return `
                         <div class="kanban-column" data-stage="${stage.id}">
                             <div class="kanban-column-header">
-                                <span class="kanban-column-title">${stage.name}</span>
+                                <span class="kanban-column-title">${clean(stage.name)}</span>
                                 <span class="kanban-column-count">${leads.length}</span>
                             </div>
                             <div class="kanban-column-body" ondragover="BizCRM.allowDrop(event)" ondrop="BizCRM.drop(event, '${stage.id}')">
@@ -4969,7 +5062,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             <button class="kanban-card-btn" onclick="BizCRM.editLead(${lead.id}); event.stopPropagation();" title="Edit">✎</button>
                             <button class="kanban-card-btn del" onclick="BizCRM.deleteLead(${lead.id}); event.stopPropagation();" title="Delete">×</button>
                         </div>
-                        <div class="kanban-card-name">${lead.name}</div>
+                        <div class="kanban-card-name">${clean(lead.name)}</div>
                         <div class="kanban-card-phone">${lead.phone || 'No phone'}</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
                             <span class="tag tag-${interestClass === 'interest-cinema' ? 'pink' : interestClass === 'interest-vr' ? 'cyan' : interestClass === 'interest-video' ? 'emerald' : interestClass === 'interest-cyber' ? 'violet' : 'gold'}">${lead.interest}</span>
@@ -4996,7 +5089,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         lead.status = newStatus;
                         Core.saveBizData();
                         this.renderPipeline();
-                        Core.log(`Lead "${lead.name}" moved to ${newStatus}`);
+                        Core.log(`Lead "${clean(lead.name)}" moved to ${newStatus}`);
                     }
                 }
                 this.draggedLead = null;
@@ -5022,13 +5115,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 container.innerHTML = leads.map((lead, i) => `
                     <div style="background: var(--surface-3); padding: var(--space-md); border-radius: 6px; margin-bottom: var(--space-sm); display: flex; justify-content: space-between; align-items: center; border-left: 3px solid var(--neon-gold);">
                         <div>
-                            <div style="font-weight: 700;">${lead.name}</div>
+                            <div style="font-weight: 700;">${clean(lead.name)}</div>
                             <div style="font-size: 12px; color: var(--text-50);">${lead.interest || 'No interest'}</div>
                             ${lead.notes ? `<div style="font-size: 11px; color: var(--neon-gold); margin-top: 4px;">📝 ${lead.notes.substring(0, 50)}${lead.notes.length > 50 ? '...' : ''}</div>` : ''}
                         </div>
                         <div style="display: flex; gap: var(--space-sm); align-items: center;">
-                            ${lead.phone ? `<a href="tel:${lead.phone}" class="btn btn-sm btn-gold">📞 Call</a>` : ''}
-                            ${lead.email ? `<a href="mailto:${lead.email}" class="btn btn-sm">✉ Email</a>` : ''}
+                            ${lead.phone ? `<a href="tel:${clean(lead.phone)}" class="btn btn-sm btn-gold">📞 Call</a>` : ''}
+                            ${lead.email ? `<a href="mailto:${clean(lead.email)}" class="btn btn-sm">✉ Email</a>` : ''}
                             <select class="form-select" style="width: auto; padding: 4px 8px;" onchange="BizCRM.updateStatus(${i}, this.value)">
                                 <option value="New" ${lead.status === 'New' ? 'selected' : ''}>New</option>
                                 <option value="Contacted" ${lead.status === 'Contacted' ? 'selected' : ''}>Contacted</option>
@@ -5294,12 +5387,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     html += `
                         <div class="gantt-row">
                             <div class="gantt-task-col">
-                                <div class="gantt-task-name">${task.name}</div>
+                                <div class="gantt-task-name">${clean(task.name)}</div>
                                 <div class="gantt-task-owner">${task.owner || ''}</div>
                             </div>
                             <div class="gantt-timeline">
-                                <div class="gantt-bar" style="left: ${leftPercent}%; width: ${widthPercent}%; background: ${color};" title="${task.name}: ${task.start} to ${task.end}">
-                                    <span class="gantt-bar-label">${task.name}</span>
+                                <div class="gantt-bar" style="left: ${leftPercent}%; width: ${widthPercent}%; background: ${color};" title="${clean(task.name)}: ${task.start} to ${task.end}">
+                                    <span class="gantt-bar-label">${clean(task.name)}</span>
                                 </div>
                             </div>
                             <button class="delete-btn" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%);" onclick="Gantt.deleteTask('${type}', ${i})">×</button>
@@ -5903,7 +5996,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             <div class="header">
                                 <div class="header-main">
                                     <div>
-                                        <div class="header-title">${Core.currentProduction}</div>
+                                        <div class="header-title">${clean(Core.currentProduction)}</div>
                                         <div class="header-subtitle">Script Breakdown Sheet</div>
                                     </div>
                                     <div class="header-meta">
@@ -5927,7 +6020,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             ${bd.description ? `
                                 <div class="section">
                                     <div class="section-title">Scene Description</div>
-                                    <p style="padding: 12px; background: #f9fafb; border-radius: 4px;">${bd.description}</p>
+                                    <p style="padding: 12px; background: #f9fafb; border-radius: 4px;">${clean(bd.description)}</p>
                                 </div>
                             ` : ''}
                             
@@ -5936,7 +6029,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                     const items = bd.elements?.[cat.id] || [];
                                     return `
                                         <div class="breakdown-category">
-                                            <div class="breakdown-category-title">${cat.icon} ${cat.name}</div>
+                                            <div class="breakdown-category-title">${cat.icon} ${clean(cat.name)}</div>
                                             ${items.length > 0 
                                                 ? items.map(item => `<div class="breakdown-element">${item}</div>`).join('')
                                                 : '<div class="text-muted text-sm">None</div>'
@@ -5947,13 +6040,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             </div>
                             
                             <div class="footer">
-                                ${Core.currentProduction} | Breakdown Sheet ${idx + 1} of ${breakdowns.length} | Generated ${new Date().toLocaleDateString()}
+                                ${clean(Core.currentProduction)} | Breakdown Sheet ${idx + 1} of ${breakdowns.length} | Generated ${new Date().toLocaleDateString()}
                             </div>
                         </div>
                     `;
                 });
 
-                this.openPrintWindow(html, `${Core.currentProduction} - Script Breakdown`);
+                this.openPrintWindow(html, `${clean(Core.currentProduction)} - Script Breakdown`);
             },
 
             /* ═══════════════════════════════════════════════════════════════════
@@ -5974,7 +6067,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="header">
                             <div class="header-main">
                                 <div>
-                                    <div class="header-title">${Core.currentProduction}</div>
+                                    <div class="header-title">${clean(Core.currentProduction)}</div>
                                     <div class="header-subtitle">Shooting Schedule</div>
                                 </div>
                                 <div class="header-meta">
@@ -6015,7 +6108,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     if (strip.type === 'daybreak') {
                         html += `<div class="strip strip-daybreak">END OF DAY ${strip.dayNumber} — ${strip.scenes || 0} scenes, ${strip.totalPages || 0} pages</div>`;
                     } else if (strip.type === 'banner') {
-                        html += `<div class="strip strip-banner">${strip.text} ${strip.duration ? `(${strip.duration} min)` : ''}</div>`;
+                        html += `<div class="strip strip-banner">${clean(strip.text)} ${strip.duration ? `(${strip.duration} min)` : ''}</div>`;
                     } else {
                         const colorClass = `strip-${Schedule.getStripColorClass(strip.intext, strip.daynight).replace(/-/g, '-')}`;
                         html += `
@@ -6034,12 +6127,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 html += `
                         </div>
                         <div class="footer">
-                            ${Core.currentProduction} | Shooting Schedule | Generated ${new Date().toLocaleDateString()}
+                            ${clean(Core.currentProduction)} | Shooting Schedule | Generated ${new Date().toLocaleDateString()}
                         </div>
                     </div>
                 `;
 
-                this.openPrintWindow(html, `${Core.currentProduction} - Shooting Schedule`);
+                this.openPrintWindow(html, `${clean(Core.currentProduction)} - Shooting Schedule`);
             },
 
             /* ═══════════════════════════════════════════════════════════════════
@@ -6059,7 +6152,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="header">
                             <div class="header-main">
                                 <div>
-                                    <div class="header-title">${Core.currentProduction}</div>
+                                    <div class="header-title">${clean(Core.currentProduction)}</div>
                                     <div class="header-subtitle">Cast & Crew Directory</div>
                                 </div>
                                 <div class="header-meta">
@@ -6091,7 +6184,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                         }).map(member => `
                                             <tr>
                                                 <td class="font-mono font-bold">${member.id}</td>
-                                                <td class="font-bold">${member.name}</td>
+                                                <td class="font-bold">${clean(member.name)}</td>
                                                 <td>${member.role || '-'}</td>
                                                 <td class="font-mono">${member.phone || '-'}</td>
                                                 <td>${member.email || '-'}</td>
@@ -6123,7 +6216,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                         }).map(member => `
                                             <tr>
                                                 <td class="font-mono font-bold">${member.id}</td>
-                                                <td class="font-bold">${member.name}</td>
+                                                <td class="font-bold">${clean(member.name)}</td>
                                                 <td>${member.position || '-'}</td>
                                                 <td class="font-mono">${member.phone || '-'}</td>
                                                 <td>${member.email || '-'}</td>
@@ -6135,12 +6228,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         ` : ''}
                         
                         <div class="footer">
-                            ${Core.currentProduction} | Cast & Crew Directory | Generated ${new Date().toLocaleDateString()}
+                            ${clean(Core.currentProduction)} | Cast & Crew Directory | Generated ${new Date().toLocaleDateString()}
                         </div>
                     </div>
                 `;
 
-                this.openPrintWindow(html, `${Core.currentProduction} - Cast & Crew`);
+                this.openPrintWindow(html, `${clean(Core.currentProduction)} - Cast & Crew`);
             },
 
             /* ═══════════════════════════════════════════════════════════════════
@@ -6511,12 +6604,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         return `
                             <div class="gantt-row">
                                 <div class="gantt-task-name">
-                                    ${task.name}
+                                    ${clean(task.name)}
                                     ${task.owner ? `<div style="font-size: 7pt; font-weight: normal; opacity: 0.8;">${task.owner}</div>` : ''}
                                 </div>
                                 <div class="gantt-bar-container">
-                                    <div class="gantt-bar ${task.phase}" style="left: ${leftPercent}%; width: ${widthPercent}%; background: ${color};">
-                                        ${task.name}
+                                    <div class="gantt-bar ${clean(task.phase)}" style="left: ${leftPercent}%; width: ${widthPercent}%; background: ${color};">
+                                        ${clean(task.name)}
                                     </div>
                                 </div>
                             </div>
@@ -6563,7 +6656,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="header">
                             <div class="header-main">
                                 <div>
-                                    <div class="header-title">${Core.currentProduction}</div>
+                                    <div class="header-title">${clean(Core.currentProduction)}</div>
                                     <div class="header-subtitle">Production Timeline - Gantt Chart</div>
                                 </div>
                                 <div class="header-meta">
@@ -6578,12 +6671,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         ${(type === 'both' || type === 'global') ? renderGanttSection(globalTasks, 'Global Gantt Chart', 'Company-wide and cross-production tasks') : ''}
                         
                         <div class="footer">
-                            ${Core.currentProduction} | Gantt Chart | Generated ${new Date().toLocaleDateString()}
+                            ${clean(Core.currentProduction)} | Gantt Chart | Generated ${new Date().toLocaleDateString()}
                         </div>
                     </div>
                 `;
 
-                this.openPrintWindow(html, `${Core.currentProduction} - Gantt Chart`);
+                this.openPrintWindow(html, `${clean(Core.currentProduction)} - Gantt Chart`);
             },
 
             /* ═══════════════════════════════════════════════════════════════════
@@ -6635,7 +6728,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="header" style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
                             <div class="header-main">
                                 <div>
-                                    <div class="header-title">${Core.currentProduction}</div>
+                                    <div class="header-title">${clean(Core.currentProduction)}</div>
                                     <div class="header-subtitle">CALL SHEET</div>
                                 </div>
                                 <div class="header-meta">
@@ -6679,7 +6772,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         ${data.notes ? `
                             <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
                                 <div style="font-weight: 700; color: #dc2626; margin-bottom: 4px;">⚠️ SPECIAL NOTES</div>
-                                <div style="font-size: 10pt;">${data.notes}</div>
+                                <div style="font-size: 10pt;">${clean(data.notes)}</div>
                             </div>
                         ` : ''}
                         
@@ -6729,7 +6822,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                         ${cast.length > 0 ? cast.map(c => `
                                             <tr>
                                                 <td class="font-mono">${c.id}</td>
-                                                <td class="font-bold">${c.name}</td>
+                                                <td class="font-bold">${clean(c.name)}</td>
                                                 <td>${c.role || '-'}</td>
                                                 <td class="font-mono">${formatTime(data.callTime)}</td>
                                             </tr>
@@ -6751,7 +6844,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                     <tbody>
                                         ${crew.length > 0 ? crew.map(c => `
                                             <tr>
-                                                <td class="font-bold">${c.name}</td>
+                                                <td class="font-bold">${clean(c.name)}</td>
                                                 <td>${c.position || '-'}</td>
                                                 <td class="font-mono">${formatTime(data.callTime)}</td>
                                             </tr>
@@ -6762,13 +6855,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         </div>
                         
                         <div class="footer">
-                            ${Core.currentProduction} | Call Sheet Day ${data.dayNumber} | Generated ${new Date().toLocaleDateString()}
+                            ${clean(Core.currentProduction)} | Call Sheet Day ${data.dayNumber} | Generated ${new Date().toLocaleDateString()}
                         </div>
                     </div>
                 `;
 
                 this.hideCallSheetModal();
-                this.openPrintWindow(html, `${Core.currentProduction} - Call Sheet Day ${data.dayNumber}`);
+                this.openPrintWindow(html, `${clean(Core.currentProduction)} - Call Sheet Day ${data.dayNumber}`);
             },
 
             /* ═══════════════════════════════════════════════════════════════════
@@ -6805,7 +6898,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         <div class="header">
                             <div class="header-main">
                                 <div>
-                                    <div class="header-title">${Core.currentProduction}</div>
+                                    <div class="header-title">${clean(Core.currentProduction)}</div>
                                     <div class="header-subtitle">Daily Production Report</div>
                                 </div>
                                 <div class="header-meta">
@@ -6855,7 +6948,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             <div class="section">
                                 <div class="section-title">Notes & Issues</div>
                                 <div style="background: #f9fafb; padding: 16px; border-radius: 8px;">
-                                    <p style="line-height: 1.6;">${data.notes}</p>
+                                    <p style="line-height: 1.6;">${clean(data.notes)}</p>
                                 </div>
                             </div>
                         ` : ''}
@@ -6874,13 +6967,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         </div>
                         
                         <div class="footer">
-                            ${Core.currentProduction} | Daily Production Report | Generated ${new Date().toLocaleDateString()}
+                            ${clean(Core.currentProduction)} | Daily Production Report | Generated ${new Date().toLocaleDateString()}
                         </div>
                     </div>
                 `;
 
                 this.hideDailyReportModal();
-                this.openPrintWindow(html, `${Core.currentProduction} - Daily Report ${data.date}`);
+                this.openPrintWindow(html, `${clean(Core.currentProduction)} - Daily Report ${data.date}`);
             }
         };
 
@@ -6954,7 +7047,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             ${data.categories.map((cat, idx) => `
                                 <div class="budget-category-card">
                                     <div class="budget-cat-header">
-                                        <span class="budget-cat-name">${cat.name}</span>
+                                        <span class="budget-cat-name">${clean(cat.name)}</span>
                                         <span class="budget-cat-percent">${cat.allocated > 0 ? Math.round((cat.spent / cat.allocated) * 100) : 0}%</span>
                                     </div>
                                     <div class="budget-progress-bar">
@@ -6985,8 +7078,8 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                 ${(data.expenses || []).slice(-10).reverse().map((exp, idx) => `
                                     <tr>
                                         <td>${exp.date}</td>
-                                        <td>${exp.description}</td>
-                                        <td>${exp.category}</td>
+                                        <td>${clean(exp.description)}</td>
+                                        <td>${clean(exp.category)}</td>
                                         <td class="font-mono">$${exp.amount.toLocaleString()}</td>
                                         <td><button class="btn btn-xs btn-danger" onclick="BudgetTracker.deleteExpense(${data.expenses.length - 1 - idx})">×</button></td>
                                     </tr>
@@ -7018,7 +7111,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             <div class="form-group">
                                 <label>Category</label>
                                 <select id="expense-category">
-                                    ${data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                                    ${data.categories.map(c => `<option value="${clean(c.name)}">${clean(c.name)}</option>`).join('')}
                                 </select>
                             </div>
                             <div class="form-group">
@@ -7054,7 +7147,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 this.saveData(data);
                 document.getElementById('modal-add-expense').remove();
                 this.render();
-                Core.log(`Added expense: ${expense.description} - $${expense.amount}`);
+                Core.log(`Added expense: ${clean(expense.description)} - $${expense.amount}`);
             },
             
             deleteExpense(idx) {
@@ -7291,7 +7384,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         ${logs.map((log, idx) => `
                             <div class="continuity-card">
                                 <div class="continuity-header">
-                                    <span class="continuity-scene">Scene ${log.scene}</span>
+                                    <span class="continuity-scene">Scene ${clean(log.scene)}</span>
                                     <span class="continuity-take">Take ${log.take}</span>
                                 </div>
                                 <div class="continuity-body">
@@ -7461,8 +7554,8 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             <tbody>
                                 ${risks.map((risk, idx) => `
                                     <tr>
-                                        <td><span class="category-badge">${risk.category}</span></td>
-                                        <td>${risk.description}</td>
+                                        <td><span class="category-badge">${clean(risk.category)}</span></td>
+                                        <td>${clean(risk.description)}</td>
                                         <td>
                                             <span class="risk-level risk-${risk.level.toLowerCase()}">${risk.level}</span>
                                         </td>
@@ -7604,11 +7697,11 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                 <div class="dept-contacts">
                                     ${byDept[dept].map((c, idx) => `
                                         <div class="contact-item" data-name="${c.name.toLowerCase()}">
-                                            <div class="contact-name">${c.name}</div>
+                                            <div class="contact-name">${clean(c.name)}</div>
                                             <div class="contact-role">${c.role || ''}</div>
                                             <div class="contact-info">
-                                                ${c.phone ? `<a href="tel:${c.phone}" class="contact-link">📞 ${c.phone}</a>` : ''}
-                                                ${c.email ? `<a href="mailto:${c.email}" class="contact-link">✉️ ${c.email}</a>` : ''}
+                                                ${c.phone ? `<a href="tel:${clean(c.phone)}" class="contact-link">📞 ${clean(c.phone)}</a>` : ''}
+                                                ${c.email ? `<a href="mailto:${clean(c.email)}" class="contact-link">✉️ ${clean(c.email)}</a>` : ''}
                                             </div>
                                         </div>
                                     `).join('')}
@@ -7741,10 +7834,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
                                     <div class="timeline-marker"></div>
                                     <div class="timeline-content">
                                         <div class="timeline-header">
-                                            <span class="timeline-phase">${m.phase}</span>
+                                            <span class="timeline-phase">${clean(m.phase)}</span>
                                             <span class="timeline-date">${m.dueDate}</span>
                                         </div>
-                                        <div class="timeline-title">${m.title}</div>
+                                        <div class="timeline-title">${clean(m.title)}</div>
                                         <div class="timeline-desc">${m.description || ''}</div>
                                         <div class="timeline-actions">
                                             <button class="btn btn-xs" onclick="Milestones.toggleComplete(${idx})">
@@ -7848,7 +7941,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${Core.currentProduction}_backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.download = `${clean(Core.currentProduction)}_backup_${new Date().toISOString().split('T')[0]}.json`;
                 a.click();
                 URL.revokeObjectURL(url);
                 Core.log('Data exported successfully');
