@@ -1580,6 +1580,66 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════════════
+           SUCCESS NOTIFICATION
+           ═══════════════════════════════════════════════════════════════════════ */
+        .success-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: var(--surface-2);
+            border: 2px solid var(--neon-emerald);
+            border-radius: 12px;
+            padding: var(--space-xl);
+            z-index: 2000;
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3), 0 0 60px rgba(16, 185, 129, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s var(--ease-out-expo);
+            min-width: 400px;
+            text-align: center;
+        }
+
+        .success-notification.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            color: var(--neon-emerald);
+            margin-bottom: var(--space-md);
+            animation: successPop 0.6s var(--ease-out-expo);
+        }
+
+        @keyframes successPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .success-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            letter-spacing: 2px;
+            color: var(--neon-emerald);
+            margin-bottom: var(--space-sm);
+        }
+
+        .success-message {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-70);
+            margin-bottom: var(--space-lg);
+        }
+
+        .success-production-name {
+            font-weight: 700;
+            color: var(--text-100);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════
            RESPONSIVE
            ═══════════════════════════════════════════════════════════════════════ */
         @media (max-width: 1200px) {
@@ -1623,6 +1683,15 @@
         </div>
         
         <div class="login-status" id="login-status">Choose your mode to get started</div>
+    </div>
+
+    <!-- SUCCESS NOTIFICATION -->
+    <div id="success-notification" class="success-notification">
+        <div class="success-icon">✓</div>
+        <div class="success-title">PRODUCTION CREATED</div>
+        <div class="success-message">
+            Successfully created: <span class="success-production-name" id="success-prod-name"></span>
+        </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
@@ -3327,7 +3396,8 @@ Rain pours down as SARAH runs through the streets."></textarea>
             syncTimeout: null,
 
             async init() {
-                // Load productions list
+                // Load productions list (from Firebase if cloud mode)
+                await this.loadProductionsList();
                 this.renderProductionDropdown();
                 
                 // Load current production data
@@ -3345,6 +3415,30 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 this.log('System initialized');
             },
 
+            async loadProductionsList() {
+                // Try to load productions list from Firebase first (if cloud mode)
+                if (Auth.user && !Auth.isDemoMode) {
+                    try {
+                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
+                        const snapshot = await window.firebaseGet(dbRef);
+                        if (snapshot.exists()) {
+                            const productions = snapshot.val();
+                            localStorage.setItem('dc_alacrity_productions', JSON.stringify(productions));
+                            this.log('Loaded productions list from cloud');
+                            return;
+                        }
+                    } catch (e) {
+                        console.warn('Firebase productions list load failed:', e);
+                    }
+                }
+                
+                // Make sure we have at least the default
+                const stored = localStorage.getItem('dc_alacrity_productions');
+                if (!stored) {
+                    localStorage.setItem('dc_alacrity_productions', JSON.stringify(['Default Production']));
+                }
+            },
+
             getProductions() {
                 const stored = localStorage.getItem('dc_alacrity_productions');
                 return stored ? JSON.parse(stored) : ['Default Production'];
@@ -3355,6 +3449,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 if (!productions.includes(name)) {
                     productions.push(name);
                     localStorage.setItem('dc_alacrity_productions', JSON.stringify(productions));
+                    
+                    // Also save to Firebase if cloud mode
+                    if (Auth.user && !Auth.isDemoMode) {
+                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
+                        window.firebaseSet(dbRef, productions).catch(e => console.error('Failed to sync productions list:', e));
+                    }
                 }
             },
 
@@ -3710,8 +3810,26 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 Core.loadProduction(name);
                 Core.renderProductionDropdown();
                 Core.renderAll();
-                this.hideModal();
+                
+                // Show success notification
+                this.showSuccessNotification(name);
+                
+                // Clear input but keep modal open
+                document.getElementById('new-production-name').value = '';
+                document.getElementById('new-production-name').focus();
+                
                 Core.log(`Created production: ${name}`);
+            },
+            showSuccessNotification(prodName) {
+                const notification = document.getElementById('success-notification');
+                const nameSpan = document.getElementById('success-prod-name');
+                nameSpan.textContent = prodName;
+                
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
             },
             rename() {
                 const newName = prompt('Enter new name:', Core.currentProduction);
