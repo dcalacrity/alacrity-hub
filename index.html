@@ -189,6 +189,31 @@
             color: var(--mode-production);
             border: 1px solid rgba(0, 240, 255, 0.3);
         }
+        .budget-indicator {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            letter-spacing: 1.5px;
+        }
+        .budget-indicator.under-budget {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--neon-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .budget-indicator.over-budget {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--neon-rose);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+        .budget-indicator.on-budget {
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+        }
         .login-overlay {
             position: fixed;
             inset: 0;
@@ -1704,7 +1729,11 @@
                 <div class="mode-badge" id="mode-badge">💾 DEMO MODE</div>
                 <div class="view-indicator" id="view-indicator">🎬 PRODUCTION</div>
             </div>
-            <div style="font-size: 10px; color: var(--text-50);">
+            <div style="font-size: 10px; color: var(--text-50); display: flex; align-items: center; gap: var(--space-md);">
+                <div class="budget-indicator" id="budget-indicator">
+                    <span>●</span>
+                    <span id="budget-status-text">CALCULATING...</span>
+                </div>
                 <span id="mode-sync-status">Saving locally</span>
             </div>
         </div>
@@ -3266,34 +3295,32 @@ Rain pours down as SARAH runs through the streets."></textarea>
             unsubscribe: null,
             isDemoMode: false,
 
-            async init() {
-                const statusEl = document.getElementById('login-status');
-                statusEl.textContent = 'Ready to start...';
-
-                // Wait for Firebase to be ready
-                if (!window.firebaseReady) {
-                    await new Promise(resolve => {
-                        document.addEventListener('firebaseReady', resolve, { once: true });
-                    });
-                }
-
-                statusEl.textContent = 'Choose your mode';
-
-                // Listen for auth state changes
-                window.firebaseOnAuthStateChanged(window.firebaseAuth, async (user) => {
-                    if (user && !this.isDemoMode) {
-                        this.user = user;
-                        statusEl.textContent = 'Authenticated. Loading...';
-                        statusEl.className = 'login-status success';
-                        
-                        // Initialize app
-                        await this.onLogin();
-                    } else if (!this.isDemoMode) {
-                        statusEl.textContent = 'Choose Demo Mode or Sign In';
-                        statusEl.className = 'login-status';
-                    }
-                });
-            },
+                        async init() {
+                console.log('🚀 DC ALACRITY Initializing...');
+                
+                // Load productions list (from Firebase if cloud mode)
+                await this.loadProductionsList();
+                this.renderProductionDropdown();
+                
+                console.log('📂 Loading production data...');
+                // Load current production data (will pull from Firebase first)
+                await this.loadProduction(this.currentProduction);
+                
+                console.log('💼 Loading business CRM data...');
+                // Load business CRM data (global, not per-production)
+                await this.loadBizData();
+                
+                console.log('🎨 Rendering all views...');
+                // Render all views
+                this.renderAll();
+                
+                console.log('🔄 Setting up real-time sync...');
+                // Setup real-time sync LAST
+                this.setupRealtimeSync();
+                
+                console.log('✅ System initialized');
+                this.log('System initialized');
+            },,
 
             async login() {
                 const statusEl = document.getElementById('login-status');
@@ -3395,25 +3422,32 @@ Rain pours down as SARAH runs through the streets."></textarea>
             activityLog: [],
             syncTimeout: null,
 
-            async init() {
+                        async init() {
+                console.log('🚀 DC ALACRITY Initializing...');
+                
                 // Load productions list (from Firebase if cloud mode)
                 await this.loadProductionsList();
                 this.renderProductionDropdown();
                 
-                // Load current production data
+                console.log('📂 Loading production data...');
+                // Load current production data (will pull from Firebase first)
                 await this.loadProduction(this.currentProduction);
                 
+                console.log('💼 Loading business CRM data...');
                 // Load business CRM data (global, not per-production)
                 await this.loadBizData();
                 
+                console.log('🎨 Rendering all views...');
                 // Render all views
                 this.renderAll();
                 
-                // Setup real-time sync
+                console.log('🔄 Setting up real-time sync...');
+                // Setup real-time sync LAST
                 this.setupRealtimeSync();
                 
+                console.log('✅ System initialized');
                 this.log('System initialized');
-            },
+            },,
 
             async loadProductionsList() {
                 // Try to load productions list from Firebase first (if cloud mode)
@@ -3458,31 +3492,43 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 }
             },
 
-            async loadProduction(name) {
+                        async loadProduction(name) {
                 this.currentProduction = name;
                 
-                // Try to load from Firebase Realtime Database first (skip in demo mode)
+                // ALWAYS try to load from Firebase first in cloud mode
                 if (Auth.user && !Auth.isDemoMode) {
                     try {
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
                         const snapshot = await window.firebaseGet(dbRef);
                         if (snapshot.exists()) {
                             this.data = snapshot.val();
-                            this.log(`Loaded "${name}" from cloud`);
+                            // Update localStorage with cloud data
+                            localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
+                            this.log(`✅ Loaded "${name}" from cloud`);
                             return;
+                        } else {
+                            // No cloud data, check localStorage
+                            const stored = localStorage.getItem('dc_alacrity_prod_' + name);
+                            if (stored) {
+                                this.data = JSON.parse(stored);
+                                // Push to cloud
+                                await window.firebaseSet(dbRef, this.data);
+                                this.log(`⬆️ Uploaded local "${name}" to cloud`);
+                                return;
+                            }
                         }
                     } catch (e) {
-                        console.warn('Firebase load failed, using localStorage:', e);
+                        console.warn('⚠️ Firebase load failed, using localStorage:', e);
                     }
                 }
                 
-                // Fall back to localStorage
+                // Fall back to localStorage (demo mode or Firebase failed)
                 const stored = localStorage.getItem('dc_alacrity_prod_' + name);
                 this.data = stored ? JSON.parse(stored) : this.getDefaultData();
                 
                 // Ensure productions list includes this one
                 this.createProduction(name);
-            },
+            },,
 
             async loadBizData() {
                 if (Auth.user && !Auth.isDemoMode) {
@@ -3578,28 +3624,78 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 }
             },
 
-            setupRealtimeSync() {
+                        setupRealtimeSync() {
                 if (!Auth.user || Auth.isDemoMode) return;
+                
+                // Cleanup existing listener if any
+                if (this.unsubscribeProduction) {
+                    this.unsubscribeProduction();
+                }
                 
                 // Flag to prevent sync loop
                 this.isSyncing = false;
                 
-                // Listen for changes to current production using Realtime Database
-                const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
-                Auth.unsubscribe = window.firebaseOnValue(dbRef, (snapshot) => {
-                    if (snapshot.exists() && !this.isSyncing) {
-                        const cloudData = snapshot.val();
-                        // Only update if cloud data is different
-                        if (JSON.stringify(cloudData) !== JSON.stringify(this.data)) {
-                            this.data = cloudData;
-                            // Save to localStorage so all devices have the same data
-                            localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, JSON.stringify(this.data));
-                            this.renderAll();
-                            this.log('Synced from cloud');
-                        }
+                // Listen for changes to current production
+                const productionRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                
+                this.unsubscribeProduction = window.firebaseOnValue(productionRef, (snapshot) => {
+                    if (!snapshot.exists()) {
+                        // No cloud data yet - this is the first time, push local data up
+                        this.syncToCloud();
+                        return;
                     }
+                    
+                    // Don't update if we're currently syncing
+                    if (this.isSyncing) return;
+                    
+                    const cloudData = snapshot.val();
+                    const currentDataStr = JSON.stringify(this.data);
+                    const cloudDataStr = JSON.stringify(cloudData);
+                    
+                    // Only update if cloud data is different
+                    if (cloudDataStr !== currentDataStr) {
+                        console.log('📥 Received update from cloud');
+                        this.data = cloudData;
+                        localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, cloudDataStr);
+                        this.renderAll();
+                        this.log('Synced from cloud');
+                    }
+                }, (error) => {
+                    console.error('Firebase sync error:', error);
+                    this.log('Sync error: ' + error.message);
                 });
-            },
+                
+                // Also listen to business CRM data
+                if (this.unsubscribeBiz) {
+                    this.unsubscribeBiz();
+                }
+                
+                const bizRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/business/crm`);
+                this.unsubscribeBiz = window.firebaseOnValue(bizRef, (snapshot) => {
+                    if (!snapshot.exists()) {
+                        this.syncBizToCloud();
+                        return;
+                    }
+                    
+                    if (this.isSyncing) return;
+                    
+                    const cloudBizData = snapshot.val();
+                    const currentBizStr = JSON.stringify(this.bizData);
+                    const cloudBizStr = JSON.stringify(cloudBizData);
+                    
+                    if (cloudBizStr !== currentBizStr) {
+                        console.log('📥 Received business data update from cloud');
+                        this.bizData = cloudBizData;
+                        localStorage.setItem('dc_alacrity_biz', cloudBizStr);
+                        this.renderAll();
+                        this.log('Business data synced from cloud');
+                    }
+                }, (error) => {
+                    console.error('Firebase business sync error:', error);
+                });
+                
+                this.log('Real-time sync enabled');
+            },,
 
             updateSyncStatus(status) {
                 const pill = document.getElementById('sync-status');
@@ -3643,6 +3739,37 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 } else {
                     pill.classList.add('off-budget');
                     text.textContent = 'OVER BUDGET';
+                }
+                
+                // Update top banner budget indicator
+                this.updateTopBudgetIndicator(totalBudget, totalSpent);
+            },
+            
+            updateTopBudgetIndicator(totalBudget, totalSpent) {
+                const indicator = document.getElementById('budget-indicator');
+                const statusText = document.getElementById('budget-status-text');
+                
+                if (!indicator || !statusText) return;
+                
+                // Remove all budget classes
+                indicator.classList.remove('under-budget', 'over-budget', 'on-budget');
+                
+                const remaining = totalBudget - totalSpent;
+                const percentUsed = totalBudget > 0 ? (totalSpent / totalBudget * 100) : 0;
+                
+                if (totalSpent > totalBudget) {
+                    // Over budget
+                    indicator.classList.add('over-budget');
+                    const overAmount = Math.abs(remaining);
+                    statusText.textContent = `OVER BUDGET $${overAmount.toLocaleString()}`;
+                } else if (percentUsed >= 90) {
+                    // Close to budget (90%+)
+                    indicator.classList.add('on-budget');
+                    statusText.textContent = `ON BUDGET $${remaining.toLocaleString()} LEFT`;
+                } else {
+                    // Under budget
+                    indicator.classList.add('under-budget');
+                    statusText.textContent = `UNDER BUDGET $${remaining.toLocaleString()} LEFT`;
                 }
             },
 
