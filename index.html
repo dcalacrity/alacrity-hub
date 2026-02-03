@@ -3892,16 +3892,21 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
                         const snapshot = await window.firebaseGet(dbRef);
                         if (snapshot.exists()) {
-                            this.data = snapshot.val();
+                            const cloudData = snapshot.val();
+                            // Merge with defaults to ensure all fields exist
+                            this.data = {...this.getDefaultData(), ...cloudData};
                             // Update localStorage with cloud data
                             localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
                             this.log(`✅ Loaded "${name}" from cloud`);
+                            console.log('📥 Cloud data loaded and merged with defaults');
                             return;
                         } else {
                             // No cloud data, check localStorage
                             const stored = localStorage.getItem('dc_alacrity_prod_' + name);
                             if (stored) {
-                                this.data = JSON.parse(stored);
+                                const localData = JSON.parse(stored);
+                                // Merge with defaults to ensure all fields exist
+                                this.data = {...this.getDefaultData(), ...localData};
                                 // Push to cloud
                                 await window.firebaseSet(dbRef, this.data);
                                 this.log(`⬆️ Uploaded local "${name}" to cloud`);
@@ -3915,19 +3920,30 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 // Fall back to localStorage (demo mode or Firebase failed)
                 const stored = localStorage.getItem('dc_alacrity_prod_' + name);
-                this.data = stored ? JSON.parse(stored) : this.getDefaultData();
+                if (stored) {
+                    const localData = JSON.parse(stored);
+                    // Merge with defaults to ensure all fields exist
+                    this.data = {...this.getDefaultData(), ...localData};
+                } else {
+                    this.data = this.getDefaultData();
+                }
                 
                 // Ensure productions list includes this one
                 this.createProduction(name);
             },
 
             async loadBizData() {
+                const defaultBizData = { leads: [], ledger: [], income: [] };
+                
                 if (Auth.user && !Auth.isDemoMode) {
                     try {
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/business/crm`);
                         const snapshot = await window.firebaseGet(dbRef);
                         if (snapshot.exists()) {
-                            this.bizData = snapshot.val();
+                            const cloudBizData = snapshot.val();
+                            // Merge with defaults to ensure all fields exist
+                            this.bizData = {...defaultBizData, ...cloudBizData};
+                            console.log('📥 Business data loaded from cloud');
                             return;
                         }
                     } catch (e) {
@@ -3936,7 +3952,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 }
                 
                 const stored = localStorage.getItem('dc_alacrity_biz');
-                this.bizData = stored ? JSON.parse(stored) : { leads: [], ledger: [] };
+                if (stored) {
+                    const localBizData = JSON.parse(stored);
+                    // Merge with defaults to ensure all fields exist
+                    this.bizData = {...defaultBizData, ...localBizData};
+                } else {
+                    this.bizData = defaultBizData;
+                }
             },
 
             getDefaultData() {
@@ -4305,10 +4327,21 @@ Rain pours down as SARAH runs through the streets."></textarea>
            PRODUCTIONS MODULE
            ═══════════════════════════════════════════════════════════════════════ */
         const Productions = {
-            load() {
+            async load() {
                 const select = document.getElementById('project-select');
-                Core.loadProduction(select.value);
-                Core.renderAll();
+                const prodName = select.value;
+                console.log('🔄 Switching to production:', prodName);
+                try {
+                    await Core.loadProduction(prodName);
+                    console.log('✅ Production data loaded:', prodName);
+                    console.log('📊 Data structure:', Core.data);
+                    Core.renderProductionDropdown();
+                    Core.renderAll();
+                    console.log('🎨 All views rendered');
+                } catch (error) {
+                    console.error('❌ Error loading production:', error);
+                    alert('Failed to load production: ' + error.message);
+                }
             },
             showNew() {
                 document.getElementById('modal-new-production').classList.add('active');
@@ -4318,13 +4351,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
             hideModal() {
                 document.getElementById('modal-new-production').classList.remove('active');
             },
-            create() {
+            async create() {
                 const name = document.getElementById('new-production-name').value.trim();
                 if (!name) { alert('Please enter a production name'); return; }
                 const productions = Core.getProductions();
                 if (productions.includes(name)) { alert('Production already exists'); return; }
                 Core.createProduction(name);
-                Core.loadProduction(name);
+                await Core.loadProduction(name);
                 Core.renderProductionDropdown();
                 Core.renderAll();
                 
@@ -4366,7 +4399,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 Core.renderProductionDropdown();
                 Core.log(`Renamed production to: ${newName}`);
             },
-            delete() {
+            async delete() {
                 const productions = Core.getProductions();
                 if (productions.length <= 1) { alert('Cannot delete the only production'); return; }
                 if (!confirm(`Delete "${clean(Core.currentProduction)}"? This cannot be undone.`)) return;
@@ -4376,7 +4409,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 productions.splice(idx, 1);
                 localStorage.setItem('dc_alacrity_productions', JSON.stringify(productions));
                 
-                Core.loadProduction(productions[0]);
+                await Core.loadProduction(productions[0]);
                 Core.renderProductionDropdown();
                 Core.renderAll();
                 Core.log('Production deleted');
