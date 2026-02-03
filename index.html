@@ -189,6 +189,27 @@
             color: var(--mode-production);
             border: 1px solid rgba(0, 240, 255, 0.3);
         }
+        .logout-btn {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 9px;
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--neon-rose);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            cursor: pointer;
+            transition: all 0.2s var(--ease-out-expo);
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+        }
+        .logout-btn:hover {
+            background: rgba(244, 63, 94, 0.25);
+            border-color: rgba(244, 63, 94, 0.5);
+            transform: translateY(-1px);
+        }
+        .logout-btn:active {
+            transform: translateY(0);
+        }
         .budget-indicator {
             padding: 4px 12px;
             border-radius: 4px;
@@ -1735,6 +1756,7 @@
                     <span id="budget-status-text">CALCULATING...</span>
                 </div>
                 <span id="mode-sync-status">Saving locally</span>
+                <button class="logout-btn" onclick="Auth.logout()">EXIT</button>
             </div>
         </div>
         
