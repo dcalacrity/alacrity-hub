@@ -899,6 +899,348 @@
             color: var(--text-100);
         }
 
+        /* ─── BUDGET SPECIFIC ─── */
+        tr.over-budget td { background: rgba(244, 63, 94, 0.1); }
+        .over-budget-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(244, 63, 94, 0.2);
+            border: 1px solid var(--neon-rose);
+            border-radius: 4px;
+            color: var(--neon-rose);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .editable { cursor: pointer; position: relative; }
+        .editable:hover { background: rgba(0, 240, 255, 0.05); }
+        .editable-input {
+            width: 100%;
+            background: var(--surface-2);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 4px;
+            color: var(--text-100);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            padding: 4px 8px;
+            outline: none;
+        }
+
+        /* ─── CONTINUITY LOG ─── */
+        .continuity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--space-lg);
+        }
+        .continuity-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .continuity-header {
+            background: var(--surface-2);
+            padding: var(--space-md) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .continuity-scene {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+        .continuity-take {
+            font-size: 12px;
+            color: var(--text-50);
+        }
+        .continuity-body {
+            padding: var(--space-lg);
+        }
+        .continuity-field {
+            margin-bottom: var(--space-md);
+        }
+        .continuity-field.full-width {
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid var(--border-subtle);
+        }
+        .field-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-50);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .field-value {
+            display: block;
+            color: var(--text-90);
+            font-size: 14px;
+        }
+        .continuity-footer {
+            background: var(--surface-1);
+            padding: var(--space-md) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .continuity-time {
+            font-size: 11px;
+            color: var(--text-50);
+            font-family: var(--font-mono);
+        }
+
+        /* ─── RISK ASSESSMENT ─── */
+        .risk-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .risk-low {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--neon-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .risk-medium {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--neon-gold);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        .risk-high {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--neon-rose);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* ─── CONTACT DIRECTORY ─── */
+        .search-bar {
+            margin-bottom: var(--space-xl);
+        }
+        .search-bar input {
+            width: 100%;
+            max-width: 500px;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            color: var(--text-100);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .search-bar input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1);
+        }
+        .departments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--space-lg);
+        }
+        .department-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .dept-header {
+            background: var(--surface-2);
+            padding: var(--space-md) var(--space-lg);
+            font-weight: 700;
+            color: var(--text-100);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .dept-contacts {
+            padding: var(--space-md);
+        }
+        .contact-item {
+            padding: var(--space-md);
+            background: var(--surface-1);
+            border-radius: 8px;
+            margin-bottom: var(--space-sm);
+        }
+        .contact-name {
+            font-weight: 600;
+            color: var(--text-100);
+            margin-bottom: 2px;
+        }
+        .contact-role {
+            font-size: 12px;
+            color: var(--text-50);
+            margin-bottom: var(--space-sm);
+        }
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .contact-link {
+            font-size: 11px;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .contact-link:hover {
+            color: var(--text-100);
+        }
+
+        /* ─── MILESTONES / TIMELINE ─── */
+        .milestone-progress {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: var(--space-xl);
+            margin-bottom: var(--space-xl);
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-md);
+            font-weight: 600;
+            color: var(--text-100);
+        }
+        .progress-bar-large {
+            height: 24px;
+            background: var(--surface-2);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: var(--space-sm);
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet));
+            transition: width 0.5s ease;
+        }
+        .progress-stats {
+            font-size: 12px;
+            color: var(--text-50);
+            text-align: center;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-default);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: var(--space-xl);
+        }
+        .timeline-marker {
+            position: absolute;
+            left: -33px;
+            top: 8px;
+            width: 18px;
+            height: 18px;
+            background: var(--surface-2);
+            border: 3px solid var(--neon-cyan);
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .timeline-item.completed .timeline-marker {
+            background: var(--neon-emerald);
+            border-color: var(--neon-emerald);
+        }
+        .timeline-item.overdue .timeline-marker {
+            border-color: var(--neon-rose);
+        }
+        .timeline-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: var(--space-lg);
+        }
+        .timeline-item.completed .timeline-content {
+            opacity: 0.6;
+        }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-sm);
+        }
+        .timeline-phase {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(0, 240, 255, 0.15);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .timeline-date {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-50);
+        }
+        .timeline-title {
+            font-weight: 600;
+            color: var(--text-100);
+            font-size: 16px;
+            margin-bottom: var(--space-sm);
+        }
+        .timeline-desc {
+            color: var(--text-70);
+            font-size: 14px;
+            margin-bottom: var(--space-md);
+        }
+        .timeline-actions {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        /* ─── STATUS BADGES ─── */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-complete {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--neon-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-pending {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--neon-gold);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        .row-completed {
+            opacity: 0.6;
+        }
+
         /* ═══════════════════════════════════════════════════════════════════════
            TABLES
            ═══════════════════════════════════════════════════════════════════════ */
@@ -1912,6 +2254,551 @@
         /* ═══════════════════════════════════════════════════════════════════════
            CALENDAR VIEW
            ═══════════════════════════════════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════════════════════════════════
+           ULTIMATE CALENDAR SYSTEM
+           ═══════════════════════════════════════════════════════════════════════ */
+        
+        /* Calendar Command Bar */
+        .calendar-command-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-lg) var(--space-xl);
+            background: var(--surface-1);
+            border-bottom: 1px solid var(--border-default);
+            margin-bottom: var(--space-lg);
+        }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+        .calendar-month-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            letter-spacing: 3px;
+            color: var(--text-100);
+            margin: 0;
+            min-width: 250px;
+            text-align: center;
+        }
+        .calendar-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* View Toggle */
+        .view-toggle {
+            display: flex;
+            background: var(--surface-2);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-default);
+        }
+        .view-toggle-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-50);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+        }
+        .view-toggle-btn.active {
+            background: var(--neon-cyan);
+            color: var(--void-pure);
+        }
+        .view-toggle-btn:hover:not(.active) {
+            background: var(--surface-3);
+            color: var(--text-90);
+        }
+
+        /* Calendar Stats Panel */
+        .calendar-stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            padding: 0 var(--space-xl);
+        }
+        .cal-stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: var(--space-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            transition: all 0.3s ease;
+        }
+        .cal-stat-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: var(--shadow-glow-cyan);
+            transform: translateY(-2px);
+        }
+        .cal-stat-icon {
+            font-size: 32px;
+            line-height: 1;
+        }
+        .cal-stat-content {
+            flex: 1;
+        }
+        .cal-stat-value {
+            font-family: var(--font-mono);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .cal-stat-label {
+            font-size: 11px;
+            color: var(--text-50);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Calendar Legend */
+        .calendar-legend {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: var(--space-md) var(--space-lg);
+            margin: 0 var(--space-xl) var(--space-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--space-xl);
+        }
+        .legend-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-50);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .legend-items {
+            display: flex;
+            gap: var(--space-lg);
+            flex: 1;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .legend-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .legend-color {
+            width: 24px;
+            height: 12px;
+            border-radius: 3px;
+        }
+        .shoot-day-color { background: var(--neon-cyan); }
+        .milestone-color { background: var(--neon-violet); }
+        .risk-color { background: var(--neon-rose); }
+        .gantt-color { background: linear-gradient(90deg, var(--neon-gold), var(--neon-emerald)); }
+        .legend-text {
+            font-size: 12px;
+            color: var(--text-70);
+            font-weight: 500;
+        }
+
+        /* Calendar Container */
+        .calendar-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: var(--space-lg);
+            padding: 0 var(--space-xl) var(--space-xl);
+            min-height: 600px;
+        }
+        .calendar-main {
+            background: var(--surface-1);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Weekday Headers */
+        .calendar-weekday-headers {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: var(--surface-2);
+            border-bottom: 2px solid var(--border-strong);
+        }
+        .weekday-header {
+            padding: var(--space-md);
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-50);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Calendar Days Grid */
+        .calendar-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: minmax(120px, auto);
+        }
+        .calendar-day-cell {
+            background: var(--void-deep);
+            border: 1px solid var(--border-subtle);
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .calendar-day-cell:hover {
+            background: var(--surface-1);
+            border-color: var(--neon-cyan);
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+        }
+        .calendar-day-cell.empty {
+            background: var(--void-pure);
+            cursor: default;
+            opacity: 0.3;
+        }
+        .calendar-day-cell.empty:hover {
+            background: var(--void-pure);
+            border-color: var(--border-subtle);
+            box-shadow: none;
+        }
+        .calendar-day-cell.today {
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+        .calendar-day-cell.selected {
+            background: rgba(0, 240, 255, 0.05);
+            border-color: var(--neon-cyan);
+        }
+        .calendar-day-cell.has-shoot {
+            background: rgba(0, 240, 255, 0.03);
+        }
+        .calendar-day-cell.has-milestone {
+            background: rgba(168, 85, 247, 0.03);
+        }
+        .calendar-day-cell.has-risk {
+            background: rgba(244, 63, 94, 0.03);
+        }
+        .calendar-day-cell.multi-event {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(168, 85, 247, 0.05));
+        }
+
+        /* Day Number */
+        .day-number {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-70);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .calendar-day-cell.today .day-number {
+            color: var(--neon-cyan);
+        }
+        .day-number-value {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .today-indicator {
+            width: 6px;
+            height: 6px;
+            background: var(--neon-cyan);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Day Events */
+        .day-events {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .day-event {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: all 0.2s ease;
+        }
+        .day-event:hover {
+            transform: translateX(2px);
+        }
+        .day-event.shoot {
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--neon-cyan);
+            border-left: 3px solid var(--neon-cyan);
+        }
+        .day-event.milestone {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--neon-violet);
+            border-left: 3px solid var(--neon-violet);
+        }
+        .day-event.risk {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--neon-rose);
+            border-left: 3px solid var(--neon-rose);
+        }
+        .day-event.gantt {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--neon-gold);
+            border-left: 3px solid var(--neon-gold);
+        }
+        .day-event-icon {
+            font-size: 9px;
+        }
+        .day-event-time {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            opacity: 0.8;
+        }
+        .event-count-badge {
+            background: var(--surface-2);
+            color: var(--text-50);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        /* Calendar Sidebar */
+        .calendar-sidebar {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(20px);
+        }
+        .sidebar-header {
+            background: var(--surface-2);
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--border-default);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-100);
+            margin: 0;
+        }
+        .sidebar-close {
+            background: transparent;
+            border: none;
+            color: var(--text-50);
+            font-size: 28px;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .sidebar-close:hover {
+            background: var(--surface-3);
+            color: var(--text-100);
+        }
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-lg);
+        }
+        .sidebar-empty {
+            text-align: center;
+            color: var(--text-50);
+            padding: var(--space-2xl);
+            font-size: 14px;
+        }
+
+        /* Sidebar Day Info */
+        .sidebar-day-header {
+            margin-bottom: var(--space-lg);
+            padding-bottom: var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .sidebar-day-date {
+            font-family: var(--font-display);
+            font-size: 24px;
+            letter-spacing: 2px;
+            color: var(--text-100);
+            margin-bottom: 4px;
+        }
+        .sidebar-day-meta {
+            font-size: 12px;
+            color: var(--text-50);
+            font-family: var(--font-mono);
+        }
+
+        /* Sidebar Event Sections */
+        .sidebar-section {
+            margin-bottom: var(--space-xl);
+        }
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-50);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sidebar-section-icon {
+            font-size: 14px;
+        }
+
+        /* Sidebar Event Cards */
+        .sidebar-event-card {
+            background: var(--surface-2);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+            transition: all 0.2s ease;
+        }
+        .sidebar-event-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 4px 12px rgba(0, 240, 255, 0.1);
+        }
+        .sidebar-event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+        .sidebar-event-title {
+            font-weight: 600;
+            color: var(--text-100);
+            font-size: 14px;
+        }
+        .sidebar-event-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .badge-shoot {
+            background: rgba(0, 240, 255, 0.15);
+            color: var(--neon-cyan);
+        }
+        .badge-milestone {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--neon-violet);
+        }
+        .badge-risk {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--neon-rose);
+        }
+        .sidebar-event-detail {
+            font-size: 12px;
+            color: var(--text-70);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .detail-label {
+            color: var(--text-50);
+            font-weight: 600;
+            min-width: 60px;
+        }
+        .sidebar-event-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: var(--space-sm);
+            padding-top: var(--space-sm);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* Quick Add Button */
+        .sidebar-quick-add {
+            width: 100%;
+            padding: var(--space-md);
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-cyan-dim));
+            border: none;
+            border-radius: 8px;
+            color: var(--void-pure);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .sidebar-quick-add:hover {
+            box-shadow: var(--shadow-glow-cyan);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Calendar */
+        @media (max-width: 1400px) {
+            .calendar-container {
+                grid-template-columns: 1fr 320px;
+            }
+            .calendar-stats-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 1024px) {
+            .calendar-container {
+                grid-template-columns: 1fr;
+            }
+            .calendar-sidebar {
+                display: none;
+            }
+            .calendar-sidebar.mobile-open {
+                display: flex;
+                position: fixed;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                width: 90%;
+                max-width: 400px;
+                z-index: 1000;
+                box-shadow: -4px 0 20px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        /* Old calendar styles for compatibility */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -2114,6 +3001,14 @@
                         <span class="nav-icon">📋</span>
                         <span class="nav-text">Breakdown Sheets</span>
                     </div>
+                    <div class="nav-item" onclick="Core.navigate('shotlist')">
+                        <span class="nav-icon">🎥</span>
+                        <span class="nav-text">Shot List</span>
+                    </div>
+                    <div class="nav-item" onclick="Core.navigate('continuity')">
+                        <span class="nav-icon">📷</span>
+                        <span class="nav-text">Continuity Log</span>
+                    </div>
                     <div class="nav-item" onclick="Core.navigate('cast-crew')">
                         <span class="nav-icon">👥</span>
                         <span class="nav-text">Cast & Crew</span>
@@ -2123,7 +3018,7 @@
                         <span class="nav-text">Shoot Days</span>
                     </div>
                     <div class="nav-item" onclick="Core.navigate('tech')">
-                        <span class="nav-icon">🎥</span>
+                        <span class="nav-icon">🎬</span>
                         <span class="nav-text">Equipment</span>
                     </div>
                     <div class="nav-item" onclick="Core.navigate('vault')">
@@ -2133,14 +3028,38 @@
                 </div>
 
                 <div class="nav-section">
+                    <div class="nav-label standard">Planning</div>
+                    <div class="nav-item" onclick="Core.navigate('gantt')">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-text">Gantt Charts</span>
+                    </div>
+                    <div class="nav-item" onclick="Core.navigate('milestones')">
+                        <span class="nav-icon">🎯</span>
+                        <span class="nav-text">Milestones</span>
+                    </div>
+                    <div class="nav-item" onclick="Core.navigate('risk')">
+                        <span class="nav-icon">⚠️</span>
+                        <span class="nav-text">Risk Assessment</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-label standard">Finance</div>
+                    <div class="nav-item" onclick="Core.navigate('financials')">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Financials</span>
+                    </div>
+                </div>
+
+                <div class="nav-section">
                     <div class="nav-label standard">Documents</div>
                     <div class="nav-item" onclick="Core.navigate('documents')">
                         <span class="nav-icon">📄</span>
                         <span class="nav-text">Production Documents</span>
                     </div>
-                    <div class="nav-item" onclick="Core.navigate('gantt')">
-                        <span class="nav-icon">📈</span>
-                        <span class="nav-text">Gantt Charts</span>
+                    <div class="nav-item" onclick="Core.navigate('contacts')">
+                        <span class="nav-icon">📒</span>
+                        <span class="nav-text">Contact Directory</span>
                     </div>
                 </div>
 
@@ -2185,32 +3104,6 @@
                     <div class="nav-item" onclick="Core.navigate('notes')">
                         <span class="nav-icon">📓</span>
                         <span class="nav-text">Production Notes</span>
-                    </div>
-                    
-                    <div class="nav-section">NEW FEATURES</div>
-                    <div class="nav-item" onclick="Core.navigate('budget')">
-                        <span class="nav-icon">💰</span>
-                        <span class="nav-text">Budget Tracker</span>
-                    </div>
-                    <div class="nav-item" onclick="Core.navigate('shotlist')">
-                        <span class="nav-icon">🎬</span>
-                        <span class="nav-text">Shot List</span>
-                    </div>
-                    <div class="nav-item" onclick="Core.navigate('continuity')">
-                        <span class="nav-icon">📷</span>
-                        <span class="nav-text">Continuity Log</span>
-                    </div>
-                    <div class="nav-item" onclick="Core.navigate('risk')">
-                        <span class="nav-icon">⚠️</span>
-                        <span class="nav-text">Risk Assessment</span>
-                    </div>
-                    <div class="nav-item" onclick="Core.navigate('contacts')">
-                        <span class="nav-icon">📒</span>
-                        <span class="nav-text">Contact Directory</span>
-                    </div>
-                    <div class="nav-item" onclick="Core.navigate('milestones')">
-                        <span class="nav-icon">🎯</span>
-                        <span class="nav-text">Milestones</span>
                     </div>
                     <div class="nav-item" onclick="DataManager.exportAllData()">
                         <span class="nav-icon">📤</span>
@@ -2351,17 +3244,111 @@
 
                 <!-- CALENDAR VIEW -->
                 <div id="view-calendar" class="view">
-                    <div class="card mb-lg">
-                        <div class="card-header">
-                            <div class="card-title">Production Calendar</div>
-                            <div style="display: flex; gap: var(--space-sm);">
-                                <button class="btn btn-sm" onclick="Calendar.prevMonth()">◀ Prev</button>
-                                <span id="calendar-month" style="font-weight: 700; min-width: 150px; text-align: center;"></span>
-                                <button class="btn btn-sm" onclick="Calendar.nextMonth()">Next ▶</button>
+                    <!-- CALENDAR HEADER WITH CONTROLS -->
+                    <div class="calendar-command-bar">
+                        <div class="calendar-nav">
+                            <button class="btn btn-icon" onclick="Calendar.prevMonth()" title="Previous Month">◀</button>
+                            <button class="btn btn-sm" onclick="Calendar.today()">Today</button>
+                            <button class="btn btn-icon" onclick="Calendar.nextMonth()" title="Next Month">▶</button>
+                            <h2 class="calendar-month-title" id="calendar-month-year">Loading...</h2>
+                        </div>
+                        <div class="calendar-actions">
+                            <div class="view-toggle">
+                                <button class="view-toggle-btn active" onclick="Calendar.setView('month')" id="view-month-btn">Month</button>
+                                <button class="view-toggle-btn" onclick="Calendar.setView('week')" id="view-week-btn">Week</button>
+                            </div>
+                            <button class="btn btn-sm btn-primary" onclick="Calendar.quickAddShootDay()">+ Quick Add Shoot</button>
+                            <button class="btn btn-sm" onclick="Calendar.showFilters()">🔍 Filters</button>
+                        </div>
+                    </div>
+
+                    <!-- STATS & COUNTDOWN PANEL -->
+                    <div class="calendar-stats-panel">
+                        <div class="cal-stat-card">
+                            <div class="cal-stat-icon">🎬</div>
+                            <div class="cal-stat-content">
+                                <div class="cal-stat-value" id="cal-shoots-count">0</div>
+                                <div class="cal-stat-label">Shoots This Month</div>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div class="calendar-grid" id="calendar-grid"></div>
+                        <div class="cal-stat-card">
+                            <div class="cal-stat-icon">⏱️</div>
+                            <div class="cal-stat-content">
+                                <div class="cal-stat-value" id="cal-days-until">--</div>
+                                <div class="cal-stat-label">Days Until Next Shoot</div>
+                            </div>
+                        </div>
+                        <div class="cal-stat-card">
+                            <div class="cal-stat-icon">🎯</div>
+                            <div class="cal-stat-content">
+                                <div class="cal-stat-value" id="cal-milestones-count">0</div>
+                                <div class="cal-stat-label">Upcoming Milestones</div>
+                            </div>
+                        </div>
+                        <div class="cal-stat-card">
+                            <div class="cal-stat-icon">⚠️</div>
+                            <div class="cal-stat-content">
+                                <div class="cal-stat-value" id="cal-risks-count">0</div>
+                                <div class="cal-stat-label">Active Risks</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LEGEND & FILTERS -->
+                    <div class="calendar-legend">
+                        <div class="legend-title">CALENDAR LEGEND</div>
+                        <div class="legend-items">
+                            <label class="legend-item">
+                                <input type="checkbox" checked onchange="Calendar.toggleFilter('shoots')" id="filter-shoots">
+                                <span class="legend-color shoot-day-color"></span>
+                                <span class="legend-text">Shoot Days</span>
+                            </label>
+                            <label class="legend-item">
+                                <input type="checkbox" checked onchange="Calendar.toggleFilter('milestones')" id="filter-milestones">
+                                <span class="legend-color milestone-color"></span>
+                                <span class="legend-text">Milestones</span>
+                            </label>
+                            <label class="legend-item">
+                                <input type="checkbox" checked onchange="Calendar.toggleFilter('risks')" id="filter-risks">
+                                <span class="legend-color risk-color"></span>
+                                <span class="legend-text">Risks</span>
+                            </label>
+                            <label class="legend-item">
+                                <input type="checkbox" checked onchange="Calendar.toggleFilter('gantt')" id="filter-gantt">
+                                <span class="legend-color gantt-color"></span>
+                                <span class="legend-text">Production Phases</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- MAIN CALENDAR GRID -->
+                    <div class="calendar-container">
+                        <div class="calendar-main">
+                            <!-- Day Headers -->
+                            <div class="calendar-weekday-headers">
+                                <div class="weekday-header">SUN</div>
+                                <div class="weekday-header">MON</div>
+                                <div class="weekday-header">TUE</div>
+                                <div class="weekday-header">WED</div>
+                                <div class="weekday-header">THU</div>
+                                <div class="weekday-header">FRI</div>
+                                <div class="weekday-header">SAT</div>
+                            </div>
+                            <!-- Calendar Days Grid -->
+                            <div class="calendar-days-grid" id="calendar-grid"></div>
+                        </div>
+
+                        <!-- DAY DETAILS SIDEBAR -->
+                        <div class="calendar-sidebar" id="calendar-sidebar">
+                            <div class="sidebar-header">
+                                <h3 class="sidebar-title" id="sidebar-title">Select a day</h3>
+                                <button class="sidebar-close" onclick="Calendar.closeSidebar()">×</button>
+                            </div>
+                            <div class="sidebar-content" id="sidebar-content">
+                                <div class="sidebar-empty">
+                                    Click on any day to view or add events
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2924,7 +3911,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 </div>
 
                 <!-- BUDGET TRACKER VIEW -->
-                <div id="view-budget" class="view"></div>
+                <div id="view-financials" class="view"></div>
 
                 <!-- SHOT LIST VIEW -->
                 <div id="view-shotlist" class="view"></div>
@@ -3804,6 +4791,28 @@ Rain pours down as SARAH runs through the streets."></textarea>
         };
 
         /* ═══════════════════════════════════════════════════════════════════════
+           DEFAULT BUDGET STRUCTURE
+           ═══════════════════════════════════════════════════════════════════════ */
+        const DEFAULT_BUDGET = {
+            lines: [
+                { code: '100', name: 'Pre-Production', est: 5000, act: 0 },
+                { code: '200', name: 'Production Staff', est: 25000, act: 0 },
+                { code: '300', name: 'Talent', est: 15000, act: 0 },
+                { code: '400', name: 'Travel & Living', est: 8000, act: 0 },
+                { code: '500', name: 'Location', est: 10000, act: 0 },
+                { code: '600', name: 'Props & Wardrobe', est: 5000, act: 0 },
+                { code: '700', name: 'Studio & Set', est: 12000, act: 0 },
+                { code: '800', name: 'Equipment', est: 15000, act: 0 },
+                { code: '900', name: 'Film & Lab', est: 3000, act: 0 },
+                { code: '1000', name: 'Post Production', est: 20000, act: 0 },
+                { code: '1100', name: 'Insurance', est: 5000, act: 0 },
+                { code: '1200', name: 'Contingency', est: 10000, act: 0 },
+                { code: '1300', name: 'Other', est: 2000, act: 0 }
+            ],
+            pos: []
+        };
+
+        /* ═══════════════════════════════════════════════════════════════════════
            CORE MODULE - Data Management & Navigation
            ═══════════════════════════════════════════════════════════════════════ */
         const Core = {
@@ -3972,7 +4981,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     crew: {},
                     crm: { leads: [], ledger: [] },
                     gantt: { production: [], global: [] },
-                    notes: ''
+                    notes: '',
+                    budget: JSON.parse(JSON.stringify(DEFAULT_BUDGET)),
+                    shotList: [],
+                    continuity: [],
+                    risks: [],
+                    contacts: [],
+                    milestones: []
                 };
             },
 
@@ -4202,6 +5217,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 Schedule.render();
                 Breakdown.render();
                 CastCrew.render();
+                Financials.render();
+                ShotList.render();
+                ContinuityLog.render();
+                RiskAssessment.render();
+                ContactDirectory.render();
+                Milestones.render();
                 ProdCRM.renderPipeline();
                 ProdCRM.renderDialer();
                 ProdCRM.renderIntel();
@@ -4218,21 +5239,38 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 document.getElementById('stat-tech').textContent = (this.data.tech || []).length;
                 document.getElementById('stat-vault').textContent = (this.data.vault || []).length;
                 
-                // Budget stats
-                const totalBudget = parseFloat(this.data.budget?.total || 0);
-                const categories = this.data.budget?.categories || [];
-                let totalSpent = 0;
-                categories.forEach(cat => {
-                    totalSpent += parseFloat(cat.spent || 0);
-                });
-                const budgetLeft = totalBudget - totalSpent;
-                document.getElementById('stat-budget').textContent = '$' + budgetLeft.toLocaleString();
-                document.getElementById('hot-budget').textContent = '$' + totalBudget.toLocaleString();
-                document.getElementById('hot-spent').textContent = '$' + totalSpent.toLocaleString();
+                // Budget calculations with new structure
+                const totalEst = this.data.budget?.lines?.reduce((s, l) => s + l.est, 0) || 0;
+                const totalAct = this.data.budget?.lines?.reduce((s, l) => s + l.act, 0) || 0;
+                const remaining = totalEst - totalAct;
+                const overBudgetLines = this.data.budget?.lines?.filter(l => l.act > l.est) || [];
+                const overAmount = overBudgetLines.reduce((s, l) => s + (l.act - l.est), 0);
+                
+                document.getElementById('stat-budget').textContent = '$' + remaining.toLocaleString();
+                document.getElementById('hot-budget').textContent = '$' + totalEst.toLocaleString();
+                document.getElementById('hot-spent').textContent = '$' + totalAct.toLocaleString();
                 document.getElementById('hot-payroll').textContent = '$0'; // Placeholder
                 
                 // Update budget indicator
-                this.updateBudgetIndicator(totalBudget, totalSpent);
+                this.updateBudgetIndicator(totalEst, totalAct);
+                
+                // Over budget handling
+                const budgetStatus = document.getElementById('budget-status');
+                const budgetText = document.getElementById('budget-text');
+                const overCard = document.getElementById('over-budget-card');
+                if (overBudgetLines.length > 0) {
+                    budgetStatus.classList.add('warning');
+                    budgetText.textContent = '⚠ OVER BUDGET';
+                    if (overCard) {
+                        overCard.style.display = 'block';
+                        const overVal = overCard.querySelector('.stat-value');
+                        if (overVal) overVal.textContent = '$' + overAmount.toLocaleString();
+                    }
+                } else {
+                    budgetStatus.classList.remove('warning');
+                    budgetText.textContent = 'ON BUDGET';
+                    if (overCard) overCard.style.display = 'none';
+                }
                 
                 // Production CRM pipeline value
                 const prodLeads = this.data.crm?.leads || [];
@@ -4266,6 +5304,12 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     'vault': 'MEDIA VAULT',
                     'documents': 'PRODUCTION DOCUMENTS',
                     'gantt': 'GANTT CHARTS',
+                    'financials': 'FINANCIALS',
+                    'shotlist': 'SHOT LIST',
+                    'continuity': 'CONTINUITY LOG',
+                    'risk': 'RISK ASSESSMENT',
+                    'contacts': 'CONTACT DIRECTORY',
+                    'milestones': 'MILESTONES',
                     'prod-pipeline': 'PRODUCTION CRM - PIPELINE',
                     'prod-dialer': 'PRODUCTION CRM - DIALER',
                     'prod-intel': 'PRODUCTION CRM - INTEL',
@@ -4431,6 +5475,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 Core.save();
                 Core.log(`Shoot day added: ${date}`);
                 this.render();
+                Calendar.render(); // Update calendar
                 Core.renderDashboard();
                 document.getElementById('day-date').value = '';
                 document.getElementById('day-location').value = '';
@@ -4441,6 +5486,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     Core.data.days = Core.data.days.filter(d => d.id !== id);
                     Core.save();
                     this.render();
+                    Calendar.render(); // Update calendar
                     Core.renderDashboard();
                     Core.log('Shoot day deleted');
                 }
@@ -6437,51 +7483,177 @@ const Gantt = GanttEnhanced;
         /* ═══════════════════════════════════════════════════════════════════════
            CALENDAR MODULE
            ═══════════════════════════════════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════════════════════════════════
+           ULTIMATE CALENDAR MODULE - Interactive Production Calendar
+           ═══════════════════════════════════════════════════════════════════════ */
         const Calendar = {
             currentDate: new Date(),
+            selectedDate: null,
+            view: 'month',
+            filters: {
+                shoots: true,
+                milestones: true,
+                risks: true,
+                gantt: true
+            },
 
             render() {
+                // Safety check - only render if calendar view exists
+                const calendarGrid = document.getElementById('calendar-grid');
+                const calendarMonthYear = document.getElementById('calendar-month-year');
+                if (!calendarGrid || !calendarMonthYear) return;
+                
                 const year = this.currentDate.getFullYear();
                 const month = this.currentDate.getMonth();
                 
-                document.getElementById('calendar-month-year').textContent = 
+                // Update header
+                calendarMonthYear.textContent = 
                     this.currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
                 
+                // Calculate calendar grid
                 const firstDay = new Date(year, month, 1);
                 const lastDay = new Date(year, month + 1, 0);
                 const startPadding = firstDay.getDay();
                 const totalDays = lastDay.getDate();
                 
-                const shootDays = (Core.data.days || []).map(d => d.date);
+                // Get all events
+                const shootDays = this.getShootDays();
+                const milestones = this.getMilestones();
+                const risks = this.getRisks();
                 const ganttDates = this.getGanttDates();
                 
+                // Update stats
+                this.updateStats(shootDays, milestones, risks);
+                
+                // Render calendar grid
                 let html = '';
                 
+                // Empty cells before month starts
                 for (let i = 0; i < startPadding; i++) {
-                    html += '<div class="calendar-day empty"></div>';
+                    html += '<div class="calendar-day-cell empty"></div>';
                 }
                 
+                // Days of the month
                 for (let day = 1; day <= totalDays; day++) {
                     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                    const isShootDay = shootDays.some(d => d === dateStr);
-                    const ganttPhase = ganttDates[dateStr];
-                    const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
+                    const dateObj = new Date(year, month, day);
+                    const isToday = new Date().toDateString() === dateObj.toDateString();
+                    const isSelected = this.selectedDate === dateStr;
                     
-                    let classes = 'calendar-day';
+                    // Get events for this day
+                    const dayEvents = this.getDayEvents(dateStr, shootDays, milestones, risks, ganttDates);
+                    
+                    // Determine classes
+                    let classes = 'calendar-day-cell';
                     if (isToday) classes += ' today';
-                    if (isShootDay) classes += ' shoot-day';
-                    if (ganttPhase) classes += ` gantt-${ganttPhase}`;
+                    if (isSelected) classes += ' selected';
+                    if (dayEvents.shoots.length > 0) classes += ' has-shoot';
+                    if (dayEvents.milestones.length > 0) classes += ' has-milestone';
+                    if (dayEvents.risks.length > 0) classes += ' has-risk';
+                    if (dayEvents.shoots.length + dayEvents.milestones.length + dayEvents.risks.length > 1) {
+                        classes += ' multi-event';
+                    }
+                    
+                    // Build events HTML
+                    let eventsHtml = '';
+                    let visibleEvents = 0;
+                    const maxVisible = 3;
+                    
+                    if (this.filters.shoots) {
+                        dayEvents.shoots.slice(0, maxVisible - visibleEvents).forEach(shoot => {
+                            eventsHtml += `
+                                <div class="day-event shoot">
+                                    <span class="day-event-icon">🎬</span>
+                                    <span class="day-event-time">${shoot.call || 'Shoot'}</span>
+                                </div>
+                            `;
+                            visibleEvents++;
+                        });
+                    }
+                    
+                    if (this.filters.milestones && visibleEvents < maxVisible) {
+                        dayEvents.milestones.slice(0, maxVisible - visibleEvents).forEach(milestone => {
+                            eventsHtml += `
+                                <div class="day-event milestone">
+                                    <span class="day-event-icon">🎯</span>
+                                    <span>${milestone.title.substring(0, 15)}</span>
+                                </div>
+                            `;
+                            visibleEvents++;
+                        });
+                    }
+                    
+                    if (this.filters.risks && visibleEvents < maxVisible) {
+                        dayEvents.risks.slice(0, maxVisible - visibleEvents).forEach(risk => {
+                            eventsHtml += `
+                                <div class="day-event risk">
+                                    <span class="day-event-icon">⚠️</span>
+                                    <span>${risk.category}</span>
+                                </div>
+                            `;
+                            visibleEvents++;
+                        });
+                    }
+                    
+                    if (this.filters.gantt && dayEvents.gantt && visibleEvents < maxVisible) {
+                        eventsHtml += `
+                            <div class="day-event gantt">
+                                <span class="day-event-icon">📊</span>
+                                <span>${dayEvents.gantt.substring(0, 10)}</span>
+                            </div>
+                        `;
+                        visibleEvents++;
+                    }
+                    
+                    // Show +N more if there are hidden events
+                    const totalEvents = dayEvents.shoots.length + dayEvents.milestones.length + dayEvents.risks.length + (dayEvents.gantt ? 1 : 0);
+                    if (totalEvents > visibleEvents) {
+                        eventsHtml += `<span class="event-count-badge">+${totalEvents - visibleEvents} more</span>`;
+                    }
                     
                     html += `
-                        <div class="${classes}">
-                            <span class="calendar-day-number">${day}</span>
-                            ${isShootDay ? '<span class="calendar-indicator shoot">🎬</span>' : ''}
-                            ${ganttPhase ? `<span class="calendar-indicator phase">${ganttPhase.substring(0, 3).toUpperCase()}</span>` : ''}
+                        <div class="${classes}" onclick="Calendar.selectDay('${dateStr}', ${day}, ${month}, ${year})" data-date="${dateStr}">
+                            <div class="day-number">
+                                <div class="day-number-value">
+                                    ${day}
+                                    ${isToday ? '<span class="today-indicator"></span>' : ''}
+                                </div>
+                            </div>
+                            <div class="day-events">
+                                ${eventsHtml}
+                            </div>
                         </div>
                     `;
                 }
                 
                 document.getElementById('calendar-grid').innerHTML = html;
+                
+                // If a day was selected, update sidebar
+                if (this.selectedDate) {
+                    this.updateSidebar(this.selectedDate, shootDays, milestones, risks, ganttDates);
+                }
+            },
+
+            getShootDays() {
+                return (Core.data.days || []).map(d => ({
+                    ...d,
+                    type: 'shoot'
+                }));
+            },
+
+            getMilestones() {
+                return (Core.data.milestones || []).map(m => ({
+                    ...m,
+                    date: m.dueDate,
+                    type: 'milestone'
+                }));
+            },
+
+            getRisks() {
+                return (Core.data.risks || []).filter(r => !r.resolved).map(r => ({
+                    ...r,
+                    type: 'risk'
+                }));
             },
 
             getGanttDates() {
@@ -6501,6 +7673,296 @@ const Gantt = GanttEnhanced;
                 return dates;
             },
 
+            getDayEvents(dateStr, shootDays, milestones, risks, ganttDates) {
+                return {
+                    shoots: shootDays.filter(s => s.date === dateStr),
+                    milestones: milestones.filter(m => m.date === dateStr),
+                    risks: risks,  // Risks don't have specific dates, shown as ongoing
+                    gantt: ganttDates[dateStr]
+                };
+            },
+
+            updateStats(shootDays, milestones, risks) {
+                // Safety check - only update if stats elements exist
+                const shootsCountEl = document.getElementById('cal-shoots-count');
+                const daysUntilEl = document.getElementById('cal-days-until');
+                const milestonesCountEl = document.getElementById('cal-milestones-count');
+                const risksCountEl = document.getElementById('cal-risks-count');
+                
+                if (!shootsCountEl || !daysUntilEl || !milestonesCountEl || !risksCountEl) return;
+                
+                const year = this.currentDate.getFullYear();
+                const month = this.currentDate.getMonth();
+                
+                // Shoots this month
+                const shootsThisMonth = shootDays.filter(s => {
+                    const d = new Date(s.date);
+                    return d.getMonth() === month && d.getFullYear() === year;
+                }).length;
+                shootsCountEl.textContent = shootsThisMonth;
+                
+                // Days until next shoot
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const upcomingShoots = shootDays.filter(s => new Date(s.date) >= today).sort((a, b) => new Date(a.date) - new Date(b.date));
+                if (upcomingShoots.length > 0) {
+                    const nextShoot = new Date(upcomingShoots[0].date);
+                    const daysUntil = Math.ceil((nextShoot - today) / (1000 * 60 * 60 * 24));
+                    daysUntilEl.textContent = daysUntil === 0 ? 'Today' : daysUntil;
+                } else {
+                    daysUntilEl.textContent = '--';
+                }
+                
+                // Upcoming milestones
+                const upcomingMilestones = milestones.filter(m => !m.completed && new Date(m.date) >= today).length;
+                milestonesCountEl.textContent = upcomingMilestones;
+                
+                // Active risks
+                risksCountEl.textContent = risks.length;
+            },
+
+            selectDay(dateStr, day, month, year) {
+                this.selectedDate = dateStr;
+                
+                // Update selected class
+                document.querySelectorAll('.calendar-day-cell').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+                document.querySelector(`[data-date="${dateStr}"]`)?.classList.add('selected');
+                
+                // Get all events
+                const shootDays = this.getShootDays();
+                const milestones = this.getMilestones();
+                const risks = this.getRisks();
+                const ganttDates = this.getGanttDates();
+                
+                this.updateSidebar(dateStr, shootDays, milestones, risks, ganttDates);
+            },
+
+            updateSidebar(dateStr, shootDays, milestones, risks, ganttDates) {
+                // Safety check - only update if sidebar elements exist
+                const sidebarTitle = document.getElementById('sidebar-title');
+                const sidebarContent = document.getElementById('sidebar-content');
+                
+                if (!sidebarTitle || !sidebarContent) return;
+                
+                const dayEvents = this.getDayEvents(dateStr, shootDays, milestones, risks, ganttDates);
+                const date = new Date(dateStr);
+                
+                // Update title
+                sidebarTitle.textContent = 
+                    date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+                
+                // Build content
+                let content = `
+                    <div class="sidebar-day-header">
+                        <div class="sidebar-day-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div class="sidebar-day-meta">${date.toLocaleDateString('en-US', { weekday: 'long' })}</div>
+                    </div>
+                `;
+                
+                // Shoots section
+                if (dayEvents.shoots.length > 0) {
+                    content += `
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">
+                                <span class="sidebar-section-icon">🎬</span>
+                                SHOOT DAYS
+                            </div>
+                    `;
+                    dayEvents.shoots.forEach(shoot => {
+                        content += `
+                            <div class="sidebar-event-card">
+                                <div class="sidebar-event-header">
+                                    <div class="sidebar-event-title">${shoot.location || 'Shoot Day'}</div>
+                                    <span class="sidebar-event-badge badge-shoot">SHOOT</span>
+                                </div>
+                                ${shoot.call ? `<div class="sidebar-event-detail"><span class="detail-label">Call:</span> ${shoot.call}</div>` : ''}
+                                ${shoot.wrap ? `<div class="sidebar-event-detail"><span class="detail-label">Wrap:</span> ${shoot.wrap}</div>` : ''}
+                                ${shoot.location ? `<div class="sidebar-event-detail"><span class="detail-label">Location:</span> ${shoot.location}</div>` : ''}
+                                ${shoot.notes ? `<div class="sidebar-event-detail"><span class="detail-label">Notes:</span> ${shoot.notes}</div>` : ''}
+                                <div class="sidebar-event-actions">
+                                    <button class="btn btn-xs" onclick="Core.navigate('days')">View All Shoots</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    content += '</div>';
+                }
+                
+                // Milestones section
+                if (dayEvents.milestones.length > 0) {
+                    content += `
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">
+                                <span class="sidebar-section-icon">🎯</span>
+                                MILESTONES
+                            </div>
+                    `;
+                    dayEvents.milestones.forEach(milestone => {
+                        content += `
+                            <div class="sidebar-event-card">
+                                <div class="sidebar-event-header">
+                                    <div class="sidebar-event-title">${milestone.title}</div>
+                                    <span class="sidebar-event-badge badge-milestone">${milestone.phase}</span>
+                                </div>
+                                ${milestone.description ? `<div class="sidebar-event-detail">${milestone.description}</div>` : ''}
+                                <div class="sidebar-event-actions">
+                                    <button class="btn btn-xs" onclick="Core.navigate('milestones')">View All Milestones</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    content += '</div>';
+                }
+                
+                // Gantt phase
+                if (dayEvents.gantt) {
+                    content += `
+                        <div class="sidebar-section">
+                            <div class="sidebar-section-title">
+                                <span class="sidebar-section-icon">📊</span>
+                                PRODUCTION PHASE
+                            </div>
+                            <div class="sidebar-event-card">
+                                <div class="sidebar-event-detail">
+                                    <span class="detail-label">Phase:</span>
+                                    <span class="sidebar-event-badge badge-shoot">${dayEvents.gantt}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Quick add button
+                content += `
+                    <button class="sidebar-quick-add" onclick="Calendar.quickAddShootDay('${dateStr}')">
+                        + Add Shoot Day
+                    </button>
+                `;
+                
+                // If no events
+                if (dayEvents.shoots.length === 0 && dayEvents.milestones.length === 0 && !dayEvents.gantt) {
+                    content += `
+                        <div class="sidebar-empty">
+                            No events scheduled for this day
+                        </div>
+                    `;
+                }
+                
+                sidebarContent.innerHTML = content;
+            },
+
+            closeSidebar() {
+                this.selectedDate = null;
+                document.querySelectorAll('.calendar-day-cell').forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+                
+                const sidebarContent = document.getElementById('sidebar-content');
+                const sidebarTitle = document.getElementById('sidebar-title');
+                
+                if (sidebarContent) {
+                    sidebarContent.innerHTML = `
+                        <div class="sidebar-empty">
+                            Click on any day to view or add events
+                        </div>
+                    `;
+                }
+                
+                if (sidebarTitle) {
+                    sidebarTitle.textContent = 'Select a day';
+                }
+            },
+
+            quickAddShootDay(dateStr = null) {
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.id = 'modal-quick-add-shoot';
+                
+                const targetDate = dateStr || new Date().toISOString().split('T')[0];
+                
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <button class="modal-close" onclick="document.getElementById('modal-quick-add-shoot').remove()">×</button>
+                        <h2 class="modal-title">Add Shoot Day</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="quick-shoot-date" value="${targetDate}">
+                            </div>
+                            <div class="form-group">
+                                <label>Call Time</label>
+                                <input type="time" id="quick-shoot-call">
+                            </div>
+                            <div class="form-group">
+                                <label>Wrap Time</label>
+                                <input type="time" id="quick-shoot-wrap">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Location</label>
+                                <input type="text" id="quick-shoot-location" placeholder="Shoot location">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>Notes</label>
+                                <textarea id="quick-shoot-notes" placeholder="Additional notes"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn" onclick="document.getElementById('modal-quick-add-shoot').remove()">Cancel</button>
+                            <button class="btn btn-primary" onclick="Calendar.saveQuickShoot()">Add Shoot</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            },
+
+            saveQuickShoot() {
+                const date = document.getElementById('quick-shoot-date').value;
+                const call = document.getElementById('quick-shoot-call').value;
+                const wrap = document.getElementById('quick-shoot-wrap').value;
+                const location = document.getElementById('quick-shoot-location').value;
+                const notes = document.getElementById('quick-shoot-notes').value;
+                
+                if (!date) { alert('Date is required'); return; }
+                
+                Core.data.days.unshift({ id: Date.now(), date, call, wrap, location, notes });
+                Core.save();
+                Core.log(`Shoot day added: ${date}`);
+                Days.render();
+                this.render();
+                Core.renderDashboard();
+                
+                document.getElementById('modal-quick-add-shoot').remove();
+            },
+
+            toggleFilter(type) {
+                const filterEl = document.getElementById(`filter-${type}`);
+                if (!filterEl) return;
+                
+                this.filters[type] = filterEl.checked;
+                this.render();
+            },
+
+            showFilters() {
+                // Already visible in legend, could add advanced filters modal here
+                alert('Advanced filters coming soon! Use the legend checkboxes to filter event types.');
+            },
+
+            setView(view) {
+                this.view = view;
+                document.querySelectorAll('.view-toggle-btn').forEach(btn => btn.classList.remove('active'));
+                
+                const viewBtn = document.getElementById(`view-${view}-btn`);
+                if (viewBtn) {
+                    viewBtn.classList.add('active');
+                }
+                
+                if (view === 'week') {
+                    alert('Week view coming soon! Building an amazing week-by-week timeline.');
+                }
+            },
+
             prevMonth() {
                 this.currentDate.setMonth(this.currentDate.getMonth() - 1);
                 this.render();
@@ -6513,6 +7975,7 @@ const Gantt = GanttEnhanced;
 
             today() {
                 this.currentDate = new Date();
+                this.selectedDate = null;
                 this.render();
             }
         };
@@ -7868,186 +9331,230 @@ const Gantt = GanttEnhanced;
         /* ═══════════════════════════════════════════════════════════════════════
            NEW FEATURE 1: BUDGET TRACKER MODULE
            ═══════════════════════════════════════════════════════════════════════ */
-        const BudgetTracker = {
-            init() {
-                this.render();
-            },
-            
-            getData() {
-                return Core.data.budget || {
-                    totalBudget: 0,
-                    categories: [
-                        { name: 'Above the Line', allocated: 0, spent: 0 },
-                        { name: 'Below the Line', allocated: 0, spent: 0 },
-                        { name: 'Post-Production', allocated: 0, spent: 0 },
-                        { name: 'Marketing', allocated: 0, spent: 0 },
-                        { name: 'Contingency', allocated: 0, spent: 0 }
-                    ],
-                    expenses: []
-                };
-            },
-            
-            saveData(data) {
-                Core.data.budget = data;
-                Core.save();
-            },
-            
+        /* ═══════════════════════════════════════════════════════════════════════
+           FINANCIALS MODULE - Complete Budget Ledger with Purchase Orders
+           ═══════════════════════════════════════════════════════════════════════ */
+        const Financials = {
             render() {
-                const container = document.getElementById('view-budget');
+                const container = document.getElementById('view-financials');
                 if (!container) return;
                 
-                const data = this.getData();
-                const totalSpent = data.categories.reduce((sum, c) => sum + c.spent, 0);
-                const totalAllocated = data.categories.reduce((sum, c) => sum + c.allocated, 0);
-                const remaining = data.totalBudget - totalSpent;
-                
+                // Render budget overview table
                 container.innerHTML = `
-                    <div class="view-header">
-                        <h1 class="view-title">BUDGET TRACKER</h1>
-                        <div class="view-actions">
-                            <button class="btn btn-sm btn-primary" onclick="BudgetTracker.showAddExpenseModal()">+ Add Expense</button>
-                            <button class="btn btn-sm btn-export" onclick="PDFExport.budgetReport()">📄 Export PDF</button>
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <div class="card-title">Budget Overview</div>
+                            <span class="text-muted font-mono">Click estimated values to edit</span>
                         </div>
-                    </div>
-                    
-                    <div class="budget-overview">
-                        <div class="stat-card">
-                            <div class="stat-label">Total Budget</div>
-                            <div class="stat-value" style="color: var(--neon-cyan);">$${data.totalBudget.toLocaleString()}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Total Spent</div>
-                            <div class="stat-value" style="color: var(--neon-rose);">${totalSpent.toLocaleString()}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Remaining</div>
-                            <div class="stat-value" style="color: ${remaining >= 0 ? 'var(--neon-emerald)' : 'var(--neon-rose)'};">$${remaining.toLocaleString()}</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Burn Rate</div>
-                            <div class="stat-value">${data.totalBudget > 0 ? Math.round((totalSpent / data.totalBudget) * 100) : 0}%</div>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">Budget Categories</div>
-                        <div class="budget-categories">
-                            ${data.categories.map((cat, idx) => `
-                                <div class="budget-category-card">
-                                    <div class="budget-cat-header">
-                                        <span class="budget-cat-name">${clean(cat.name)}</span>
-                                        <span class="budget-cat-percent">${cat.allocated > 0 ? Math.round((cat.spent / cat.allocated) * 100) : 0}%</span>
-                                    </div>
-                                    <div class="budget-progress-bar">
-                                        <div class="budget-progress-fill" style="width: ${cat.allocated > 0 ? Math.min(100, (cat.spent / cat.allocated) * 100) : 0}%; background: ${cat.spent > cat.allocated ? 'var(--neon-rose)' : 'var(--neon-cyan)'};"></div>
-                                    </div>
-                                    <div class="budget-cat-amounts">
-                                        <span>Spent: $${cat.spent.toLocaleString()}</span>
-                                        <span>Allocated: $${cat.allocated.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">Recent Expenses</div>
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th>Amount</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${(data.expenses || []).slice(-10).reverse().map((exp, idx) => `
+                        <div class="table-container">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td>${exp.date}</td>
-                                        <td>${clean(exp.description)}</td>
-                                        <td>${clean(exp.category)}</td>
-                                        <td class="font-mono">$${exp.amount.toLocaleString()}</td>
-                                        <td><button class="btn btn-xs btn-danger" onclick="BudgetTracker.deleteExpense(${data.expenses.length - 1 - idx})">×</button></td>
+                                        <th>Code</th>
+                                        <th>Category</th>
+                                        <th>Estimated</th>
+                                        <th>Actual</th>
+                                        <th>Variance</th>
+                                        <th>Status</th>
                                     </tr>
-                                `).join('') || '<tr><td colspan="5" class="text-center text-muted">No expenses recorded</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            },
-            
-            showAddExpenseModal() {
-                const data = this.getData();
-                const modal = document.createElement('div');
-                modal.className = 'modal active';
-                modal.id = 'modal-add-expense';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <button class="modal-close" onclick="document.getElementById('modal-add-expense').remove()">×</button>
-                        <h2 class="modal-title">Add Expense</h2>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Description</label>
-                                <input type="text" id="expense-desc" placeholder="Expense description">
-                            </div>
-                            <div class="form-group">
-                                <label>Amount ($)</label>
-                                <input type="number" id="expense-amount" placeholder="0.00">
-                            </div>
-                            <div class="form-group">
-                                <label>Category</label>
-                                <select id="expense-category">
-                                    ${data.categories.map(c => `<option value="${clean(c.name)}">${clean(c.name)}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Date</label>
-                                <input type="date" id="expense-date" value="${new Date().toISOString().split('T')[0]}">
-                            </div>
-                        </div>
-                        <div class="modal-actions">
-                            <button class="btn" onclick="document.getElementById('modal-add-expense').remove()">Cancel</button>
-                            <button class="btn btn-primary" onclick="BudgetTracker.addExpense()">Add Expense</button>
+                                </thead>
+                                <tbody id="table-budget"></tbody>
+                            </table>
                         </div>
                     </div>
+
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <div class="card-title">Issue Purchase Order</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Budget Category</label>
+                                    <select class="form-select" id="po-code">
+                                        <option value="100">100 - Pre-Production</option>
+                                        <option value="200">200 - Production Staff</option>
+                                        <option value="300">300 - Talent</option>
+                                        <option value="400">400 - Travel & Living</option>
+                                        <option value="500">500 - Location</option>
+                                        <option value="600">600 - Props & Wardrobe</option>
+                                        <option value="700">700 - Studio & Set</option>
+                                        <option value="800">800 - Equipment</option>
+                                        <option value="900">900 - Film & Lab</option>
+                                        <option value="1000">1000 - Post Production</option>
+                                        <option value="1100">1100 - Insurance</option>
+                                        <option value="1200">1200 - Contingency</option>
+                                        <option value="1300">1300 - Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Vendor</label>
+                                    <input type="text" class="form-input" id="po-vendor" placeholder="Vendor name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Description</label>
+                                    <input type="text" class="form-input" id="po-desc" placeholder="What is this for?">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Amount ($)</label>
+                                    <input type="number" class="form-input" id="po-amount" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary" onclick="Financials.issuePO()">Issue PO</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Purchase Orders</div>
+                            <button class="btn btn-sm" onclick="Financials.exportCSV()">Export CSV</button>
+                        </div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>PO #</th>
+                                        <th>Vendor</th>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-po"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 `;
-                document.body.appendChild(modal);
+                
+                // Render budget lines
+                this.renderBudgetLines();
+                this.renderPOs();
             },
             
-            addExpense() {
-                const data = this.getData();
-                const expense = {
-                    description: document.getElementById('expense-desc').value,
-                    amount: parseFloat(document.getElementById('expense-amount').value) || 0,
-                    category: document.getElementById('expense-category').value,
-                    date: document.getElementById('expense-date').value
+            renderBudgetLines() {
+                const tbody = document.getElementById('table-budget');
+                if (!tbody || !Core.data.budget?.lines) return;
+                
+                tbody.innerHTML = Core.data.budget.lines.map(l => {
+                    const variance = l.est - l.act;
+                    const isOver = l.act > l.est;
+                    return `<tr class="${isOver ? 'over-budget' : ''}">
+                        <td class="font-mono">${l.code}</td>
+                        <td>${l.name}</td>
+                        <td class="font-mono editable" onclick="Financials.editEstimate('${l.code}', this)">$${l.est.toLocaleString()}</td>
+                        <td class="font-mono text-gold">$${l.act.toLocaleString()}</td>
+                        <td class="font-mono ${variance < 0 ? 'text-rose' : 'text-emerald'}">${variance < 0 ? '-' : '+'}$${Math.abs(variance).toLocaleString()}</td>
+                        <td>${isOver ? '<span class="over-budget-badge">⚠ OVER</span>' : '<span class="tag tag-emerald">OK</span>'}</td>
+                    </tr>`;
+                }).join('');
+            },
+            
+            editEstimate(code, cell) {
+                const line = Core.data.budget.lines.find(l => l.code === code);
+                if (!line) return;
+                const currentVal = line.est;
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'editable-input';
+                input.value = currentVal;
+                input.onblur = () => {
+                    const newVal = parseFloat(input.value) || currentVal;
+                    line.est = newVal;
+                    Core.save();
+                    this.renderBudgetLines();
+                    Core.renderDashboard();
+                    Core.log(`Budget updated: ${line.name} → $${newVal.toLocaleString()}`);
                 };
-                
-                if (!data.expenses) data.expenses = [];
-                data.expenses.push(expense);
-                
-                // Update category spent amount
-                const cat = data.categories.find(c => c.name === expense.category);
-                if (cat) cat.spent += expense.amount;
-                
-                this.saveData(data);
-                document.getElementById('modal-add-expense').remove();
-                this.render();
-                Core.log(`Added expense: ${clean(expense.description)} - $${expense.amount}`);
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') { input.value = currentVal; input.blur(); }
+                };
+                cell.innerHTML = '';
+                cell.appendChild(input);
+                input.focus();
+                input.select();
             },
             
-            deleteExpense(idx) {
-                const data = this.getData();
-                if (data.expenses && data.expenses[idx]) {
-                    const exp = data.expenses[idx];
-                    const cat = data.categories.find(c => c.name === exp.category);
-                    if (cat) cat.spent -= exp.amount;
-                    data.expenses.splice(idx, 1);
-                    this.saveData(data);
-                    this.render();
+            issuePO() {
+                const code = document.getElementById('po-code').value;
+                const vendor = document.getElementById('po-vendor').value;
+                const desc = document.getElementById('po-desc').value;
+                const amount = parseFloat(document.getElementById('po-amount').value);
+                if (!vendor || !amount) { alert('Vendor and amount are required'); return; }
+                
+                // Initialize POs array if needed
+                if (!Core.data.budget.pos) Core.data.budget.pos = [];
+                
+                const poNum = 'PO-' + (Core.data.budget.pos.length + 1).toString().padStart(4, '0');
+                Core.data.budget.pos.unshift({ 
+                    id: Date.now(), 
+                    poNum, 
+                    code, 
+                    vendor, 
+                    desc, 
+                    amount, 
+                    date: new Date().toISOString().split('T')[0] 
+                });
+                
+                const line = Core.data.budget.lines.find(l => l.code === code);
+                if (line) line.act += amount;
+                
+                Core.save();
+                Core.log(`PO issued: ${poNum} - $${amount.toFixed(2)} to ${vendor}`);
+                this.renderBudgetLines();
+                this.renderPOs();
+                Core.renderDashboard();
+                
+                document.getElementById('po-vendor').value = '';
+                document.getElementById('po-desc').value = '';
+                document.getElementById('po-amount').value = '';
+            },
+            
+            deletePO(id) {
+                const po = Core.data.budget.pos.find(p => p.id === id);
+                if (!po) return;
+                if (confirm(`Delete PO ${po.poNum}? This will reverse the budget actual.`)) {
+                    const line = Core.data.budget.lines.find(l => l.code === po.code);
+                    if (line) line.act = Math.max(0, line.act - po.amount);
+                    Core.data.budget.pos = Core.data.budget.pos.filter(p => p.id !== id);
+                    Core.save();
+                    this.renderBudgetLines();
+                    this.renderPOs();
+                    Core.renderDashboard();
+                    Core.log(`PO deleted: ${po.poNum}`);
                 }
+            },
+            
+            renderPOs() {
+                const tbody = document.getElementById('table-po');
+                if (!tbody) return;
+                
+                if (!Core.data.budget?.pos?.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No purchase orders issued</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = Core.data.budget.pos.map(p => `
+                    <tr>
+                        <td class="font-mono">${p.date}</td>
+                        <td><span class="tag tag-gold">${p.poNum}</span></td>
+                        <td class="font-bold">${p.vendor}</td>
+                        <td class="font-mono">${p.code}</td>
+                        <td>${p.desc || '-'}</td>
+                        <td class="font-mono text-gold">$${p.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td><button class="delete-btn" onclick="Financials.deletePO(${p.id})">×</button></td>
+                    </tr>
+                `).join('');
+            },
+            
+            exportCSV() {
+                let csv = 'Date,PO Number,Vendor,Code,Description,Amount\n';
+                Core.data.budget.pos.forEach(p => csv += `"${p.date}","${p.poNum}","${p.vendor}","${p.code}","${p.desc}",${p.amount}\n`);
+                Core.download(csv, 'purchase_orders.csv');
+                Core.log('POs exported');
             }
         };
 
