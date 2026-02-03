@@ -2907,9 +2907,288 @@
             .kanban-wrapper { grid-template-columns: 1fr; }
             .dialer-grid { grid-template-columns: 1fr; }
         }
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           RESPONSIVE DESIGN - ALL SCREEN SIZES
+           ═══════════════════════════════════════════════════════════════════════ */
+        
+        /* 4K and Ultra-Wide (2560px+) */
+        @media (min-width: 2560px) {
+            .content-inner { max-width: 2400px; margin: 0 auto; }
+        }
+        
+        /* Desktop Large (1920px - 2559px) - Default, no changes needed */
+        
+        /* Desktop Standard (1440px - 1919px) */
+        @media (max-width: 1919px) {
+            html { font-size: 15px; }
+            .content-inner { padding: 36px; }
+        }
+        
+        /* Desktop Small / Laptop (1280px - 1439px) */
+        @media (max-width: 1439px) {
+            html { font-size: 14px; }
+            .content-inner { padding: 30px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .strip-form { grid-template-columns: 1fr 1fr; }
+        }
+        
+        /* Laptop / Tablet Landscape (1024px - 1279px) */
+        @media (max-width: 1279px) {
+            html { font-size: 14px; }
+            
+            /* Sidebar becomes collapsible */
+            .app { grid-template-columns: 60px 1fr; }
+            .sidebar { width: 60px; transition: width 0.3s ease; }
+            .sidebar:hover, .sidebar.expanded { width: 280px; }
+            
+            .brand-name, .brand-tagline, .nav-label, 
+            .sidebar:not(:hover):not(.expanded) .user-name,
+            .sidebar:not(:hover):not(.expanded) .user-role { 
+                display: none; 
+            }
+            .sidebar:hover .brand-name, .sidebar.expanded .brand-name,
+            .sidebar:hover .brand-tagline, .sidebar.expanded .brand-tagline,
+            .sidebar:hover .nav-label, .sidebar.expanded .nav-label,
+            .sidebar:hover .user-name, .sidebar.expanded .user-name,
+            .sidebar:hover .user-role, .sidebar.expanded .user-role { 
+                display: block; 
+            }
+            
+            .mode-banner { left: 60px; }
+            .sidebar:hover + .content { margin-left: 280px; }
+            
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .content-inner { padding: 24px; }
+        }
+        
+        /* Tablet Portrait (768px - 1023px) */
+        @media (max-width: 1023px) {
+            html { font-size: 13px; }
+            
+            /* Full mobile sidebar */
+            .app { grid-template-columns: 1fr; }
+            .sidebar { 
+                position: fixed; 
+                left: -280px; 
+                top: 0; 
+                bottom: 0; 
+                width: 280px; 
+                z-index: 9999; 
+                transition: left 0.3s ease;
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+            }
+            .sidebar.mobile-open { left: 0; }
+            
+            /* Mobile menu button */
+            .mobile-menu-btn {
+                display: flex;
+                position: fixed;
+                top: 8px;
+                left: 8px;
+                z-index: 10000;
+                width: 44px;
+                height: 44px;
+                background: var(--surface-2);
+                border: 1px solid var(--border-strong);
+                border-radius: 8px;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: var(--neon-cyan);
+            }
+            
+            /* Overlay for sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 9998;
+            }
+            .sidebar-overlay.active { display: block; }
+            
+            .mode-banner { 
+                left: 0; 
+                padding-left: 60px;
+                font-size: 8px;
+            }
+            
+            .content { margin-left: 0; }
+            .content-inner { padding: 20px; }
+            
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .strip-form { grid-template-columns: 1fr; }
+            
+            /* Tables scroll horizontally */
+            .table-container { 
+                overflow-x: auto; 
+                -webkit-overflow-scrolling: touch;
+            }
+            table { min-width: 800px; }
+            
+            /* Modal adjustments */
+            .modal-content { 
+                max-width: 90%; 
+                padding: 30px; 
+                max-height: 85vh;
+            }
+        }
+        
+        /* Mobile Landscape (640px - 767px) */
+        @media (max-width: 767px) {
+            html { font-size: 12px; }
+            
+            .stats-grid { grid-template-columns: 1fr; }
+            .content-inner { padding: 16px; }
+            
+            .mode-banner {
+                flex-wrap: wrap;
+                height: auto;
+                min-height: 36px;
+                padding: 8px 8px 8px 52px;
+            }
+            .mode-status { 
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .mode-badge, .view-indicator, .budget-indicator {
+                font-size: 7px;
+                padding: 3px 8px;
+            }
+            
+            /* Buttons full width */
+            .btn-group { flex-direction: column; }
+            .btn-group .btn { width: 100%; }
+            
+            /* Forms */
+            .form-grid { grid-template-columns: 1fr; }
+            
+            /* Cards */
+            .card { padding: 16px; border-radius: 8px; }
+            .card-header { flex-direction: column; align-items: flex-start; }
+            
+            table { min-width: 600px; font-size: 11px; }
+            thead th, tbody td { padding: 8px; }
+        }
+        
+        /* Mobile Portrait (480px - 639px) */
+        @media (max-width: 639px) {
+            html { font-size: 11px; }
+            
+            .content-inner { padding: 12px; }
+            .card { padding: 12px; }
+            
+            .login-overlay { padding: 20px; }
+            .login-options { flex-direction: column; gap: 16px; }
+            .login-btn { min-width: 100%; }
+            
+            .modal-content { 
+                padding: 20px; 
+                max-width: 95%;
+                border-radius: 12px;
+            }
+            .modal-title { font-size: 1.5rem; }
+            
+            /* Hide less important columns on very small screens */
+            .hide-mobile { display: none !important; }
+        }
+        
+        /* Mobile Small (320px - 479px) */
+        @media (max-width: 479px) {
+            html { font-size: 10px; }
+            
+            .content-inner { padding: 8px; }
+            .card { padding: 10px; margin-bottom: 12px; }
+            
+            .mode-banner { 
+                font-size: 6px; 
+                padding: 6px 6px 6px 48px;
+            }
+            .mode-badge, .view-indicator { font-size: 6px; padding: 2px 6px; }
+            
+            .btn { padding: 10px 16px; font-size: 12px; }
+            .btn-sm { padding: 8px 12px; font-size: 11px; }
+            
+            .stat-value { font-size: 2rem; }
+            .stat-label { font-size: 10px; }
+            
+            table { min-width: 500px; font-size: 10px; }
+        }
+        
+        /* Ensure mobile-menu-btn exists in all sizes but hidden by default */
+        .mobile-menu-btn { display: none; }
+        
+        /* Ultra-wide specific adjustments */
+        @media (min-width: 3440px) {
+            .content-inner { max-width: 3200px; }
+            .stats-grid { grid-template-columns: repeat(6, 1fr); }
+        }
+        
+        /* Height-based media queries for shorter screens */
+        @media (max-height: 720px) {
+            .content-inner { padding-top: 16px; padding-bottom: 16px; }
+            .card { margin-bottom: 16px; }
+        }
+        
+        @media (max-height: 600px) {
+            .modal-content { max-height: 80vh; }
+            .card { padding: 12px; margin-bottom: 12px; }
+        }
+        
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .btn, .nav-item, .tab { 
+                min-height: 44px; 
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
+            
+            /* Larger touch targets */
+            .modal-close { width: 44px; height: 44px; }
+            .logout-btn { min-height: 36px; }
+        }
+        
+        /* Print styles */
+        @media print {
+            .sidebar, .mode-banner, .btn, .modal { display: none !important; }
+            .content { margin-left: 0; margin-top: 0; }
+            .card { page-break-inside: avoid; }
+            body { background: white; color: black; }
+        }
+        
+        /* High DPI screens */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .brand-mark, .nav-icon { 
+                image-rendering: -webkit-optimize-contrast;
+                image-rendering: crisp-edges;
+            }
+        }
+        
+        /* Dark mode support (if system prefers) */
+        @media (prefers-color-scheme: light) {
+            /* Keep dark theme always - this is a production app */
+        }
+        
+        /* Reduce motion for accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
+    
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()" style="display: none;">
+        ☰
+    </button>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleMobileMenu()"></div>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
          LOGIN OVERLAY
@@ -4583,6 +4862,101 @@ Rain pours down as SARAH runs through the streets."></textarea>
         };
 
         /* ═══════════════════════════════════════════════════════════════════════
+           DOM SAFETY UTILITIES - Prevent null reference errors
+           ═══════════════════════════════════════════════════════════════════════ */
+        const DOM = {
+            // Safe get element - returns element or null without throwing
+            get(id) {
+                try {
+                    return document.getElementById(id);
+                } catch (e) {
+                    console.warn(`Element not found: ${id}`);
+                    return null;
+                }
+            },
+            
+            // Safe set text content
+            setText(id, value) {
+                const el = this.get(id);
+                if (el) el.textContent = value;
+                return !!el;
+            },
+            
+            // Safe set HTML
+            setHTML(id, html) {
+                const el = this.get(id);
+                if (el) el.innerHTML = html;
+                return !!el;
+            },
+            
+            // Safe set value (for inputs)
+            setValue(id, value) {
+                const el = this.get(id);
+                if (el) el.value = value;
+                return !!el;
+            },
+            
+            // Safe get value
+            getValue(id, defaultValue = '') {
+                const el = this.get(id);
+                return el ? el.value : defaultValue;
+            },
+            
+            // Safe add class
+            addClass(id, className) {
+                const el = this.get(id);
+                if (el) el.classList.add(className);
+                return !!el;
+            },
+            
+            // Safe remove class
+            removeClass(id, className) {
+                const el = this.get(id);
+                if (el) el.classList.remove(className);
+                return !!el;
+            },
+            
+            // Safe toggle class
+            toggleClass(id, className) {
+                const el = this.get(id);
+                if (el) el.classList.toggle(className);
+                return !!el;
+            },
+            
+            // Safe show element
+            show(id) {
+                const el = this.get(id);
+                if (el) el.style.display = '';
+                return !!el;
+            },
+            
+            // Safe hide element
+            hide(id) {
+                const el = this.get(id);
+                if (el) el.style.display = 'none';
+                return !!el;
+            },
+            
+            // Safe focus
+            focus(id) {
+                const el = this.get(id);
+                if (el) {
+                    try {
+                        el.focus();
+                    } catch (e) {
+                        console.warn(`Could not focus element: ${id}`);
+                    }
+                }
+                return !!el;
+            },
+            
+            // Check if element exists
+            exists(id) {
+                return !!this.get(id);
+            }
+        };
+
+        /* ═══════════════════════════════════════════════════════════════════════
            BREAKDOWN CATEGORIES CONFIGURATION
            ═══════════════════════════════════════════════════════════════════════ */
         const BREAKDOWN_CATEGORIES = [
@@ -4723,17 +5097,11 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             async onLogin() {
                 // Hide login overlay, show app
-                const loginOverlay = document.getElementById('login-overlay');
-                const app = document.getElementById('app');
-                const userEmail = document.getElementById('user-email');
-                
-                if (loginOverlay) loginOverlay.classList.add('hidden');
-                if (app) app.style.display = 'grid';
+                document.getElementById('login-overlay').classList.add('hidden');
+                document.getElementById('app').style.display = 'grid';
                 
                 // Update user display
-                if (userEmail) {
-                    userEmail.textContent = this.user.email || this.user.displayName;
-                }
+                document.getElementById('user-email').textContent = this.user.email || this.user.displayName;
                 
                 // Show/hide logout button based on mode
                 const logoutBtn = document.getElementById('logout-btn');
@@ -4752,11 +5120,6 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const banner = document.getElementById('mode-banner');
                 const badge = document.getElementById('mode-badge');
                 const syncStatus = document.getElementById('mode-sync-status');
-                
-                if (!banner || !badge) {
-                    console.warn('Mode banner elements not found');
-                    return;
-                }
                 
                 if (this.isDemoMode) {
                     banner.className = 'mode-banner demo-mode';
@@ -4828,13 +5191,33 @@ Rain pours down as SARAH runs through the streets."></textarea>
            ═══════════════════════════════════════════════════════════════════════ */
         const Core = {
             currentProduction: 'Default Production',
-            data: {},
-            bizData: { leads: [], ledger: [] },
+            data: {
+                // Initialize with defaults to prevent undefined errors
+                cast: {},
+                crew: {},
+                schedule: { strips: [] },
+                breakdowns: [],
+                tech: [],
+                vault: [],
+                days: [],
+                crm: { leads: [], ledger: [] },
+                gantt: { production: [], global: [] },
+                notes: ''
+            },
+            bizData: { leads: [], ledger: [], income: [] },
             activityLog: [],
             syncTimeout: null,
 
                         async init() {
                 console.log('🚀 DC ALACRITY Initializing...');
+                
+                // Ensure data structure exists before any operations
+                if (!this.data) {
+                    this.data = this.getDefaultData();
+                }
+                if (!this.bizData) {
+                    this.bizData = { leads: [], ledger: [], income: [] };
+                }
                 
                 // Load productions list (from Firebase if cloud mode)
                 await this.loadProductionsList();
@@ -5018,21 +5401,42 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             save() {
-                // Save to localStorage immediately
-                localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, JSON.stringify(this.data));
-                
-                // Debounce cloud sync
-                clearTimeout(this.syncTimeout);
-                this.syncTimeout = setTimeout(() => this.syncToCloud(), 2000);
-                
-                this.updateSyncStatus('saving');
+                try {
+                    // Ensure data exists before saving
+                    if (!this.data) {
+                        console.error('Cannot save: data is undefined');
+                        this.data = this.getDefaultData();
+                    }
+                    
+                    // Save to localStorage immediately
+                    localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, JSON.stringify(this.data));
+                    
+                    // Debounce cloud sync
+                    clearTimeout(this.syncTimeout);
+                    this.syncTimeout = setTimeout(() => this.syncToCloud(), 2000);
+                    
+                    this.updateSyncStatus('saving');
+                } catch (error) {
+                    console.error('Save failed:', error);
+                    this.log('Save failed: ' + error.message);
+                }
             },
 
             saveBizData() {
-                localStorage.setItem('dc_alacrity_biz', JSON.stringify(this.bizData));
-                
-                clearTimeout(this.syncTimeout);
-                this.syncTimeout = setTimeout(() => this.syncBizToCloud(), 2000);
+                try {
+                    // Ensure bizData exists before saving
+                    if (!this.bizData) {
+                        console.error('Cannot save: bizData is undefined');
+                        this.bizData = { leads: [], ledger: [], income: [] };
+                    }
+                    
+                    localStorage.setItem('dc_alacrity_biz', JSON.stringify(this.bizData));
+                    
+                    clearTimeout(this.syncTimeout);
+                    this.syncTimeout = setTimeout(() => this.syncBizToCloud(), 2000);
+                } catch (error) {
+                    console.error('BizData save failed:', error);
+                }
             },
 
             async syncToCloud() {
@@ -5213,9 +5617,9 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             renderProductionDropdown() {
-                const select = document.getElementById('project-select');
+                const select = DOM.get('project-select');
                 if (!select) {
-                    console.warn('project-select element not found');
+                    console.warn('project-select element not found, skipping render');
                     return;
                 }
                 const productions = this.getProductions();
@@ -5250,13 +5654,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             renderDashboard() {
-                const statDays = document.getElementById('stat-days');
-                const statTech = document.getElementById('stat-tech');
-                const statVault = document.getElementById('stat-vault');
-                
-                if (statDays) statDays.textContent = (this.data.days || []).length;
-                if (statTech) statTech.textContent = (this.data.tech || []).length;
-                if (statVault) statVault.textContent = (this.data.vault || []).length;
+                // Use DOM utility for safe updates
+                DOM.setText('stat-days', (this.data.days || []).length);
+                DOM.setText('stat-tech', (this.data.tech || []).length);
+                DOM.setText('stat-vault', (this.data.vault || []).length);
                 
                 // Budget calculations with new structure
                 const totalEst = this.data.budget?.lines?.reduce((s, l) => s + l.est, 0) || 0;
@@ -5265,54 +5666,43 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const overBudgetLines = this.data.budget?.lines?.filter(l => l.act > l.est) || [];
                 const overAmount = overBudgetLines.reduce((s, l) => s + (l.act - l.est), 0);
                 
-                const statBudget = document.getElementById('stat-budget');
-                const hotBudget = document.getElementById('hot-budget');
-                const hotSpent = document.getElementById('hot-spent');
-                const hotPayroll = document.getElementById('hot-payroll');
-                
-                if (statBudget) statBudget.textContent = '$' + remaining.toLocaleString();
-                if (hotBudget) hotBudget.textContent = '$' + totalEst.toLocaleString();
-                if (hotSpent) hotSpent.textContent = '$' + totalAct.toLocaleString();
-                if (hotPayroll) hotPayroll.textContent = '$0'; // Placeholder
+                DOM.setText('stat-budget', '$' + remaining.toLocaleString());
+                DOM.setText('hot-budget', '$' + totalEst.toLocaleString());
+                DOM.setText('hot-spent', '$' + totalAct.toLocaleString());
+                DOM.setText('hot-payroll', '$0'); // Placeholder
                 
                 // Update budget indicator
                 this.updateBudgetIndicator(totalEst, totalAct);
                 
                 // Over budget handling
-                const budgetStatus = document.getElementById('budget-status');
-                const budgetText = document.getElementById('budget-text');
-                const overCard = document.getElementById('over-budget-card');
                 if (overBudgetLines.length > 0) {
-                    if (budgetStatus) budgetStatus.classList.add('warning');
-                    if (budgetText) budgetText.textContent = '⚠ OVER BUDGET';
+                    DOM.addClass('budget-status', 'warning');
+                    DOM.setText('budget-text', '⚠ OVER BUDGET');
+                    
+                    const overCard = DOM.get('over-budget-card');
                     if (overCard) {
                         overCard.style.display = 'block';
                         const overVal = overCard.querySelector('.stat-value');
                         if (overVal) overVal.textContent = '$' + overAmount.toLocaleString();
                     }
                 } else {
-                    if (budgetStatus) budgetStatus.classList.remove('warning');
-                    if (budgetText) budgetText.textContent = 'ON BUDGET';
-                    if (overCard) overCard.style.display = 'none';
+                    DOM.removeClass('budget-status', 'warning');
+                    DOM.setText('budget-text', 'ON BUDGET');
+                    DOM.hide('over-budget-card');
                 }
                 
                 // Production CRM pipeline value
                 const prodLeads = this.data.crm?.leads || [];
                 const prodPipelineValue = prodLeads.reduce((sum, lead) => sum + parseFloat(lead.value || 0), 0);
-                const statProdPipeline = document.getElementById('stat-prod-pipeline');
-                if (statProdPipeline) statProdPipeline.textContent = '$' + prodPipelineValue.toLocaleString();
+                DOM.setText('stat-prod-pipeline', '$' + prodPipelineValue.toLocaleString());
                 
                 // Business CRM stats (global)
                 const bizLeads = this.bizData?.leads || [];
                 const bizPipelineValue = bizLeads.reduce((sum, lead) => sum + parseFloat(lead.value || 0), 0);
                 const bizRevenue = this.bizData?.income?.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0) || 0;
-                const bizPipelineValueEl = document.getElementById('biz-pipeline-value');
-                const bizRevenueValueEl = document.getElementById('biz-revenue-value');
-                const bizLeadsCountEl = document.getElementById('biz-leads-count');
-                
-                if (bizPipelineValueEl) bizPipelineValueEl.textContent = '$' + bizPipelineValue.toLocaleString();
-                if (bizRevenueValueEl) bizRevenueValueEl.textContent = '$' + bizRevenue.toLocaleString();
-                if (bizLeadsCountEl) bizLeadsCountEl.textContent = bizLeads.length;
+                DOM.setText('biz-pipeline-value', '$' + bizPipelineValue.toLocaleString());
+                DOM.setText('biz-revenue-value', '$' + bizRevenue.toLocaleString());
+                DOM.setText('biz-leads-count', bizLeads.length);
             },
 
             navigate(viewId) {
@@ -5348,10 +5738,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     'script-import': 'SCRIPT IMPORT',
                     'notes': 'PRODUCTION NOTES'
                 };
-                const pageTitle = document.getElementById('page-title');
-                if (pageTitle) {
-                    pageTitle.textContent = titles[viewId] || viewId.toUpperCase();
-                }
+                document.getElementById('page-title').textContent = titles[viewId] || viewId.toUpperCase();
                 
                 // Update view indicator (Global vs Production)
                 const viewIndicator = document.getElementById('view-indicator');
@@ -5404,7 +5791,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
            ═══════════════════════════════════════════════════════════════════════ */
         const Productions = {
             async load() {
-                const select = document.getElementById('project-select');
+                const select = DOM.get('project-select');
                 if (!select) {
                     console.error('project-select element not found');
                     return;
@@ -5424,15 +5811,15 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 }
             },
             showNew() {
-                document.getElementById('modal-new-production').classList.add('active');
-                document.getElementById('new-production-name').value = '';
-                document.getElementById('new-production-name').focus();
+                DOM.addClass('modal-new-production', 'active');
+                DOM.setValue('new-production-name', '');
+                DOM.focus('new-production-name');
             },
             hideModal() {
-                document.getElementById('modal-new-production').classList.remove('active');
+                DOM.removeClass('modal-new-production', 'active');
             },
             async create() {
-                const name = document.getElementById('new-production-name').value.trim();
+                const name = DOM.getValue('new-production-name').trim();
                 if (!name) { alert('Please enter a production name'); return; }
                 const productions = Core.getProductions();
                 if (productions.includes(name)) { alert('Production already exists'); return; }
@@ -5445,20 +5832,17 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 this.showSuccessNotification(name);
                 
                 // Clear input but keep modal open
-                document.getElementById('new-production-name').value = '';
-                document.getElementById('new-production-name').focus();
+                DOM.setValue('new-production-name', '');
+                DOM.focus('new-production-name');
                 
                 Core.log(`Created production: ${name}`);
             },
             showSuccessNotification(prodName) {
-                const notification = document.getElementById('success-notification');
-                const nameSpan = document.getElementById('success-prod-name');
-                nameSpan.textContent = prodName;
-                
-                notification.classList.add('show');
+                DOM.setText('success-prod-name', prodName);
+                DOM.addClass('success-notification', 'show');
                 
                 setTimeout(() => {
-                    notification.classList.remove('show');
+                    DOM.removeClass('success-notification', 'show');
                 }, 3000);
             },
             rename() {
@@ -5974,10 +6358,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     const pages = this.parsePages(s.pages);
                     return sum + pages;
                 }, 0);
-                const totalPagesEl = document.getElementById('schedule-total-pages');
-                if (totalPagesEl) {
-                    totalPagesEl.textContent = totalPages.toFixed(2) + ' pages';
-                }
+                document.getElementById('schedule-total-pages').textContent = totalPages.toFixed(2) + ' pages';
             },
 
             parsePages(pageStr) {
@@ -6077,29 +6458,17 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             editScene(index) {
                 const strip = Core.data.schedule.strips[index];
-                const modal = document.getElementById('modal-scene');
-                const modalTitle = document.getElementById('scene-modal-title');
-                const sceneId = document.getElementById('scene-id');
-                const sceneNumber = document.getElementById('scene-number');
-                const sceneIntext = document.getElementById('scene-intext');
-                const sceneDaynight = document.getElementById('scene-daynight');
-                const sceneLocation = document.getElementById('scene-location');
-                const sceneShootLocation = document.getElementById('scene-shoot-location');
-                const sceneDescription = document.getElementById('scene-description');
-                const sceneCast = document.getElementById('scene-cast');
-                const scenePages = document.getElementById('scene-pages');
-                
-                if (modal) modal.classList.add('active');
-                if (modalTitle) modalTitle.textContent = 'Edit Scene';
-                if (sceneId) sceneId.value = index;
-                if (sceneNumber) sceneNumber.value = strip.scene || '';
-                if (sceneIntext) sceneIntext.value = strip.intext || 'INT';
-                if (sceneDaynight) sceneDaynight.value = strip.daynight || 'DAY';
-                if (sceneLocation) sceneLocation.value = strip.location || '';
-                if (sceneShootLocation) sceneShootLocation.value = strip.shootLocation || '';
-                if (sceneDescription) sceneDescription.value = strip.description || '';
-                if (sceneCast) sceneCast.value = strip.cast || '';
-                if (scenePages) scenePages.value = strip.pages || '';
+                document.getElementById('modal-scene').classList.add('active');
+                document.getElementById('scene-modal-title').textContent = 'Edit Scene';
+                document.getElementById('scene-id').value = index;
+                document.getElementById('scene-number').value = strip.scene || '';
+                document.getElementById('scene-intext').value = strip.intext || 'INT';
+                document.getElementById('scene-daynight').value = strip.daynight || 'DAY';
+                document.getElementById('scene-location').value = strip.location || '';
+                document.getElementById('scene-shoot-location').value = strip.shootLocation || '';
+                document.getElementById('scene-description').value = strip.description || '';
+                document.getElementById('scene-cast').value = strip.cast || '';
+                document.getElementById('scene-pages').value = strip.pages || '';
             },
 
             saveScene() {
@@ -6265,25 +6634,15 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     </datalist>
                 `;
 
-                const bdSheet = document.getElementById('bd-sheet');
-                const bdPages = document.getElementById('bd-pages');
-                const bdDate = document.getElementById('bd-date');
-                const bdProject = document.getElementById('bd-project');
-                const bdScene = document.getElementById('bd-scene');
-                const bdIntext = document.getElementById('bd-intext');
-                const bdDaynight = document.getElementById('bd-daynight');
-                const bdLocation = document.getElementById('bd-location');
-                const bdDescription = document.getElementById('bd-description');
-                
-                if (bdSheet) bdSheet.value = bd.sheet || '';
-                if (bdPages) bdPages.value = bd.pages || '';
-                if (bdDate) bdDate.value = bd.date || '';
-                if (bdProject) bdProject.value = bd.project || '';
-                if (bdScene) bdScene.value = bd.scene || '';
-                if (bdIntext) bdIntext.value = bd.intext || 'INT';
-                if (bdDaynight) bdDaynight.value = bd.daynight || 'DAY';
-                if (bdLocation) bdLocation.value = bd.location || '';
-                if (bdDescription) bdDescription.value = bd.description || '';
+                document.getElementById('bd-sheet').value = bd.sheet || '';
+                document.getElementById('bd-pages').value = bd.pages || '';
+                document.getElementById('bd-date').value = bd.date || '';
+                document.getElementById('bd-project').value = bd.project || '';
+                document.getElementById('bd-scene').value = bd.scene || '';
+                document.getElementById('bd-intext').value = bd.intext || 'INT';
+                document.getElementById('bd-daynight').value = bd.daynight || 'DAY';
+                document.getElementById('bd-location').value = bd.location || '';
+                document.getElementById('bd-description').value = bd.description || '';
 
                 const catContainer = document.getElementById('breakdown-categories');
                 catContainer.innerHTML = BREAKDOWN_CATEGORIES.map(cat => {
@@ -8046,19 +8405,13 @@ const Gantt = GanttEnhanced;
            ═══════════════════════════════════════════════════════════════════════ */
         const Notes = {
             load() {
-                const notesTextarea = document.getElementById('notes-textarea');
-                if (notesTextarea) {
-                    notesTextarea.value = Core.data.notes || '';
-                }
+                document.getElementById('notes-textarea').value = Core.data.notes || '';
             },
 
             save() {
-                const notesTextarea = document.getElementById('notes-textarea');
-                if (notesTextarea) {
-                    Core.data.notes = notesTextarea.value;
-                    Core.save();
-                    Core.log('Notes saved');
-                }
+                Core.data.notes = document.getElementById('notes-textarea').value;
+                Core.save();
+                Core.log('Notes saved');
             }
         };
 
@@ -10479,10 +10832,45 @@ const Gantt = GanttEnhanced;
         };
 
         /* ═══════════════════════════════════════════════════════════════════════
+           MOBILE MENU FUNCTIONALITY
+           ═══════════════════════════════════════════════════════════════════════ */
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('mobile-open');
+                overlay.classList.toggle('active');
+            }
+        }
+        
+        // Close mobile menu when clicking nav items
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-item')) {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar && overlay) {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                }
+            }
+        });
+        
+        /* ═══════════════════════════════════════════════════════════════════════
            INITIALIZATION
            ═══════════════════════════════════════════════════════════════════════ */
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
+            
+            // Show mobile menu button on appropriate screen sizes
+            const checkMobileMenu = () => {
+                const mobileBtn = document.getElementById('mobile-menu-btn');
+                if (mobileBtn) {
+                    mobileBtn.style.display = window.innerWidth <= 1023 ? 'flex' : 'none';
+                }
+            };
+            checkMobileMenu();
+            window.addEventListener('resize', checkMobileMenu);
         });
     </script>
 </body>
