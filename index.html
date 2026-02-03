@@ -397,14 +397,41 @@
             letter-spacing: 2px;
             position: relative;
             z-index: 1;
+            transition: color 0.3s ease;
+        }
+        .login-status::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            margin-right: 8px;
+            border-radius: 50%;
+            background: var(--text-50);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .login-status.loading::before {
+            opacity: 1;
+            background: var(--neon-cyan);
+            animation: pulse 1.5s ease-in-out infinite;
         }
         .login-status.error { 
             color: var(--neon-rose);
             text-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
         }
+        .login-status.error::before {
+            opacity: 1;
+            background: var(--neon-rose);
+            animation: none;
+        }
         .login-status.success { 
             color: var(--neon-emerald);
             text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+        .login-status.success::before {
+            opacity: 1;
+            background: var(--neon-emerald);
+            animation: none;
         }
 
         /* ═══════════════════════════════════════════════════════════════════════
@@ -3606,30 +3633,37 @@ Rain pours down as SARAH runs through the streets."></textarea>
             isDemoMode: false,
 
             async init() {
-                console.log('🚀 DC ALACRITY Initializing...');
+                console.log('🚀 DC ALACRITY Starting...');
                 
-                // Load productions list (from Firebase if cloud mode)
-                await this.loadProductionsList();
-                this.renderProductionDropdown();
+                // Check if user is already logged in (page reload)
+                if (!window.firebaseReady) {
+                    console.log('Waiting for Firebase...');
+                    await new Promise((resolve) => {
+                        if (window.firebaseReady) {
+                            resolve();
+                        } else {
+                            document.addEventListener('firebaseReady', resolve, { once: true });
+                        }
+                    });
+                }
                 
-                console.log('📂 Loading production data...');
-                // Load current production data (will pull from Firebase first)
-                await this.loadProduction(this.currentProduction);
-                
-                console.log('💼 Loading business CRM data...');
-                // Load business CRM data (global, not per-production)
-                await this.loadBizData();
-                
-                console.log('🎨 Rendering all views...');
-                // Render all views
-                this.renderAll();
-                
-                console.log('🔄 Setting up real-time sync...');
-                // Setup real-time sync LAST
-                this.setupRealtimeSync();
-                
-                console.log('✅ System initialized');
-                this.log('System initialized');
+                // Check for existing auth state
+                window.firebaseOnAuthStateChanged(window.firebaseAuth, async (user) => {
+                    if (user) {
+                        console.log('Found existing session for:', user.email);
+                        const statusEl = document.getElementById('login-status');
+                        statusEl.textContent = 'Restoring your session...';
+                        statusEl.className = 'login-status';
+                        
+                        this.user = user;
+                        this.isDemoMode = false;
+                        await this.onLogin();
+                    } else {
+                        console.log('No existing session - showing login screen');
+                        // Show login overlay
+                        document.getElementById('login-overlay').classList.remove('hidden');
+                    }
+                });
             },
 
             async login() {
@@ -3638,16 +3672,63 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 
                 try {
                     if (btn) btn.disabled = true;
-                    statusEl.textContent = 'Opening authentication...';
-                    statusEl.className = 'login-status';
                     
+                    // Check if Firebase is ready
+                    if (!window.firebaseReady) {
+                        statusEl.textContent = 'Loading Firebase SDK...';
+                        statusEl.className = 'login-status loading';
+                        
+                        // Wait for Firebase to be ready
+                        await new Promise((resolve) => {
+                            if (window.firebaseReady) {
+                                resolve();
+                            } else {
+                                document.addEventListener('firebaseReady', resolve, { once: true });
+                            }
+                        });
+                    }
+                    
+                    statusEl.textContent = 'Opening authentication popup...';
+                    statusEl.className = 'login-status loading';
+                    
+                    // Step 1: Open popup
+                    console.log('Opening Google Sign-In popup...');
                     const result = await window.firebaseSignInWithPopup(window.firebaseAuth, window.firebaseProvider);
+                    
+                    // Step 2: Authentication successful
+                    statusEl.textContent = 'Authentication successful! Loading your data...';
+                    statusEl.className = 'login-status loading';
+                    console.log('User authenticated:', result.user.email);
+                    
                     this.user = result.user;
                     this.isDemoMode = false;
                     
+                    // Step 3: Call onLogin to initialize the app
+                    statusEl.textContent = 'Initializing application...';
+                    statusEl.className = 'login-status loading';
+                    await this.onLogin();
+                    
+                    statusEl.textContent = 'Welcome! Starting your session...';
+                    statusEl.className = 'login-status success';
+                    
                 } catch (error) {
                     console.error('Login error:', error);
-                    statusEl.textContent = 'Authentication failed: ' + error.message;
+                    
+                    // Better error messages
+                    let errorMessage = 'Authentication failed';
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage = 'Sign-in cancelled - Please try again';
+                    } else if (error.code === 'auth/popup-blocked') {
+                        errorMessage = 'Popup blocked - Please allow popups for this site';
+                    } else if (error.code === 'auth/network-request-failed') {
+                        errorMessage = 'Network error - Please check your connection';
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        errorMessage = 'Unauthorized domain - Check Firebase configuration';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    statusEl.textContent = errorMessage;
                     statusEl.className = 'login-status error';
                     if (btn) btn.disabled = false;
                 }
