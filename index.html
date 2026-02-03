@@ -2966,19 +2966,24 @@
         @media (max-width: 1023px) {
             html { font-size: 13px; }
             
-            /* Full mobile sidebar */
+            /* Full mobile sidebar - FIXED FOR MOBILE */
             .app { grid-template-columns: 1fr; }
             .sidebar { 
-                position: fixed; 
-                left: -280px; 
+                position: fixed !important;
+                left: 0 !important;
                 top: 0; 
                 bottom: 0; 
                 width: 280px; 
-                z-index: 9999; 
-                transition: left 0.3s ease;
+                z-index: 9999 !important;
+                transform: translateX(-100%) !important;
+                transition: transform 0.3s ease !important;
                 box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+                pointer-events: all !important;
             }
-            .sidebar.mobile-open { left: 0; }
+            .sidebar.mobile-open { 
+                transform: translateX(0) !important;
+                pointer-events: all !important;
+            }
             
             /* Mobile menu button */
             .mobile-menu-btn {
@@ -3005,8 +3010,18 @@
                 inset: 0;
                 background: rgba(0, 0, 0, 0.7);
                 z-index: 9998;
+                backdrop-filter: blur(4px);
             }
-            .sidebar-overlay.active { display: block; }
+            .sidebar-overlay.active { 
+                display: block; 
+            }
+            
+            /* Better touch targets for mobile */
+            .nav-item {
+                min-height: 48px;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: rgba(0, 240, 255, 0.1);
+            }
             
             .mode-banner { 
                 left: 0; 
@@ -10841,6 +10856,13 @@ const Gantt = GanttEnhanced;
             if (sidebar && overlay) {
                 sidebar.classList.toggle('mobile-open');
                 overlay.classList.toggle('active');
+                
+                // Prevent body scroll when menu is open
+                if (sidebar.classList.contains('mobile-open')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
             }
         }
         
@@ -10852,6 +10874,7 @@ const Gantt = GanttEnhanced;
                 if (sidebar && overlay) {
                     sidebar.classList.remove('mobile-open');
                     overlay.classList.remove('active');
+                    document.body.style.overflow = '';
                 }
             }
         });
