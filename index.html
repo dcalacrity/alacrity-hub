@@ -4723,11 +4723,17 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             async onLogin() {
                 // Hide login overlay, show app
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('app').style.display = 'grid';
+                const loginOverlay = document.getElementById('login-overlay');
+                const app = document.getElementById('app');
+                const userEmail = document.getElementById('user-email');
+                
+                if (loginOverlay) loginOverlay.classList.add('hidden');
+                if (app) app.style.display = 'grid';
                 
                 // Update user display
-                document.getElementById('user-email').textContent = this.user.email || this.user.displayName;
+                if (userEmail) {
+                    userEmail.textContent = this.user.email || this.user.displayName;
+                }
                 
                 // Show/hide logout button based on mode
                 const logoutBtn = document.getElementById('logout-btn');
@@ -4746,6 +4752,11 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const banner = document.getElementById('mode-banner');
                 const badge = document.getElementById('mode-badge');
                 const syncStatus = document.getElementById('mode-sync-status');
+                
+                if (!banner || !badge) {
+                    console.warn('Mode banner elements not found');
+                    return;
+                }
                 
                 if (this.isDemoMode) {
                     banner.className = 'mode-banner demo-mode';
@@ -5203,6 +5214,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             renderProductionDropdown() {
                 const select = document.getElementById('project-select');
+                if (!select) {
+                    console.warn('project-select element not found');
+                    return;
+                }
                 const productions = this.getProductions();
                 select.innerHTML = productions.map(p => 
                     `<option value="${p}" ${p === this.currentProduction ? 'selected' : ''}>${p}</option>`
@@ -5235,9 +5250,13 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             renderDashboard() {
-                document.getElementById('stat-days').textContent = (this.data.days || []).length;
-                document.getElementById('stat-tech').textContent = (this.data.tech || []).length;
-                document.getElementById('stat-vault').textContent = (this.data.vault || []).length;
+                const statDays = document.getElementById('stat-days');
+                const statTech = document.getElementById('stat-tech');
+                const statVault = document.getElementById('stat-vault');
+                
+                if (statDays) statDays.textContent = (this.data.days || []).length;
+                if (statTech) statTech.textContent = (this.data.tech || []).length;
+                if (statVault) statVault.textContent = (this.data.vault || []).length;
                 
                 // Budget calculations with new structure
                 const totalEst = this.data.budget?.lines?.reduce((s, l) => s + l.est, 0) || 0;
@@ -5246,10 +5265,15 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const overBudgetLines = this.data.budget?.lines?.filter(l => l.act > l.est) || [];
                 const overAmount = overBudgetLines.reduce((s, l) => s + (l.act - l.est), 0);
                 
-                document.getElementById('stat-budget').textContent = '$' + remaining.toLocaleString();
-                document.getElementById('hot-budget').textContent = '$' + totalEst.toLocaleString();
-                document.getElementById('hot-spent').textContent = '$' + totalAct.toLocaleString();
-                document.getElementById('hot-payroll').textContent = '$0'; // Placeholder
+                const statBudget = document.getElementById('stat-budget');
+                const hotBudget = document.getElementById('hot-budget');
+                const hotSpent = document.getElementById('hot-spent');
+                const hotPayroll = document.getElementById('hot-payroll');
+                
+                if (statBudget) statBudget.textContent = '$' + remaining.toLocaleString();
+                if (hotBudget) hotBudget.textContent = '$' + totalEst.toLocaleString();
+                if (hotSpent) hotSpent.textContent = '$' + totalAct.toLocaleString();
+                if (hotPayroll) hotPayroll.textContent = '$0'; // Placeholder
                 
                 // Update budget indicator
                 this.updateBudgetIndicator(totalEst, totalAct);
@@ -5259,31 +5283,36 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const budgetText = document.getElementById('budget-text');
                 const overCard = document.getElementById('over-budget-card');
                 if (overBudgetLines.length > 0) {
-                    budgetStatus.classList.add('warning');
-                    budgetText.textContent = '⚠ OVER BUDGET';
+                    if (budgetStatus) budgetStatus.classList.add('warning');
+                    if (budgetText) budgetText.textContent = '⚠ OVER BUDGET';
                     if (overCard) {
                         overCard.style.display = 'block';
                         const overVal = overCard.querySelector('.stat-value');
                         if (overVal) overVal.textContent = '$' + overAmount.toLocaleString();
                     }
                 } else {
-                    budgetStatus.classList.remove('warning');
-                    budgetText.textContent = 'ON BUDGET';
+                    if (budgetStatus) budgetStatus.classList.remove('warning');
+                    if (budgetText) budgetText.textContent = 'ON BUDGET';
                     if (overCard) overCard.style.display = 'none';
                 }
                 
                 // Production CRM pipeline value
                 const prodLeads = this.data.crm?.leads || [];
                 const prodPipelineValue = prodLeads.reduce((sum, lead) => sum + parseFloat(lead.value || 0), 0);
-                document.getElementById('stat-prod-pipeline').textContent = '$' + prodPipelineValue.toLocaleString();
+                const statProdPipeline = document.getElementById('stat-prod-pipeline');
+                if (statProdPipeline) statProdPipeline.textContent = '$' + prodPipelineValue.toLocaleString();
                 
                 // Business CRM stats (global)
                 const bizLeads = this.bizData?.leads || [];
                 const bizPipelineValue = bizLeads.reduce((sum, lead) => sum + parseFloat(lead.value || 0), 0);
                 const bizRevenue = this.bizData?.income?.reduce((sum, inc) => sum + parseFloat(inc.amount || 0), 0) || 0;
-                document.getElementById('biz-pipeline-value').textContent = '$' + bizPipelineValue.toLocaleString();
-                document.getElementById('biz-revenue-value').textContent = '$' + bizRevenue.toLocaleString();
-                document.getElementById('biz-leads-count').textContent = bizLeads.length;
+                const bizPipelineValueEl = document.getElementById('biz-pipeline-value');
+                const bizRevenueValueEl = document.getElementById('biz-revenue-value');
+                const bizLeadsCountEl = document.getElementById('biz-leads-count');
+                
+                if (bizPipelineValueEl) bizPipelineValueEl.textContent = '$' + bizPipelineValue.toLocaleString();
+                if (bizRevenueValueEl) bizRevenueValueEl.textContent = '$' + bizRevenue.toLocaleString();
+                if (bizLeadsCountEl) bizLeadsCountEl.textContent = bizLeads.length;
             },
 
             navigate(viewId) {
@@ -5319,7 +5348,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     'script-import': 'SCRIPT IMPORT',
                     'notes': 'PRODUCTION NOTES'
                 };
-                document.getElementById('page-title').textContent = titles[viewId] || viewId.toUpperCase();
+                const pageTitle = document.getElementById('page-title');
+                if (pageTitle) {
+                    pageTitle.textContent = titles[viewId] || viewId.toUpperCase();
+                }
                 
                 // Update view indicator (Global vs Production)
                 const viewIndicator = document.getElementById('view-indicator');
@@ -5373,6 +5405,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
         const Productions = {
             async load() {
                 const select = document.getElementById('project-select');
+                if (!select) {
+                    console.error('project-select element not found');
+                    return;
+                }
                 const prodName = select.value;
                 console.log('🔄 Switching to production:', prodName);
                 try {
@@ -5938,7 +5974,10 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     const pages = this.parsePages(s.pages);
                     return sum + pages;
                 }, 0);
-                document.getElementById('schedule-total-pages').textContent = totalPages.toFixed(2) + ' pages';
+                const totalPagesEl = document.getElementById('schedule-total-pages');
+                if (totalPagesEl) {
+                    totalPagesEl.textContent = totalPages.toFixed(2) + ' pages';
+                }
             },
 
             parsePages(pageStr) {
@@ -6038,17 +6077,29 @@ Rain pours down as SARAH runs through the streets."></textarea>
 
             editScene(index) {
                 const strip = Core.data.schedule.strips[index];
-                document.getElementById('modal-scene').classList.add('active');
-                document.getElementById('scene-modal-title').textContent = 'Edit Scene';
-                document.getElementById('scene-id').value = index;
-                document.getElementById('scene-number').value = strip.scene || '';
-                document.getElementById('scene-intext').value = strip.intext || 'INT';
-                document.getElementById('scene-daynight').value = strip.daynight || 'DAY';
-                document.getElementById('scene-location').value = strip.location || '';
-                document.getElementById('scene-shoot-location').value = strip.shootLocation || '';
-                document.getElementById('scene-description').value = strip.description || '';
-                document.getElementById('scene-cast').value = strip.cast || '';
-                document.getElementById('scene-pages').value = strip.pages || '';
+                const modal = document.getElementById('modal-scene');
+                const modalTitle = document.getElementById('scene-modal-title');
+                const sceneId = document.getElementById('scene-id');
+                const sceneNumber = document.getElementById('scene-number');
+                const sceneIntext = document.getElementById('scene-intext');
+                const sceneDaynight = document.getElementById('scene-daynight');
+                const sceneLocation = document.getElementById('scene-location');
+                const sceneShootLocation = document.getElementById('scene-shoot-location');
+                const sceneDescription = document.getElementById('scene-description');
+                const sceneCast = document.getElementById('scene-cast');
+                const scenePages = document.getElementById('scene-pages');
+                
+                if (modal) modal.classList.add('active');
+                if (modalTitle) modalTitle.textContent = 'Edit Scene';
+                if (sceneId) sceneId.value = index;
+                if (sceneNumber) sceneNumber.value = strip.scene || '';
+                if (sceneIntext) sceneIntext.value = strip.intext || 'INT';
+                if (sceneDaynight) sceneDaynight.value = strip.daynight || 'DAY';
+                if (sceneLocation) sceneLocation.value = strip.location || '';
+                if (sceneShootLocation) sceneShootLocation.value = strip.shootLocation || '';
+                if (sceneDescription) sceneDescription.value = strip.description || '';
+                if (sceneCast) sceneCast.value = strip.cast || '';
+                if (scenePages) scenePages.value = strip.pages || '';
             },
 
             saveScene() {
@@ -6214,15 +6265,25 @@ Rain pours down as SARAH runs through the streets."></textarea>
                     </datalist>
                 `;
 
-                document.getElementById('bd-sheet').value = bd.sheet || '';
-                document.getElementById('bd-pages').value = bd.pages || '';
-                document.getElementById('bd-date').value = bd.date || '';
-                document.getElementById('bd-project').value = bd.project || '';
-                document.getElementById('bd-scene').value = bd.scene || '';
-                document.getElementById('bd-intext').value = bd.intext || 'INT';
-                document.getElementById('bd-daynight').value = bd.daynight || 'DAY';
-                document.getElementById('bd-location').value = bd.location || '';
-                document.getElementById('bd-description').value = bd.description || '';
+                const bdSheet = document.getElementById('bd-sheet');
+                const bdPages = document.getElementById('bd-pages');
+                const bdDate = document.getElementById('bd-date');
+                const bdProject = document.getElementById('bd-project');
+                const bdScene = document.getElementById('bd-scene');
+                const bdIntext = document.getElementById('bd-intext');
+                const bdDaynight = document.getElementById('bd-daynight');
+                const bdLocation = document.getElementById('bd-location');
+                const bdDescription = document.getElementById('bd-description');
+                
+                if (bdSheet) bdSheet.value = bd.sheet || '';
+                if (bdPages) bdPages.value = bd.pages || '';
+                if (bdDate) bdDate.value = bd.date || '';
+                if (bdProject) bdProject.value = bd.project || '';
+                if (bdScene) bdScene.value = bd.scene || '';
+                if (bdIntext) bdIntext.value = bd.intext || 'INT';
+                if (bdDaynight) bdDaynight.value = bd.daynight || 'DAY';
+                if (bdLocation) bdLocation.value = bd.location || '';
+                if (bdDescription) bdDescription.value = bd.description || '';
 
                 const catContainer = document.getElementById('breakdown-categories');
                 catContainer.innerHTML = BREAKDOWN_CATEGORIES.map(cat => {
@@ -7985,13 +8046,19 @@ const Gantt = GanttEnhanced;
            ═══════════════════════════════════════════════════════════════════════ */
         const Notes = {
             load() {
-                document.getElementById('notes-textarea').value = Core.data.notes || '';
+                const notesTextarea = document.getElementById('notes-textarea');
+                if (notesTextarea) {
+                    notesTextarea.value = Core.data.notes || '';
+                }
             },
 
             save() {
-                Core.data.notes = document.getElementById('notes-textarea').value;
-                Core.save();
-                Core.log('Notes saved');
+                const notesTextarea = document.getElementById('notes-textarea');
+                if (notesTextarea) {
+                    Core.data.notes = notesTextarea.value;
+                    Core.save();
+                    Core.log('Notes saved');
+                }
             }
         };
 
