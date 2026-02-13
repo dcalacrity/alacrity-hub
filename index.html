@@ -2902,7 +2902,6 @@
         }
         @media (max-width: 768px) {
             .app { grid-template-columns: 1fr; }
-            /* Sidebar controlled by transform on mobile */
             .grid-2, .grid-3, .grid-4, .grid-6 { grid-template-columns: 1fr; }
             .kanban-wrapper { grid-template-columns: 1fr; }
             .dialer-grid { grid-template-columns: 1fr; }
@@ -2988,13 +2987,8 @@
                 background: linear-gradient(180deg, #0f1318 0%, #030508 100%) !important;
                 filter: none !important;
                 isolation: isolate !important;
-                will-change: transform !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
-                /* Force new stacking context to prevent blur */
-                transform-style: preserve-3d !important;
-                backface-visibility: hidden !important;
-                -webkit-backface-visibility: hidden !important;
             }
             .sidebar.mobile-open { 
                 transform: translateX(0) !important;
@@ -3025,13 +3019,13 @@
                 filter: none !important;
             }
             
-            /* Mobile menu button - HIDDEN until logged in */
+            /* Mobile menu button - HIDDEN by default */
             .mobile-menu-btn {
-                display: none !important; /* Hidden by default */
+                display: none;
                 position: fixed !important;
                 top: 8px !important;
                 left: 8px !important;
-                z-index: 10002 !important;
+                z-index: 10000 !important;
                 width: 48px !important;
                 height: 48px !important;
                 background: var(--surface-2) !important;
@@ -3047,19 +3041,26 @@
                 -webkit-tap-highlight-color: rgba(0, 240, 255, 0.2) !important;
             }
             
+            /* Only show when this class is added by JavaScript */
+            .mobile-menu-btn.show {
+                display: flex !important;
+            }
+            
             .mobile-menu-btn:active {
                 background: var(--surface-3) !important;
                 transform: scale(0.95) !important;
             }
             
-            /* Overlay for sidebar - NO BLUR to prevent sidebar blur */
+            /* Overlay for sidebar - positioned to right of sidebar */
             .sidebar-overlay {
                 display: none !important;
                 position: fixed !important;
-                inset: 0 !important;
+                top: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                left: 280px !important;
                 background: rgba(0, 0, 0, 0.85) !important;
-                z-index: 10000 !important;
-                /* NO backdrop-filter - it causes sidebar to blur */
+                z-index: 9998 !important;
             }
             
             .sidebar-overlay.active { 
@@ -5870,7 +5871,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const view = document.getElementById('view-' + viewId);
                 if (view) view.classList.add('active');
                 
-                // Close mobile menu after navigation (mobile only)
+                // Close mobile menu AFTER navigation
                 if (window.innerWidth <= 1023) {
                     setTimeout(() => {
                         const sidebar = document.querySelector('.sidebar');
@@ -5880,7 +5881,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                             overlay.classList.remove('active');
                             document.body.style.overflow = '';
                         }
-                    }, 350);
+                    }, 250);
                 }
             },
 
@@ -10983,33 +10984,26 @@ const Gantt = GanttEnhanced;
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
             
-            // Control hamburger menu visibility - ONLY show when logged in
-            function showHamburgerWhenLoggedIn() {
-                const hamburger = document.getElementById('mobile-menu-btn');
+            // Control hamburger with class instead of inline style
+            const updateHamburger = () => {
+                const btn = document.getElementById('mobile-menu-btn');
                 const app = document.getElementById('app');
-                
-                if (!hamburger || !app) return;
-                
-                const isMobile = window.innerWidth <= 1023;
-                const isLoggedIn = app.style.display === 'grid';
-                
-                // ONLY show hamburger when: mobile screen AND logged in
-                if (isMobile && isLoggedIn) {
-                    hamburger.style.display = 'flex';
-                } else {
-                    hamburger.style.display = 'none';
+                if (btn && app) {
+                    const shouldShow = (window.innerWidth <= 1023) && (app.style.display === 'grid');
+                    if (shouldShow) {
+                        btn.classList.add('show');
+                    } else {
+                        btn.classList.remove('show');
+                    }
                 }
-            }
+            };
             
-            // Check on load and resize
-            showHamburgerWhenLoggedIn();
-            window.addEventListener('resize', showHamburgerWhenLoggedIn);
+            updateHamburger();
+            window.addEventListener('resize', updateHamburger);
             
-            // Watch for app display changes (login/logout)
             const app = document.getElementById('app');
             if (app) {
-                const observer = new MutationObserver(showHamburgerWhenLoggedIn);
-                observer.observe(app, {
+                new MutationObserver(updateHamburger).observe(app, {
                     attributes: true,
                     attributeFilter: ['style']
                 });
