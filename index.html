@@ -2902,7 +2902,7 @@
         }
         @media (max-width: 768px) {
             .app { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
+            /* Sidebar controlled by transform on mobile */
             .grid-2, .grid-3, .grid-4, .grid-6 { grid-template-columns: 1fr; }
             .kanban-wrapper { grid-template-columns: 1fr; }
             .dialer-grid { grid-template-columns: 1fr; }
@@ -2978,7 +2978,7 @@
                 bottom: 0 !important;
                 width: 280px !important;
                 height: 100vh !important;
-                z-index: 9999 !important;
+                z-index: 10001 !important;
                 transform: translateX(-100%) !important;
                 transition: transform 0.3s ease !important;
                 box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
@@ -2987,9 +2987,14 @@
                 visibility: visible !important;
                 background: linear-gradient(180deg, #0f1318 0%, #030508 100%) !important;
                 filter: none !important;
-                isolation: isolate;
+                isolation: isolate !important;
+                will-change: transform !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
+                /* Force new stacking context to prevent blur */
+                transform-style: preserve-3d !important;
+                backface-visibility: hidden !important;
+                -webkit-backface-visibility: hidden !important;
             }
             .sidebar.mobile-open { 
                 transform: translateX(0) !important;
@@ -3020,13 +3025,13 @@
                 filter: none !important;
             }
             
-            /* Mobile menu button */
+            /* Mobile menu button - HIDDEN until logged in */
             .mobile-menu-btn {
-                display: flex !important;
+                display: none !important; /* Hidden by default */
                 position: fixed !important;
                 top: 8px !important;
                 left: 8px !important;
-                z-index: 10000 !important;
+                z-index: 10002 !important;
                 width: 48px !important;
                 height: 48px !important;
                 background: var(--surface-2) !important;
@@ -3047,15 +3052,14 @@
                 transform: scale(0.95) !important;
             }
             
-            /* Overlay for sidebar */
+            /* Overlay for sidebar - NO BLUR to prevent sidebar blur */
             .sidebar-overlay {
                 display: none !important;
                 position: fixed !important;
                 inset: 0 !important;
-                background: rgba(0, 0, 0, 0.7) !important;
-                z-index: 9998 !important;
-                backdrop-filter: blur(4px) !important;
-                -webkit-backdrop-filter: blur(4px) !important;
+                background: rgba(0, 0, 0, 0.85) !important;
+                z-index: 10000 !important;
+                /* NO backdrop-filter - it causes sidebar to blur */
             }
             
             .sidebar-overlay.active { 
@@ -5815,17 +5819,6 @@ Rain pours down as SARAH runs through the streets."></textarea>
             },
 
             navigate(viewId) {
-                // Close mobile menu if open
-                if (window.innerWidth <= 1023) {
-                    const sidebar = document.querySelector('.sidebar');
-                    const overlay = document.getElementById('sidebar-overlay');
-                    if (sidebar && overlay) {
-                        sidebar.classList.remove('mobile-open');
-                        overlay.classList.remove('active');
-                        document.body.style.overflow = '';
-                    }
-                }
-                
                 // Update active nav item
                 document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
                 const navItem = document.querySelector(`.nav-item[onclick*="${viewId}"]`);
@@ -5876,6 +5869,19 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
                 const view = document.getElementById('view-' + viewId);
                 if (view) view.classList.add('active');
+                
+                // Close mobile menu after navigation (mobile only)
+                if (window.innerWidth <= 1023) {
+                    setTimeout(() => {
+                        const sidebar = document.querySelector('.sidebar');
+                        const overlay = document.getElementById('sidebar-overlay');
+                        if (sidebar && overlay) {
+                            sidebar.classList.remove('mobile-open');
+                            overlay.classList.remove('active');
+                            document.body.style.overflow = '';
+                        }
+                    }, 350);
+                }
             },
 
             log(message) {
@@ -10971,34 +10977,43 @@ const Gantt = GanttEnhanced;
             }
         }
         
-        // Close mobile menu when clicking nav items
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.nav-item')) {
-                const sidebar = document.querySelector('.sidebar');
-                const overlay = document.getElementById('sidebar-overlay');
-                if (sidebar && overlay) {
-                    sidebar.classList.remove('mobile-open');
-                    overlay.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            }
-        });
-        
         /* ═══════════════════════════════════════════════════════════════════════
            INITIALIZATION
            ═══════════════════════════════════════════════════════════════════════ */
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
             
-            // Show mobile menu button on appropriate screen sizes
-            const checkMobileMenu = () => {
-                const mobileBtn = document.getElementById('mobile-menu-btn');
-                if (mobileBtn) {
-                    mobileBtn.style.display = window.innerWidth <= 1023 ? 'flex' : 'none';
+            // Control hamburger menu visibility - ONLY show when logged in
+            function showHamburgerWhenLoggedIn() {
+                const hamburger = document.getElementById('mobile-menu-btn');
+                const app = document.getElementById('app');
+                
+                if (!hamburger || !app) return;
+                
+                const isMobile = window.innerWidth <= 1023;
+                const isLoggedIn = app.style.display === 'grid';
+                
+                // ONLY show hamburger when: mobile screen AND logged in
+                if (isMobile && isLoggedIn) {
+                    hamburger.style.display = 'flex';
+                } else {
+                    hamburger.style.display = 'none';
                 }
-            };
-            checkMobileMenu();
-            window.addEventListener('resize', checkMobileMenu);
+            }
+            
+            // Check on load and resize
+            showHamburgerWhenLoggedIn();
+            window.addEventListener('resize', showHamburgerWhenLoggedIn);
+            
+            // Watch for app display changes (login/logout)
+            const app = document.getElementById('app');
+            if (app) {
+                const observer = new MutationObserver(showHamburgerWhenLoggedIn);
+                observer.observe(app, {
+                    attributes: true,
+                    attributeFilter: ['style']
+                });
+            }
         });
     </script>
 </body>
