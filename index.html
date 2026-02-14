@@ -2769,6 +2769,53 @@
             transform: translateY(-2px);
         }
 
+        /* ═══════════════════════════════════════════════════════════════════════
+           EXPORT & BACKUP STYLES
+           ═══════════════════════════════════════════════════════════════════════ */
+        .export-section {
+            margin-bottom: var(--space-xl);
+            padding: var(--space-lg);
+            background: var(--surface-3);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+        }
+        .export-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-100);
+            margin-bottom: var(--space-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        .export-section-desc {
+            font-size: 13px;
+            color: var(--text-70);
+            margin-bottom: var(--space-lg);
+            line-height: 1.6;
+        }
+        .export-buttons {
+            display: flex;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+        }
+        .page-header {
+            margin-bottom: var(--space-xl);
+        }
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 32px;
+            letter-spacing: 4px;
+            margin-bottom: var(--space-sm);
+        }
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-70);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════════════════════════════════ */
         /* Responsive Calendar */
         @media (max-width: 1400px) {
             .calendar-container {
@@ -2977,7 +3024,7 @@
                 bottom: 0 !important;
                 width: 280px !important;
                 height: 100vh !important;
-                z-index: 10001 !important;
+                z-index: 9999 !important;
                 transform: translateX(-100%) !important;
                 transition: transform 0.3s ease !important;
                 box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
@@ -2986,7 +3033,7 @@
                 visibility: visible !important;
                 background: linear-gradient(180deg, #0f1318 0%, #030508 100%) !important;
                 filter: none !important;
-                isolation: isolate !important;
+                isolation: isolate;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
             }
@@ -3019,7 +3066,7 @@
                 filter: none !important;
             }
             
-            /* Mobile menu button - HIDDEN by default */
+            /* Mobile menu button */
             .mobile-menu-btn {
                 display: none;
                 position: fixed !important;
@@ -3041,8 +3088,7 @@
                 -webkit-tap-highlight-color: rgba(0, 240, 255, 0.2) !important;
             }
             
-            /* Only show when this class is added by JavaScript */
-            .mobile-menu-btn.show {
+            .mobile-menu-btn.visible {
                 display: flex !important;
             }
             
@@ -3051,7 +3097,7 @@
                 transform: scale(0.95) !important;
             }
             
-            /* Overlay for sidebar - positioned to right of sidebar */
+            /* Overlay for sidebar */
             .sidebar-overlay {
                 display: none !important;
                 position: fixed !important;
@@ -3059,7 +3105,9 @@
                 right: 0 !important;
                 bottom: 0 !important;
                 left: 280px !important;
-                background: rgba(0, 0, 0, 0.85) !important;
+                background: rgba(0, 0, 0, 0.6) !important;
+                backdrop-filter: blur(8px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(8px) saturate(180%) !important;
                 z-index: 9998 !important;
             }
             
@@ -3498,9 +3546,9 @@
                         <span class="nav-icon">📓</span>
                         <span class="nav-text">Production Notes</span>
                     </div>
-                    <div class="nav-item" onclick="DataManager.exportAllData()">
+                    <div class="nav-item" onclick="Core.navigate('export')">
                         <span class="nav-icon">📤</span>
-                        <span class="nav-text">Export All Data</span>
+                        <span class="nav-text">Export & Backup</span>
                     </div>
                 </div>
             </nav>
@@ -4299,6 +4347,99 @@ Rain pours down as SARAH runs through the streets."></textarea>
                         </div>
                         <div class="card-body">
                             <textarea class="form-textarea" id="production-notes" style="min-height: 500px;" placeholder="Enter production notes here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXPORT & BACKUP VIEW -->
+                <div id="view-export" class="view">
+                    <div class="page-header">
+                        <div class="page-title">📤 Export & Backup</div>
+                        <div class="page-subtitle">Comprehensive data export and backup system with history tracking</div>
+                    </div>
+
+                    <!-- Global CRM Export -->
+                    <div class="export-section">
+                        <div class="export-section-title">
+                            🌐 Global CRM Export
+                        </div>
+                        <div class="export-section-desc">
+                            Export your global database including all cast, crew, vendors, and locations. This data is production-independent and can be imported into any system instance.
+                        </div>
+                        <div class="export-buttons">
+                            <button class="btn btn-primary" onclick="DataManager.exportGlobalCRM()">
+                                💾 Export Global CRM (JSON)
+                            </button>
+                            <button class="btn" onclick="DataManager.exportToCSV('cast')">
+                                📊 Export Cast (CSV)
+                            </button>
+                            <button class="btn" onclick="DataManager.exportToCSV('crew')">
+                                📊 Export Crew (CSV)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Production Export -->
+                    <div class="export-section">
+                        <div class="export-section-title">
+                            🎬 Production Export
+                        </div>
+                        <div class="export-section-desc">
+                            Export data for the currently selected production including schedule, budget, milestones, and production-specific information. This export can be re-imported as a standalone production.
+                        </div>
+                        <div class="export-buttons">
+                            <button class="btn btn-primary" onclick="DataManager.exportProductionData()">
+                                💾 Export Current Production (JSON)
+                            </button>
+                            <button class="btn" onclick="DataManager.exportToCSV('schedule')">
+                                📊 Export Schedule (CSV)
+                            </button>
+                            <button class="btn btn-export" onclick="DataManager.exportProductionReadable()">
+                                📄 Export Readable Production Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Complete System Export -->
+                    <div class="export-section">
+                        <div class="export-section-title">
+                            🌟 Complete System Export
+                        </div>
+                        <div class="export-section-desc">
+                            Export everything: Global CRM data + all productions with their complete data. This is a full system backup that can restore your entire workspace.
+                        </div>
+                        <div class="export-buttons">
+                            <button class="btn btn-primary" onclick="DataManager.exportEverything()">
+                                💾 Export Everything (Full Backup)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Import Section -->
+                    <div class="export-section">
+                        <div class="export-section-title">
+                            📥 Import Data
+                        </div>
+                        <div class="export-section-desc">
+                            Import previously exported data. You can import Global CRM data, individual productions, or complete system backups.
+                        </div>
+                        <div class="export-buttons">
+                            <button class="btn btn-export" onclick="DataManager.importData()">
+                                📥 Import Data File
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Export History (Cloud Mode Only) -->
+                    <div id="export-history-section" class="export-history-container" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">📜 Export History</div>
+                                <p style="font-size: 13px; color: var(--text-70); margin-top: 4px;">View and restore previous exports (Cloud Mode feature)</p>
+                            </div>
+                            <div class="card-body">
+                                <div id="export-history-timeline" class="timeline"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5854,7 +5995,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 };
                 document.getElementById('page-title').textContent = titles[viewId] || viewId.toUpperCase();
                 
-                // Update view indicator (Global vs Production)
+                // Update view indicator
                 const viewIndicator = document.getElementById('view-indicator');
                 if (viewIndicator) {
                     if (viewId.startsWith('biz-')) {
@@ -5871,7 +6012,7 @@ Rain pours down as SARAH runs through the streets."></textarea>
                 const view = document.getElementById('view-' + viewId);
                 if (view) view.classList.add('active');
                 
-                // Close mobile menu AFTER navigation
+                // Close mobile menu after navigation
                 if (window.innerWidth <= 1023) {
                     setTimeout(() => {
                         const sidebar = document.querySelector('.sidebar');
@@ -10869,26 +11010,112 @@ const Gantt = GanttEnhanced;
         /* ═══════════════════════════════════════════════════════════════════════
            NEW FEATURE 7: ADVANCED DATA EXPORT/IMPORT
            ═══════════════════════════════════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════════════════════════════════
+           ENHANCED DATA EXPORT/IMPORT SYSTEM
+           ═══════════════════════════════════════════════════════════════════════ */
         const DataManager = {
-            exportAllData() {
+            // Export Global CRM Only
+            exportGlobalCRM() {
                 const data = {
-                    production: Core.currentProduction,
+                    exportType: 'global_crm',
                     exportDate: new Date().toISOString(),
-                    version: '6.0',
-                    data: Core.data,
+                    version: '7.0',
                     bizData: Core.bizData
                 };
                 
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                this.downloadJSON(data, `GlobalCRM_${this.getDateString()}.json`);
+                Core.log('Global CRM data exported');
+                alert('Global CRM data exported successfully!');
+            },
+            
+            // Export Current Production Only
+            exportProductionData() {
+                if (Core.currentProduction === 'GLOBAL') {
+                    alert('Please select a production to export');
+                    return;
+                }
+                
+                const data = {
+                    exportType: 'production',
+                    exportDate: new Date().toISOString(),
+                    version: '7.0',
+                    productionName: Core.currentProduction,
+                    productionData: Core.data[Core.currentProduction]
+                };
+                
+                this.downloadJSON(data, `${clean(Core.currentProduction)}_${this.getDateString()}.json`);
+                Core.log(`Production "${Core.currentProduction}" exported`);
+                alert('Production data exported successfully!');
+            },
+            
+            // Export Readable Production Report
+            exportProductionReadable() {
+                if (Core.currentProduction === 'GLOBAL') {
+                    alert('Please select a production to export');
+                    return;
+                }
+                
+                const prod = Core.data[Core.currentProduction];
+                const schedule = prod?.schedule || {};
+                const budget = prod?.budget || {};
+                const milestones = prod?.milestones || [];
+                
+                let report = `PRODUCTION REPORT: ${Core.currentProduction}\n`;
+                report += `Generated: ${new Date().toLocaleString()}\n`;
+                report += `${'='.repeat(60)}\n\n`;
+                
+                // Schedule Summary
+                report += `SCHEDULE\n${'-'.repeat(60)}\n`;
+                const scenes = schedule.strips?.filter(s => s.type === 'scene') || [];
+                scenes.forEach(s => {
+                    report += `Scene ${s.scene}: ${s.intext} ${s.location} - ${s.daynight}\n`;
+                    report += `  Cast: ${s.cast || 'N/A'} | Pages: ${s.pages || 'N/A'}\n\n`;
+                });
+                
+                // Budget Summary
+                report += `\nBUDGET\n${'-'.repeat(60)}\n`;
+                const total = budget.items?.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) || 0;
+                report += `Total Budget: $${total.toLocaleString()}\n\n`;
+                budget.items?.forEach(item => {
+                    report += `${item.category}: $${parseFloat(item.amount || 0).toLocaleString()}\n`;
+                    report += `  ${item.description}\n\n`;
+                });
+                
+                // Milestones
+                report += `\nMILESTONES\n${'-'.repeat(60)}\n`;
+                milestones.forEach(m => {
+                    report += `${m.completed ? '✓' : '○'} ${m.title} (${m.phase})\n`;
+                    report += `  Due: ${m.dueDate}\n\n`;
+                });
+                
+                const blob = new Blob([report], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${clean(Core.currentProduction)}_backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.download = `${clean(Core.currentProduction)}_Report_${this.getDateString()}.txt`;
                 a.click();
                 URL.revokeObjectURL(url);
-                Core.log('Data exported successfully');
+                
+                Core.log('Readable production report exported');
+                alert('Production report exported successfully!');
             },
             
+            // Export Everything (Full System Backup)
+            exportEverything() {
+                const data = {
+                    exportType: 'full_backup',
+                    exportDate: new Date().toISOString(),
+                    version: '7.0',
+                    bizData: Core.bizData,
+                    productions: Core.data
+                };
+                
+                this.downloadJSON(data, `FullBackup_${this.getDateString()}.json`);
+                Core.log('Full system backup exported');
+                alert('Full system backup exported successfully!');
+            },
+            
+            // Import Data
             importData() {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -10901,15 +11128,43 @@ const Gantt = GanttEnhanced;
                     reader.onload = (event) => {
                         try {
                             const imported = JSON.parse(event.target.result);
-                            if (imported.data) {
-                                Core.data = imported.data;
-                                Core.save();
-                                Core.renderAll();
-                                Core.log('Data imported successfully');
-                                alert('Data imported successfully!');
+                            
+                            // Validate import
+                            if (!imported.exportType || !imported.version) {
+                                alert('Invalid export file format');
+                                return;
+                            }
+                            
+                            // Handle different import types
+                            if (imported.exportType === 'global_crm') {
+                                if (confirm('Import Global CRM data? This will merge with existing data.')) {
+                                    Core.bizData = { ...Core.bizData, ...imported.bizData };
+                                    Core.save();
+                                    Core.renderAll();
+                                    alert('Global CRM data imported successfully!');
+                                }
+                            } else if (imported.exportType === 'production') {
+                                if (confirm(`Import production "${imported.productionName}"?`)) {
+                                    Core.data[imported.productionName] = imported.productionData;
+                                    Core.save();
+                                    Core.updateProductionSelect();
+                                    alert(`Production "${imported.productionName}" imported successfully!`);
+                                }
+                            } else if (imported.exportType === 'full_backup') {
+                                if (confirm('Import full backup? This will replace ALL current data!')) {
+                                    if (confirm('⚠️ FINAL WARNING: This will overwrite everything. Continue?')) {
+                                        Core.bizData = imported.bizData;
+                                        Core.data = imported.productions;
+                                        Core.save();
+                                        Core.updateProductionSelect();
+                                        Core.renderAll();
+                                        alert('Full backup imported successfully!');
+                                    }
+                                }
                             }
                         } catch (err) {
                             alert('Error importing data: ' + err.message);
+                            console.error(err);
                         }
                     };
                     reader.readAsText(file);
@@ -10917,29 +11172,34 @@ const Gantt = GanttEnhanced;
                 input.click();
             },
             
+            // Export to CSV
             exportToCSV(type) {
                 let csv = '';
                 let filename = '';
                 
                 switch(type) {
                     case 'schedule':
-                        const strips = Core.data.schedule?.strips || [];
+                        if (Core.currentProduction === 'GLOBAL') {
+                            alert('Please select a production first');
+                            return;
+                        }
+                        const strips = Core.data[Core.currentProduction]?.schedule?.strips || [];
                         csv = 'Scene,INT/EXT,DAY/NIGHT,Location,Cast,Pages,Description\n';
                         strips.filter(s => s.type === 'scene').forEach(s => {
                             csv += `"${s.scene || ''}","${s.intext || ''}","${s.daynight || ''}","${s.location || ''}","${s.cast || ''}","${s.pages || ''}","${s.description || ''}"\n`;
                         });
-                        filename = 'shooting_schedule.csv';
+                        filename = `${clean(Core.currentProduction)}_schedule.csv`;
                         break;
                     case 'cast':
-                        const cast = Object.values(Core.data.cast || {});
-                        csv = 'ID,Name,Role,Phone,Email\n';
+                        const cast = Object.values(Core.bizData.cast || {});
+                        csv = 'ID,Name,Role,Phone,Email,Agent\n';
                         cast.forEach(c => {
-                            csv += `"${c.id || ''}","${c.name || ''}","${c.role || ''}","${c.phone || ''}","${c.email || ''}"\n`;
+                            csv += `"${c.id || ''}","${c.name || ''}","${c.role || ''}","${c.phone || ''}","${c.email || ''}","${c.agent || ''}"\n`;
                         });
                         filename = 'cast_list.csv';
                         break;
                     case 'crew':
-                        const crew = Object.values(Core.data.crew || {});
+                        const crew = Object.values(Core.bizData.crew || {});
                         csv = 'ID,Name,Position,Phone,Email\n';
                         crew.forEach(c => {
                             csv += `"${c.id || ''}","${c.name || ''}","${c.position || ''}","${c.phone || ''}","${c.email || ''}"\n`;
@@ -10955,6 +11215,28 @@ const Gantt = GanttEnhanced;
                 a.download = filename;
                 a.click();
                 URL.revokeObjectURL(url);
+                Core.log(`CSV exported: ${filename}`);
+            },
+            
+            // Helper function to download JSON
+            downloadJSON(data, filename) {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            },
+            
+            // Helper to get formatted date string
+            getDateString() {
+                return new Date().toISOString().split('T')[0];
+            },
+            
+            // Legacy function for backward compatibility
+            exportAllData() {
+                this.exportEverything();
             }
         };
 
@@ -10978,22 +11260,22 @@ const Gantt = GanttEnhanced;
             }
         }
         
+        /* Navigation system ready */
+        
         /* ═══════════════════════════════════════════════════════════════════════
            INITIALIZATION
            ═══════════════════════════════════════════════════════════════════════ */
         document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
             
-            // Control hamburger with class instead of inline style
             const updateHamburger = () => {
                 const btn = document.getElementById('mobile-menu-btn');
                 const app = document.getElementById('app');
                 if (btn && app) {
-                    const shouldShow = (window.innerWidth <= 1023) && (app.style.display === 'grid');
-                    if (shouldShow) {
-                        btn.classList.add('show');
+                    if (window.innerWidth <= 1023 && app.style.display === 'grid') {
+                        btn.classList.add('visible');
                     } else {
-                        btn.classList.remove('show');
+                        btn.classList.remove('visible');
                     }
                 }
             };
