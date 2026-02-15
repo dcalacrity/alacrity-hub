@@ -9,7 +9,7 @@
  style-src 'self' https://fonts.googleapis.com https://www.gstatic.com 'unsafe-inline';
  font-src 'self' https://fonts.gstatic.com;
  img-src 'self' data: https://www.google.com https://www.gstatic.com;
- connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com https://content-firebaseappcheck.googleapis.com https://dcalacrity-default-rtdb.firebaseio.com;
+ connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com https://content-firebaseappcheck.googleapis.com https://alacrity-hub-default-rtdb.firebaseio.com;
  frame-src https://dcalacrity.github.io https://alacrity-hub.firebaseapp.com https://accounts.google.com https://www.google.com;">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7983,60 +7983,80 @@ Target is on the move. Headed north on 8th."></textarea>
             syncTimeout: null,
 
                         async init() {
-                console.log('🚀 DC ALACRITY Initializing...');
+                console.log('🚀 ═══════════════════════════════════════════════════════');
+                console.log('🚀 DC ALACRITY Production Command System Initializing...');
+                console.log('🚀 ═══════════════════════════════════════════════════════');
                 
                 // Ensure data structure exists before any operations
                 if (!this.data) {
+                    console.log('⚠️ Data structure missing, initializing defaults...');
                     this.data = this.getDefaultData();
                 }
                 if (!this.bizData) {
+                    console.log('⚠️ BizData structure missing, initializing defaults...');
                     this.bizData = { leads: [], ledger: [], income: [] };
                 }
                 
-                // Load productions list (from Firebase if cloud mode)
+                // Step 1: Load productions list
+                console.log('📋 STEP 1: Loading productions list...');
                 await this.loadProductionsList();
+                
+                // Step 2: Render production dropdown
+                console.log('🎬 STEP 2: Rendering production dropdown...');
                 this.renderProductionDropdown();
                 
-                console.log('📂 Loading production data...');
-                // Load current production data (will pull from Firebase first)
+                // Step 3: Load current production data
+                console.log(`📂 STEP 3: Loading production data for "${this.currentProduction}"...`);
                 await this.loadProduction(this.currentProduction);
                 
-                console.log('💼 Loading business CRM data...');
-                // Load business CRM data (global, not per-production)
+                // Step 4: Load business CRM data
+                console.log('💼 STEP 4: Loading business CRM data...');
                 await this.loadBizData();
                 
-                console.log('🎨 Rendering all views...');
-                // Render all views
+                // Step 5: Render all views
+                console.log('🎨 STEP 5: Rendering all views...');
                 this.renderAll();
                 
-                console.log('🔄 Setting up real-time sync...');
-                // Setup real-time sync LAST
+                // Step 6: Setup real-time sync
+                console.log('🔄 STEP 6: Setting up real-time sync...');
                 this.setupRealtimeSync();
                 
-                console.log('✅ System initialized');
+                console.log('✅ ═══════════════════════════════════════════════════════');
+                console.log('✅ System initialized successfully!');
+                console.log('✅ ═══════════════════════════════════════════════════════');
                 this.log('System initialized');
             },
 
             async loadProductionsList() {
+                console.log('📋 Loading productions list...');
+                
                 // Try to load productions list from Firebase first (if cloud mode)
                 if (Auth.user && !Auth.isDemoMode) {
                     try {
+                        console.log('🔍 Checking cloud for productions list...');
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
                         const snapshot = await window.firebaseGet(dbRef);
                         if (snapshot.exists()) {
                             const productions = snapshot.val();
+                            console.log('✅ Found productions in cloud:', productions);
                             localStorage.setItem('dc_alacrity_productions', JSON.stringify(productions));
                             this.log('Loaded productions list from cloud');
                             return;
+                        } else {
+                            console.log('ℹ️ No productions list found in cloud, will check local...');
                         }
                     } catch (e) {
-                        console.warn('Firebase productions list load failed:', e);
+                        console.error('❌ Firebase productions list load failed:', e);
+                        this.log('Warning: Could not load productions from cloud, using local data');
                     }
                 }
                 
-                // Make sure we have at least the default
+                // Check localStorage for existing productions
                 const stored = localStorage.getItem('dc_alacrity_productions');
-                if (!stored) {
+                if (stored) {
+                    console.log('📂 Found local productions list:', JSON.parse(stored));
+                } else {
+                    console.log('🆕 No productions found, creating default...');
                     localStorage.setItem('dc_alacrity_productions', JSON.stringify(['Default Production']));
                 }
             },
@@ -8049,27 +8069,41 @@ Target is on the move. Headed north on 8th."></textarea>
             createProduction(name) {
                 const productions = this.getProductions();
                 if (!productions.includes(name)) {
+                    console.log(`➕ Adding "${name}" to productions list`);
                     productions.push(name);
                     localStorage.setItem('dc_alacrity_productions', JSON.stringify(productions));
                     
                     // Also save to Firebase if cloud mode
                     if (Auth.user && !Auth.isDemoMode) {
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
-                        window.firebaseSet(dbRef, productions).catch(e => console.error('Failed to sync productions list:', e));
+                        window.firebaseSet(dbRef, productions)
+                            .then(() => {
+                                console.log(`✅ Productions list synced to cloud`);
+                                this.log(`Added "${name}" to productions`);
+                            })
+                            .catch(e => {
+                                console.error('❌ Failed to sync productions list:', e);
+                                this.log('Warning: Could not sync productions list to cloud');
+                            });
                     }
+                } else {
+                    console.log(`ℹ️ Production "${name}" already exists in list`);
                 }
             },
 
                         async loadProduction(name) {
+                console.log(`📂 Loading production: "${name}"...`);
                 this.currentProduction = name;
                 
                 // ALWAYS try to load from Firebase first in cloud mode
                 if (Auth.user && !Auth.isDemoMode) {
                     try {
+                        console.log(`🔍 Checking cloud for "${name}"...`);
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
                         const snapshot = await window.firebaseGet(dbRef);
                         if (snapshot.exists()) {
                             const cloudData = snapshot.val();
+                            console.log(`✅ Found "${name}" in cloud with ${Object.keys(cloudData).length} properties`);
                             // Merge with defaults to ensure all fields exist
                             this.data = {...this.getDefaultData(), ...cloudData};
                             // Update localStorage with cloud data
@@ -8078,20 +8112,26 @@ Target is on the move. Headed north on 8th."></textarea>
                             console.log('📥 Cloud data loaded and merged with defaults');
                             return;
                         } else {
+                            console.log(`ℹ️ No cloud data for "${name}", checking localStorage...`);
                             // No cloud data, check localStorage
                             const stored = localStorage.getItem('dc_alacrity_prod_' + name);
                             if (stored) {
                                 const localData = JSON.parse(stored);
+                                console.log(`📂 Found "${name}" in localStorage, uploading to cloud...`);
                                 // Merge with defaults to ensure all fields exist
                                 this.data = {...this.getDefaultData(), ...localData};
                                 // Push to cloud
                                 await window.firebaseSet(dbRef, this.data);
                                 this.log(`⬆️ Uploaded local "${name}" to cloud`);
+                                console.log(`✅ Uploaded "${name}" to cloud successfully`);
                                 return;
+                            } else {
+                                console.log(`🆕 No data found for "${name}", creating new production...`);
                             }
                         }
                     } catch (e) {
-                        console.warn('⚠️ Firebase load failed, using localStorage:', e);
+                        console.error(`❌ Firebase load failed for "${name}":`, e);
+                        this.log(`Warning: Cloud sync error for "${name}", using local data`);
                     }
                 }
                 
@@ -8099,14 +8139,17 @@ Target is on the move. Headed north on 8th."></textarea>
                 const stored = localStorage.getItem('dc_alacrity_prod_' + name);
                 if (stored) {
                     const localData = JSON.parse(stored);
+                    console.log(`📂 Using local data for "${name}"`);
                     // Merge with defaults to ensure all fields exist
                     this.data = {...this.getDefaultData(), ...localData};
                 } else {
+                    console.log(`🆕 Creating new production "${name}" with defaults`);
                     this.data = this.getDefaultData();
                 }
                 
                 // Ensure productions list includes this one
                 this.createProduction(name);
+                console.log(`✅ Production "${name}" loaded successfully`);
             },
 
             async loadBizData() {
@@ -8393,13 +8436,24 @@ Target is on the move. Headed north on 8th."></textarea>
             renderProductionDropdown() {
                 const select = DOM.get('project-select');
                 if (!select) {
-                    console.warn('project-select element not found, skipping render');
+                    console.warn('⚠️ project-select element not found, skipping render');
                     return;
                 }
+                
                 const productions = this.getProductions();
+                console.log(`🎬 Rendering ${productions.length} productions in dropdown`);
+                
+                if (productions.length === 0) {
+                    console.warn('⚠️ No productions found, creating default');
+                    productions.push('Default Production');
+                    localStorage.setItem('dc_alacrity_productions', JSON.stringify(productions));
+                }
+                
                 select.innerHTML = productions.map(p => 
                     `<option value="${p}" ${p === this.currentProduction ? 'selected' : ''}>${p}</option>`
                 ).join('');
+                
+                console.log(`✅ Dropdown rendered with current: "${this.currentProduction}"`);
             },
 
             renderAll() {
