@@ -8951,6 +8951,16 @@ Target is on the move. Headed north on 8th."></textarea>
                 const defaults = this.getDefaultData();
                 this.data = {...defaults, ...productionData};
                 
+                // Debug cast/crew data
+                console.log(`🎭 Cast members loaded: ${Object.keys(this.data.cast || {}).length}`);
+                console.log(`🎬 Crew members loaded: ${Object.keys(this.data.crew || {}).length}`);
+                if (Object.keys(this.data.cast || {}).length > 0) {
+                    console.log(`📋 Cast data:`, this.data.cast);
+                }
+                if (Object.keys(this.data.crew || {}).length > 0) {
+                    console.log(`📋 Crew data:`, this.data.crew);
+                }
+                
                 // Ensure the production is in the productions list
                 await this.createProduction(name);
                 
@@ -10111,8 +10121,22 @@ Target is on the move. Headed north on 8th."></textarea>
         
         const CastCrew = {
             render() {
-                if (!Core.data.cast) Core.data.cast = {};
-                if (!Core.data.crew) Core.data.crew = {};
+                console.log('🎭 CastCrew.render() called');
+                console.log('📊 Core.data.cast:', Core.data.cast);
+                console.log('📊 Core.data.crew:', Core.data.crew);
+                
+                if (!Core.data.cast) {
+                    console.warn('⚠️ Core.data.cast was undefined, initializing as {}');
+                    Core.data.cast = {};
+                }
+                if (!Core.data.crew) {
+                    console.warn('⚠️ Core.data.crew was undefined, initializing as {}');
+                    Core.data.crew = {};
+                }
+                
+                console.log(`📋 Cast members: ${Object.keys(Core.data.cast).length}`);
+                console.log(`📋 Crew members: ${Object.keys(Core.data.crew).length}`);
+                
                 this.renderList('cast');
                 this.renderList('crew');
             },
@@ -10219,9 +10243,14 @@ Target is on the move. Headed north on 8th."></textarea>
                         const name = data.name;
                         if (!name) return;
                         
+                        console.log(`➕ Adding ${type} member: ${name}`);
+                        console.log(`📊 Current Core.data[${type}]:`, Core.data[type]);
+                        
                         const existing = Object.values(Core.data[type] || {});
                         if (existing.some(m => m.name.toLowerCase() === name.toLowerCase())) {
                             alert(`A ${type} member named "${name}" already exists!`);
+                            console.log(`⚠️ Duplicate ${type} member detected: ${name}`);
+                            console.log(`📋 Existing members:`, existing.map(m => m.name));
                             return;
                         }
                         
@@ -10243,6 +10272,9 @@ Target is on the move. Headed north on 8th."></textarea>
                             phone: data.phone || '',
                             email: data.email || ''
                         };
+                        
+                        console.log(`✅ Added ${type} member:`, Core.data[type][key]);
+                        console.log(`📊 Total ${type} members now:`, Object.keys(Core.data[type]).length);
                         
                         Core.save();
                         this.render();
