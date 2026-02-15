@@ -8285,10 +8285,16 @@ Target is on the move. Headed north on 8th."></textarea>
             },
 
                         setupRealtimeSync() {
-                if (!Auth.user || Auth.isDemoMode) return;
+                if (!Auth.user || Auth.isDemoMode) {
+                    console.log('⏭️ Skipping real-time sync (demo mode or not authenticated)');
+                    return;
+                }
+                
+                console.log(`🔄 Setting up real-time sync for "${this.currentProduction}"...`);
                 
                 // Cleanup existing listener if any
                 if (this.unsubscribeProduction) {
+                    console.log('🧹 Cleaning up previous production listener...');
                     this.unsubscribeProduction();
                 }
                 
@@ -8297,16 +8303,21 @@ Target is on the move. Headed north on 8th."></textarea>
                 
                 // Listen for changes to current production
                 const productionRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                console.log(`👂 Listening to: users/${Auth.user.uid}/productions/${this.currentProduction}`);
                 
                 this.unsubscribeProduction = window.firebaseOnValue(productionRef, (snapshot) => {
                     if (!snapshot.exists()) {
                         // No cloud data yet - this is the first time, push local data up
+                        console.log(`☁️ No cloud data for "${this.currentProduction}", pushing local data...`);
                         this.syncToCloud();
                         return;
                     }
                     
                     // Don't update if we're currently syncing
-                    if (this.isSyncing) return;
+                    if (this.isSyncing) {
+                        console.log('⏸️ Skipping sync (already syncing)');
+                        return;
+                    }
                     
                     const cloudData = snapshot.val();
                     const currentDataStr = JSON.stringify(this.data);
@@ -8314,18 +8325,18 @@ Target is on the move. Headed north on 8th."></textarea>
                     
                     // Only update if cloud data is different
                     if (cloudDataStr !== currentDataStr) {
-                        console.log('📥 Received update from cloud');
+                        console.log(`📥 Received update from cloud for "${this.currentProduction}"`);
                         this.data = cloudData;
                         localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, cloudDataStr);
                         this.renderAll();
                         this.log('Synced from cloud');
                     }
                 }, (error) => {
-                    console.error('Firebase sync error:', error);
+                    console.error('❌ Firebase sync error:', error);
                     this.log('Sync error: ' + error.message);
                 });
                 
-                // Also listen to business CRM data
+                // Also listen to business CRM data (only need to set up once)
                 if (this.unsubscribeBiz) {
                     this.unsubscribeBiz();
                 }
@@ -8351,9 +8362,10 @@ Target is on the move. Headed north on 8th."></textarea>
                         this.log('Business data synced from cloud');
                     }
                 }, (error) => {
-                    console.error('Firebase business sync error:', error);
+                    console.error('❌ Firebase business sync error:', error);
                 });
                 
+                console.log(`✅ Real-time sync enabled for "${this.currentProduction}"`);
                 this.log('Real-time sync enabled');
             },
 
@@ -8719,12 +8731,30 @@ Target is on the move. Headed north on 8th."></textarea>
                 const prodName = select.value;
                 console.log('🔄 Switching to production:', prodName);
                 try {
+                    // First, cleanup existing real-time listeners for old production
+                    if (Core.unsubscribeProduction) {
+                        console.log('🧹 Cleaning up old production listener...');
+                        Core.unsubscribeProduction();
+                        Core.unsubscribeProduction = null;
+                    }
+                    
+                    // Load the new production data
                     await Core.loadProduction(prodName);
                     console.log('✅ Production data loaded:', prodName);
                     console.log('📊 Data structure:', Core.data);
+                    
+                    // Re-render everything
                     Core.renderProductionDropdown();
                     Core.renderAll();
                     console.log('🎨 All views rendered');
+                    
+                    // Setup real-time sync for the NEW production
+                    if (Auth.user && !Auth.isDemoMode) {
+                        console.log('🔄 Setting up real-time sync for new production...');
+                        Core.setupRealtimeSync();
+                    }
+                    
+                    Core.log(`Switched to production: ${prodName}`);
                 } catch (error) {
                     console.error('❌ Error loading production:', error);
                     alert('Failed to load production: ' + error.message);
@@ -8743,10 +8773,27 @@ Target is on the move. Headed north on 8th."></textarea>
                 if (!name) { alert('Please enter a production name'); return; }
                 const productions = Core.getProductions();
                 if (productions.includes(name)) { alert('Production already exists'); return; }
+                
+                console.log(`🆕 Creating new production: "${name}"`);
+                
+                // Cleanup old production listener
+                if (Core.unsubscribeProduction) {
+                    console.log('🧹 Cleaning up old production listener...');
+                    Core.unsubscribeProduction();
+                    Core.unsubscribeProduction = null;
+                }
+                
+                // Create and load the new production
                 Core.createProduction(name);
                 await Core.loadProduction(name);
                 Core.renderProductionDropdown();
                 Core.renderAll();
+                
+                // Setup sync for the new production
+                if (Auth.user && !Auth.isDemoMode) {
+                    console.log('🔄 Setting up sync for new production...');
+                    Core.setupRealtimeSync();
+                }
                 
                 // Show success notification
                 this.showSuccessNotification(name);
