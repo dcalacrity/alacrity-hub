@@ -25,6 +25,418 @@
 
 
 
+        /* ═══════════════════════════════════════════════════════════════════════
+           PRODUCTION LIBRARY SYSTEM - ADVANCED CLOUD MANAGEMENT
+           ═══════════════════════════════════════════════════════════════════════ */
+
+        .production-library-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .production-library-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .production-library {
+            background: linear-gradient(145deg, #0a0a0a 0%, #1a1a1a 100%);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 20px;
+            width: 95%;
+            max-width: 1400px;
+            height: 90vh;
+            max-height: 900px;
+            overflow: hidden;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9), 0 0 60px rgba(34, 211, 238, 0.4);
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .production-library-overlay.active .production-library {
+            transform: scale(1);
+        }
+
+        .production-library-header {
+            padding: 32px 40px;
+            border-bottom: 2px solid rgba(34, 211, 238, 0.3);
+            background: linear-gradient(180deg, rgba(34, 211, 238, 0.12) 0%, transparent 100%);
+            flex-shrink: 0;
+        }
+
+        .production-library-title {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            margin: 0 0 8px 0;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .production-library-subtitle {
+            color: var(--text-50);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .production-library-close {
+            position: absolute;
+            top: 28px;
+            right: 32px;
+            background: rgba(244, 63, 94, 0.2);
+            border: 2px solid rgba(244, 63, 94, 0.5);
+            color: var(--neon-rose);
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .production-library-close:hover {
+            background: rgba(244, 63, 94, 0.4);
+            border-color: var(--neon-rose);
+            transform: rotate(90deg);
+        }
+
+        .production-library-toolbar {
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .production-search {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+            min-width: 250px;
+        }
+
+        .production-search input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            border-radius: 10px;
+            color: var(--text-100);
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .production-search input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+        }
+
+        .production-search::before {
+            content: '🔍';
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+        }
+
+        .production-filter {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background: rgba(34, 211, 238, 0.1);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            border-radius: 8px;
+            color: var(--text-70);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(34, 211, 238, 0.25);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+        .production-library-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 40px;
+        }
+
+        .production-library-body::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .production-library-body::-webkit-scrollbar-track {
+            background: rgba(10, 10, 10, 0.5);
+            border-radius: 10px;
+        }
+
+        .production-library-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, var(--neon-cyan) 0%, var(--neon-cyan-dim) 100%);
+            border-radius: 10px;
+        }
+
+        .production-library-body::-webkit-scrollbar-thumb:hover {
+            background: var(--neon-cyan);
+        }
+
+        .production-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .production-card {
+            background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+            border: 2px solid rgba(34, 211, 238, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .production-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .production-card:hover {
+            border-color: var(--neon-cyan);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(34, 211, 238, 0.3);
+        }
+
+        .production-card:hover::before {
+            opacity: 1;
+        }
+
+        .production-card-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .production-card-type {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(34, 211, 238, 0.2);
+            border: 1px solid rgba(34, 211, 238, 0.4);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .production-card-name {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-100);
+            margin: 0 0 6px 0;
+            letter-spacing: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .production-card-date {
+            color: var(--text-50);
+            font-size: 12px;
+            font-family: var(--font-mono);
+        }
+
+        .production-card-body {
+            padding: 20px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .production-card-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .production-stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-70);
+            font-size: 12px;
+        }
+
+        .production-stat-icon {
+            font-size: 16px;
+        }
+
+        .production-stat-value {
+            color: var(--neon-cyan);
+            font-weight: 700;
+        }
+
+        .production-card-description {
+            color: var(--text-60);
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .production-card-footer {
+            padding: 16px 24px;
+            border-top: 1px solid rgba(34, 211, 238, 0.1);
+            display: flex;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .production-card-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            border: none;
+        }
+
+        .production-card-btn-load {
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-cyan-dim) 100%);
+            color: #000;
+        }
+
+        .production-card-btn-load:hover {
+            box-shadow: 0 4px 20px rgba(34, 211, 238, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .production-card-btn-delete {
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid rgba(244, 63, 94, 0.4);
+            color: var(--neon-rose);
+        }
+
+        .production-card-btn-delete:hover {
+            background: rgba(244, 63, 94, 0.3);
+            border-color: var(--neon-rose);
+        }
+
+        .production-empty {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .production-empty-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            opacity: 0.3;
+        }
+
+        .production-empty-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            color: var(--text-70);
+            margin: 0 0 12px 0;
+            letter-spacing: 2px;
+        }
+
+        .production-empty-subtitle {
+            color: var(--text-50);
+            font-size: 14px;
+        }
+
+        .production-create-new {
+            margin-top: 32px;
+        }
+
+        .production-create-new-btn {
+            padding: 16px 40px;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-cyan-dim) 100%);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .production-create-new-btn:hover {
+            box-shadow: 0 8px 32px rgba(34, 211, 238, 0.6);
+            transform: translateY(-4px);
+        }
+
+        .production-storage-indicator {
+            padding: 12px 20px;
+            background: rgba(34, 211, 238, 0.08);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-70);
+            margin-left: auto;
+        }
+
+        .production-storage-indicator strong {
+            color: var(--neon-cyan);
+            font-weight: 700;
+        }
+
         .popup-overlay {
             position: fixed;
             inset: 0;
@@ -5665,6 +6077,44 @@
 </head>
 <body>
     
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         PRODUCTION LIBRARY MODAL - Advanced Cloud Production Management
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div class="production-library-overlay" id="production-library-overlay">
+        <div class="production-library">
+            <div class="production-library-header">
+                <h1 class="production-library-title">
+                    <span>📚</span> PRODUCTION LIBRARY
+                </h1>
+                <p class="production-library-subtitle">Load, manage, and organize all your productions</p>
+                <button class="production-library-close" onclick="ProductionLibrary.close()">×</button>
+            </div>
+            
+            <div class="production-library-toolbar">
+                <div class="production-search">
+                    <input type="text" id="production-search" placeholder="Search productions..." oninput="ProductionLibrary.filterProductions()">
+                </div>
+                
+                <div class="production-filter">
+                    <button class="filter-btn active" data-filter="all" onclick="ProductionLibrary.setFilter('all')">All</button>
+                    <button class="filter-btn" data-filter="Film" onclick="ProductionLibrary.setFilter('Film')">Films</button>
+                    <button class="filter-btn" data-filter="Commercial" onclick="ProductionLibrary.setFilter('Commercial')">Commercials</button>
+                    <button class="filter-btn" data-filter="Music Video" onclick="ProductionLibrary.setFilter('Music Video')">Music Videos</button>
+                </div>
+                
+                <div class="production-storage-indicator">
+                    <span>☁️ Cloud Storage</span>
+                    <strong id="production-count">0 Productions</strong>
+                </div>
+            </div>
+            
+            <div class="production-library-body" id="production-library-body">
+                <!-- Productions will be rendered here -->
+            </div>
+        </div>
+    </div>
+    
+
     <!-- Mobile Menu Button -->
     <button class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileMenu()" style="display: none;">
         ☰
@@ -16172,6 +16622,323 @@ const Gantt = GanttEnhanced;
         function openCrewPopup() { PopupSystem.show(PopupConfigs.crew); }
         function openTaskPopup() { PopupSystem.show(PopupConfigs.task); }
 
+        
+        // ═══════════════════════════════════════════════════════════════════════
+        // PRODUCTION LIBRARY SYSTEM - Complete Cloud Management
+        // ═══════════════════════════════════════════════════════════════════════
+        
+        const ProductionLibrary = {
+            currentFilter: 'all',
+            searchTerm: '',
+            
+            open() {
+                const overlay = document.getElementById('production-library-overlay');
+                overlay.classList.add('active');
+                this.render();
+            },
+            
+            close() {
+                const overlay = document.getElementById('production-library-overlay');
+                overlay.classList.remove('active');
+            },
+            
+            setFilter(filter) {
+                this.currentFilter = filter;
+                // Update active button
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.filter === filter);
+                });
+                this.render();
+            },
+            
+            filterProductions() {
+                this.searchTerm = document.getElementById('production-search').value.toLowerCase();
+                this.render();
+            },
+            
+            getProductions() {
+                // Get all productions from storage
+                const productions = [];
+                const keys = Object.keys(localStorage);
+                
+                for (const key of keys) {
+                    if (key.startsWith('dc_alacrity_prod_') && key !== 'dc_alacrity_prod_GLOBAL') {
+                        try {
+                            const data = JSON.parse(localStorage.getItem(key));
+                            const prodId = key.replace('dc_alacrity_prod_', '');
+                            productions.push({
+                                id: prodId,
+                                ...data
+                            });
+                        } catch (e) {
+                            console.error('Error parsing production:', key, e);
+                        }
+                    }
+                }
+                
+                // Sort by last modified (most recent first)
+                productions.sort((a, b) => {
+                    const aDate = a.lastModified || a.created || 0;
+                    const bDate = b.lastModified || b.created || 0;
+                    return bDate - aDate;
+                });
+                
+                return productions;
+            },
+            
+            getFilteredProductions() {
+                let productions = this.getProductions();
+                
+                // Apply type filter
+                if (this.currentFilter !== 'all') {
+                    productions = productions.filter(p => p.type === this.currentFilter);
+                }
+                
+                // Apply search filter
+                if (this.searchTerm) {
+                    productions = productions.filter(p => {
+                        const name = (p.name || '').toLowerCase();
+                        const description = (p.description || '').toLowerCase();
+                        return name.includes(this.searchTerm) || description.includes(this.searchTerm);
+                    });
+                }
+                
+                return productions;
+            },
+            
+            formatDate(timestamp) {
+                if (!timestamp) return 'Unknown';
+                const date = new Date(timestamp);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            },
+            
+            getProductionStats(prod) {
+                const stats = {
+                    scenes: 0,
+                    shots: 0,
+                    cast: 0,
+                    crew: 0,
+                    budget: prod.budget || 0
+                };
+                
+                if (prod.schedule && prod.schedule.strips) {
+                    stats.scenes = prod.schedule.strips.filter(s => s.type === 'scene').length;
+                }
+                
+                if (prod.shotlist) {
+                    stats.shots = prod.shotlist.length;
+                }
+                
+                if (prod.cast) {
+                    stats.cast = Object.keys(prod.cast).length;
+                }
+                
+                if (prod.crew) {
+                    stats.crew = Object.keys(prod.crew).length;
+                }
+                
+                return stats;
+            },
+            
+            createProductionCard(prod) {
+                const stats = this.getProductionStats(prod);
+                const lastModified = this.formatDate(prod.lastModified || prod.created);
+                const prodName = (prod.name || prod.id || 'Untitled Production').replace(/'/g, "\\'");
+                
+                return `
+                    <div class="production-card">
+                        <div class="production-card-header">
+                            <div class="production-card-type">${prod.type || 'Production'}</div>
+                            <h3 class="production-card-name" title="${prodName}">${prod.name || prod.id || 'Untitled Production'}</h3>
+                            <div class="production-card-date">Last modified: ${lastModified}</div>
+                        </div>
+                        
+                        <div class="production-card-body">
+                            <div class="production-card-stats">
+                                <div class="production-stat">
+                                    <span class="production-stat-icon">🎬</span>
+                                    <span><span class="production-stat-value">${stats.scenes}</span> Scenes</span>
+                                </div>
+                                <div class="production-stat">
+                                    <span class="production-stat-icon">📸</span>
+                                    <span><span class="production-stat-value">${stats.shots}</span> Shots</span>
+                                </div>
+                                <div class="production-stat">
+                                    <span class="production-stat-icon">👥</span>
+                                    <span><span class="production-stat-value">${stats.cast}</span> Cast</span>
+                                </div>
+                                <div class="production-stat">
+                                    <span class="production-stat-icon">🎥</span>
+                                    <span><span class="production-stat-value">${stats.crew}</span> Crew</span>
+                                </div>
+                            </div>
+                            
+                            <div class="production-card-description">
+                                ${prod.description || 'No description available'}
+                            </div>
+                        </div>
+                        
+                        <div class="production-card-footer">
+                            <button class="production-card-btn production-card-btn-load" onclick="ProductionLibrary.loadProduction('${prod.id}')">
+                                Load Production
+                            </button>
+                            <button class="production-card-btn production-card-btn-delete" onclick="ProductionLibrary.deleteProduction('${prod.id}')">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            render() {
+                const body = document.getElementById('production-library-body');
+                const productions = this.getFilteredProductions();
+                const allProductions = this.getProductions();
+                
+                // Update production count
+                const countEl = document.getElementById('production-count');
+                if (countEl) {
+                    countEl.textContent = `${allProductions.length} Production${allProductions.length !== 1 ? 's' : ''}`;
+                }
+                
+                if (productions.length === 0) {
+                    body.innerHTML = `
+                        <div class="production-empty">
+                            <div class="production-empty-icon">📁</div>
+                            <h2 class="production-empty-title">
+                                ${this.searchTerm || this.currentFilter !== 'all' ? 'No Productions Found' : 'No Productions Yet'}
+                            </h2>
+                            <p class="production-empty-subtitle">
+                                ${this.searchTerm || this.currentFilter !== 'all' 
+                                    ? 'Try adjusting your search or filter' 
+                                    : 'Create your first production to get started'}
+                            </p>
+                            ${!this.searchTerm && this.currentFilter === 'all' ? `
+                                <div class="production-create-new">
+                                    <button class="production-create-new-btn" onclick="ProductionLibrary.close(); Core.newProduction();">
+                                        + Create New Production
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    body.innerHTML = `
+                        <div class="production-grid">
+                            ${productions.map(prod => this.createProductionCard(prod)).join('')}
+                        </div>
+                    `;
+                }
+            },
+            
+            async loadProduction(productionId) {
+                const prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
+                const prodName = prodData?.name || productionId;
+                
+                if (confirm(`Load production "${prodName}"?\n\nAny unsaved changes to the current production will be lost.`)) {
+                    this.close();
+                    await Core.loadProduction(productionId);
+                    alert(`Production "${prodName}" loaded successfully!`);
+                }
+            },
+            
+            deleteProduction(productionId) {
+                const prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
+                const prodName = prodData?.name || productionId;
+                
+                if (confirm(`Are you sure you want to DELETE production "${prodName}"?\n\nThis action cannot be undone!`)) {
+                    // Double confirmation for safety
+                    if (confirm(`FINAL CONFIRMATION:\n\nDelete "${prodName}" permanently?`)) {
+                        localStorage.removeItem(`dc_alacrity_prod_${productionId}`);
+                        
+                        // If this was the current production, switch to GLOBAL
+                        if (Core.currentProduction === productionId) {
+                            Core.currentProduction = 'GLOBAL';
+                            Core.save();
+                        }
+                        
+                        alert(`Production "${prodName}" has been deleted.`);
+                        this.render();
+                    }
+                }
+            }
+        };
+        
+        // Enhanced Core.newProduction with better metadata
+        const originalNewProduction = Core.newProduction;
+        Core.newProduction = function() {
+            const name = prompt('Production Name:');
+            if (!name || !name.trim()) return;
+            
+            const type = prompt('Production Type:\n\nEnter one of:\n- Film\n- TV Series\n- Commercial\n- Music Video\n- Documentary\n- Short\n- Other', 'Film');
+            if (!type) return;
+            
+            const description = prompt('Brief Description (optional):', '');
+            
+            const id = name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase();
+            
+            if (this.data[id]) {
+                alert('Production with this name already exists!');
+                return;
+            }
+            
+            this.data[id] = {
+                name: name,
+                type: type,
+                description: description || '',
+                created: Date.now(),
+                lastModified: Date.now(),
+                budget: 0,
+                schedule: { strips: [] },
+                shotlist: [],
+                milestones: [],
+                risks: [],
+                tasks: [],
+                continuity: []
+            };
+            
+            this.currentProduction = id;
+            this.save();
+            this.updateProductionSelect();
+            alert(`Production "${name}" created successfully!`);
+        };
+        
+        // Enhanced Core.save to update lastModified
+        const originalSave = Core.save;
+        Core.save = function() {
+            if (this.currentProduction && this.currentProduction !== 'GLOBAL') {
+                if (this.data[this.currentProduction]) {
+                    this.data[this.currentProduction].lastModified = Date.now();
+                }
+            }
+            originalSave.call(this);
+        };
+        
+        // Add Load Production button functionality
+        function openProductionLibrary() {
+            ProductionLibrary.open();
+        }
+        
+        // Modify the Load Production button in the toolbar
+        window.addEventListener('load', () => {
+            // Try to find and update any "Load" buttons
+            setTimeout(() => {
+                const allButtons = document.querySelectorAll('button');
+                allButtons.forEach(btn => {
+                    const text = btn.textContent.trim();
+                    if (text.includes('Load') && text.includes('Production')) {
+                        btn.onclick = openProductionLibrary;
+                        console.log('Updated Load Production button');
+                    }
+                });
+            }, 1000);
+        });
         
                 document.addEventListener('DOMContentLoaded', () => {
             Auth.init();
