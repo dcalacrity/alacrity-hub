@@ -8986,14 +8986,12 @@ Target is on the move. Headed north on 8th."></textarea>
                 console.log(`🔄 Migrating legacy property names...`);
                 const hadMigrations = this.migrateOldPropertyNames();
                 
-                // If migrations occurred, save the updated data
+                // If migrations occurred, save the updated data to localStorage
+                // Cloud sync will happen naturally on next save()
                 if (hadMigrations) {
-                    console.log(`💾 Saving migrated data...`);
+                    console.log(`💾 Saving migrated data to localStorage...`);
                     localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
-                    // Also sync to cloud if in cloud mode
-                    if (Auth.user && !Auth.isDemoMode && dataSource === 'cloud') {
-                        await this.syncToCloud();
-                    }
+                    console.log(`✅ Migrated data saved locally`);
                 }
                 
                 // Debug cast/crew data
@@ -9788,6 +9786,12 @@ Target is on the move. Headed north on 8th."></textarea>
                     Core.renderProductionDropdown();
                     Core.renderAll();
                     console.log('🎨 All views rendered');
+                    
+                    // Sync any migrated data to cloud immediately
+                    if (Auth.user && !Auth.isDemoMode) {
+                        console.log('☁️ Syncing migrated data to cloud...');
+                        await Core.syncToCloud();
+                    }
                     
                     // Setup real-time sync for the NEW production
                     if (Auth.user && !Auth.isDemoMode) {
@@ -14702,10 +14706,20 @@ const Gantt = GanttEnhanced;
             },
             
             render() {
+                console.log('🎬 ShotList.render() called');
+                console.log('📊 Core.data:', Core.data);
+                console.log('📊 Core.data.shotlist:', Core.data.shotlist);
+                
                 const container = document.getElementById('view-shotlist');
-                if (!container) return;
+                if (!container) {
+                    console.log('⚠️ Shot list container not found!');
+                    return;
+                }
                 
                 const shots = this.getData();
+                console.log('📊 Shots from getData():', shots);
+                console.log('📊 Number of shots:', shots.length);
+                
                 const completed = shots.filter(s => s.completed || s.status === 'Completed').length;
                 const inReview = shots.filter(s => s.status === 'Review').length;
                 const inProgress = shots.filter(s => s.status === 'In Progress').length;
@@ -17390,11 +17404,19 @@ const Gantt = GanttEnhanced;
             Core.renderRisks();
         };
         PopupConfigs.shot.onSubmit = (data) => {
+            console.log('🎬 Shot onSubmit called with data:', data);
+            console.log('📊 Current production:', Core.currentProduction);
+            console.log('📊 Core.data exists:', !!Core.data);
+            console.log('📊 Core.data.shotlist before:', Core.data.shotlist);
+            
             if (Core.currentProduction === 'GLOBAL') { 
                 alert('Please select a production first'); 
                 return; 
             }
-            if (!Core.data.shotlist) Core.data.shotlist = [];
+            if (!Core.data.shotlist) {
+                console.log('⚠️ Initializing shotlist array');
+                Core.data.shotlist = [];
+            }
             
             const shot = {
                 id: Date.now(),
@@ -17416,19 +17438,26 @@ const Gantt = GanttEnhanced;
                 completed: (data.shotStatus === 'Completed')
             };
             
+            console.log('✅ Shot object created:', shot);
+            
             Core.data.shotlist.push(shot);
+            console.log('📊 Core.data.shotlist after push:', Core.data.shotlist);
+            console.log('💾 Calling Core.save()...');
             Core.save();
             
             // Immediate cloud sync for better responsiveness
             if (Auth.user && !Auth.isDemoMode) {
+                console.log('☁️ Triggering immediate cloud sync...');
                 Core.syncToCloud();
             }
             
             // Refresh shot list view if it's active
             if (document.querySelector('#view-shotlist.active')) {
+                console.log('🔄 Refreshing shot list view...');
                 ShotList.render();
             }
             
+            console.log('✅ Shot addition complete');
             PopupSystem.showToast(`✅ Shot ${data.shotNumber} added`, 'success');
         };
         PopupConfigs.contact.onSubmit = (data) => {
