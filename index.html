@@ -8982,6 +8982,18 @@ Target is on the move. Headed north on 8th."></textarea>
                 // Use deep merge to preserve loaded data, especially nested objects like cast/crew
                 this.data = this.deepMerge(defaults, productionData);
                 
+                // PHASE 5: Migrate old property names to new ones (for backward compatibility)
+                console.log(`🔄 Migrating legacy property names...`);
+                const hadMigrations = this.migrateOldPropertyNames();
+                
+                // If migrations occurred, save the updated data to localStorage
+                // Cloud sync will happen naturally on next save()
+                if (hadMigrations) {
+                    console.log(`💾 Saving migrated data to localStorage...`);
+                    localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
+                    console.log(`✅ Migrated data saved locally`);
+                }
+                
                 // Debug cast/crew data
                 console.log(`🎭 Cast members loaded: ${Object.keys(this.data.cast || {}).length}`);
                 console.log(`🎬 Crew members loaded: ${Object.keys(this.data.crew || {}).length}`);
@@ -9003,6 +9015,82 @@ Target is on the move. Headed north on 8th."></textarea>
                 console.log(`✅ ═══════════════════════════════════════════`);
                 
                 this.log(`Loaded production: ${name} (${dataSource})`);
+            },
+            
+            migrateOldPropertyNames() {
+                let hadMigrations = false;
+                
+                // Migrate shotList (old camelCase) to shotlist (new lowercase)
+                if (this.data.shotList && !this.data.shotlist) {
+                    console.log(`📦 Migrating shotList → shotlist (${this.data.shotList.length} shots)`);
+                    this.data.shotlist = this.data.shotList;
+                    delete this.data.shotList;
+                    hadMigrations = true;
+                }
+                
+                // Ensure shotlist exists
+                if (!this.data.shotlist) {
+                    this.data.shotlist = [];
+                }
+                
+                // Ensure budget structure exists with proper format
+                if (!this.data.budget || !this.data.budget.lines) {
+                    console.log(`📦 Initializing budget structure`);
+                    this.data.budget = JSON.parse(JSON.stringify(DEFAULT_BUDGET));
+                    hadMigrations = true;
+                }
+                
+                // Ensure budget.pos exists
+                if (!this.data.budget.pos) {
+                    this.data.budget.pos = [];
+                    hadMigrations = true;
+                }
+                
+                // Ensure all required arrays exist
+                if (!this.data.milestones) {
+                    this.data.milestones = [];
+                    hadMigrations = true;
+                }
+                if (!this.data.risks) {
+                    this.data.risks = [];
+                    hadMigrations = true;
+                }
+                if (!this.data.continuity) {
+                    this.data.continuity = [];
+                    hadMigrations = true;
+                }
+                if (!this.data.tasks) {
+                    this.data.tasks = [];
+                    hadMigrations = true;
+                }
+                
+                // Ensure gantt structure exists
+                if (!this.data.gantt) {
+                    this.data.gantt = { production: [], global: [] };
+                    hadMigrations = true;
+                } else {
+                    // Ensure both production and global arrays exist
+                    if (!this.data.gantt.production) {
+                        this.data.gantt.production = [];
+                        hadMigrations = true;
+                    }
+                    if (!this.data.gantt.global) {
+                        this.data.gantt.global = [];
+                        hadMigrations = true;
+                    }
+                }
+                
+                // Ensure schedule structure exists
+                if (!this.data.schedule) {
+                    this.data.schedule = { strips: [] };
+                    hadMigrations = true;
+                } else if (!this.data.schedule.strips) {
+                    this.data.schedule.strips = [];
+                    hadMigrations = true;
+                }
+                
+                console.log(`✅ Migration complete (had changes: ${hadMigrations})`);
+                return hadMigrations;
             },
 
             async loadBizData() {
@@ -9047,7 +9135,7 @@ Target is on the move. Headed north on 8th."></textarea>
                     gantt: { production: [], global: [] },
                     notes: '',
                     budget: JSON.parse(JSON.stringify(DEFAULT_BUDGET)),
-                    shotList: [],
+                    shotlist: [],
                     continuity: [],
                     risks: [],
                     contacts: [],
@@ -9698,6 +9786,12 @@ Target is on the move. Headed north on 8th."></textarea>
                     Core.renderProductionDropdown();
                     Core.renderAll();
                     console.log('🎨 All views rendered');
+                    
+                    // Sync any migrated data to cloud immediately
+                    if (Auth.user && !Auth.isDemoMode) {
+                        console.log('☁️ Syncing migrated data to cloud...');
+                        await Core.syncToCloud();
+                    }
                     
                     // Setup real-time sync for the NEW production
                     if (Auth.user && !Auth.isDemoMode) {
@@ -14608,17 +14702,28 @@ const Gantt = GanttEnhanced;
             },
             
             getData() {
-                return Core.data.shotList || [];
+                return Core.data.shotlist || [];
             },
             
             render() {
+                console.log('🎬 ShotList.render() called');
+                console.log('📊 Core.data:', Core.data);
+                console.log('📊 Core.data.shotlist:', Core.data.shotlist);
+                
                 const container = document.getElementById('view-shotlist');
-                if (!container) return;
+                if (!container) {
+                    console.log('⚠️ Shot list container not found!');
+                    return;
+                }
                 
                 const shots = this.getData();
-                const completed = shots.filter(s => s.completed).length;
-                const inReview = shots.filter(s => s.status === 'review').length;
-                const planned = shots.filter(s => !s.completed && s.status !== 'review').length;
+                console.log('📊 Shots from getData():', shots);
+                console.log('📊 Number of shots:', shots.length);
+                
+                const completed = shots.filter(s => s.completed || s.status === 'Completed').length;
+                const inReview = shots.filter(s => s.status === 'Review').length;
+                const inProgress = shots.filter(s => s.status === 'In Progress').length;
+                const planned = shots.filter(s => s.status === 'Planned').length;
                 
                 container.innerHTML = `
                     <style>
@@ -14664,19 +14769,36 @@ const Gantt = GanttEnhanced;
                         }
                         .shotlist-grid {
                             display: grid;
-                            grid-template-columns: repeat(2, 1fr);
+                            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
                             gap: 20px;
                         }
                         .shot-card {
-                            background: var(--surface-2);
-                            border: 1px solid var(--border-default);
-                            border-radius: 8px;
-                            padding: 20px;
-                            transition: all 0.2s ease;
+                            background: linear-gradient(145deg, #1a1a1a 0%, #0f0f0f 100%);
+                            border: 2px solid rgba(34, 211, 238, 0.2);
+                            border-radius: 12px;
+                            padding: 24px;
+                            transition: all 0.3s ease;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .shot-card::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 4px;
+                            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet));
+                            opacity: 0;
+                            transition: opacity 0.3s;
                         }
                         .shot-card:hover {
                             border-color: var(--neon-cyan);
-                            box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+                            box-shadow: 0 8px 32px rgba(34, 211, 238, 0.2);
+                            transform: translateY(-4px);
+                        }
+                        .shot-card:hover::before {
+                            opacity: 1;
                         }
                         .shot-card-header {
                             display: flex;
@@ -14686,53 +14808,60 @@ const Gantt = GanttEnhanced;
                         }
                         .shot-number {
                             font-family: var(--font-display);
-                            font-size: 24px;
+                            font-size: 28px;
                             letter-spacing: 2px;
                             color: var(--neon-cyan);
+                            font-weight: 700;
                         }
                         .shot-scene-label {
-                            font-size: 10px;
+                            font-size: 11px;
                             text-transform: uppercase;
                             letter-spacing: 1px;
                             color: var(--text-50);
                             font-family: var(--font-mono);
-                            margin-bottom: 4px;
+                            margin-top: 4px;
                         }
                         .shot-badge {
-                            padding: 4px 12px;
-                            border-radius: 4px;
+                            padding: 6px 14px;
+                            border-radius: 6px;
                             font-size: 10px;
-                            font-weight: 600;
+                            font-weight: 700;
                             text-transform: uppercase;
-                            letter-spacing: 1px;
+                            letter-spacing: 1.2px;
                             font-family: var(--font-mono);
                         }
-                        .shot-badge.done {
-                            background: rgba(16, 185, 129, 0.15);
+                        .shot-badge.completed {
+                            background: rgba(16, 185, 129, 0.2);
                             color: var(--neon-emerald);
-                            border: 1px solid rgba(16, 185, 129, 0.3);
+                            border: 1px solid rgba(16, 185, 129, 0.4);
                         }
                         .shot-badge.review {
-                            background: rgba(251, 191, 36, 0.15);
+                            background: rgba(251, 191, 36, 0.2);
                             color: var(--neon-gold);
-                            border: 1px solid rgba(251, 191, 36, 0.3);
+                            border: 1px solid rgba(251, 191, 36, 0.4);
+                        }
+                        .shot-badge.in-progress {
+                            background: rgba(59, 130, 246, 0.2);
+                            color: #3b82f6;
+                            border: 1px solid rgba(59, 130, 246, 0.4);
                         }
                         .shot-badge.planned {
-                            background: rgba(167, 139, 250, 0.15);
+                            background: rgba(167, 139, 250, 0.2);
                             color: var(--neon-violet);
-                            border: 1px solid rgba(167, 139, 250, 0.3);
+                            border: 1px solid rgba(167, 139, 250, 0.4);
                         }
                         .shot-title {
-                            font-size: 16px;
+                            font-size: 15px;
                             font-weight: 600;
                             color: var(--text-90);
-                            margin-bottom: 12px;
+                            margin-bottom: 16px;
+                            line-height: 1.4;
                         }
                         .shot-meta {
                             display: grid;
-                            grid-template-columns: repeat(3, 1fr);
+                            grid-template-columns: repeat(2, 1fr);
                             gap: 12px;
-                            margin-bottom: 12px;
+                            margin-bottom: 16px;
                         }
                         .shot-meta-item {
                             display: flex;
@@ -14750,27 +14879,59 @@ const Gantt = GanttEnhanced;
                             font-size: 13px;
                             color: var(--text-90);
                             font-family: var(--font-mono);
+                            font-weight: 500;
+                        }
+                        .shot-details {
+                            background: rgba(34, 211, 238, 0.05);
+                            border: 1px solid rgba(34, 211, 238, 0.15);
+                            border-radius: 6px;
+                            padding: 12px;
+                            margin-bottom: 12px;
+                        }
+                        .shot-details-row {
+                            display: flex;
+                            justify-content: space-between;
+                            padding: 6px 0;
+                            border-bottom: 1px solid rgba(34, 211, 238, 0.1);
+                            font-size: 12px;
+                        }
+                        .shot-details-row:last-child {
+                            border-bottom: none;
+                        }
+                        .shot-details-label {
+                            color: var(--text-60);
+                            font-family: var(--font-mono);
+                        }
+                        .shot-details-value {
+                            color: var(--text-90);
+                            font-weight: 600;
                         }
                         .shot-notes {
                             font-size: 12px;
                             color: var(--text-70);
                             font-style: italic;
-                            margin-top: 8px;
-                            padding-top: 12px;
-                            border-top: 1px solid var(--border-subtle);
+                            margin-top: 12px;
+                            padding: 12px;
+                            background: var(--surface-3);
+                            border-radius: 6px;
+                            border-left: 3px solid var(--neon-cyan);
                         }
                         .shot-actions {
                             display: flex;
                             gap: 8px;
-                            margin-top: 12px;
+                            margin-top: 16px;
                         }
                         .shot-btn {
-                            padding: 6px 12px;
+                            flex: 1;
+                            padding: 10px 16px;
                             background: var(--surface-3);
                             border: 1px solid var(--border-default);
                             color: var(--text-90);
-                            border-radius: 4px;
+                            border-radius: 6px;
                             font-size: 11px;
+                            font-weight: 700;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
                             cursor: pointer;
                             transition: all 0.2s ease;
                         }
@@ -14779,13 +14940,18 @@ const Gantt = GanttEnhanced;
                             border-color: var(--neon-cyan);
                             color: var(--neon-cyan);
                         }
+                        .shot-btn.delete:hover {
+                            background: rgba(244, 63, 94, 0.15);
+                            border-color: var(--neon-rose);
+                            color: var(--neon-rose);
+                        }
                     </style>
                     
                     <div class="shotlist-header">
                         <h1 class="view-title">SHOT LIST</h1>
                         <div class="shotlist-actions">
-                            <button class="btn btn-sm" onclick="ShotList.showByScene()">📋 By Scene</button>
-                            <button class="btn btn-sm btn-primary" onclick="openShotPopup()">+ Add Shot</button>
+                            <button class="btn btn-sm" onclick="ShotList.exportPDF()">📄 Export PDF</button>
+                            <button class="btn btn-sm btn-primary" onclick="PopupSystem.show(PopupConfigs.shot)">+ Add Shot</button>
                         </div>
                     </div>
                     
@@ -14799,8 +14965,8 @@ const Gantt = GanttEnhanced;
                             <div class="shotlist-stat-value" style="color: var(--neon-emerald);">${completed}</div>
                         </div>
                         <div class="shotlist-stat-card">
-                            <div class="shotlist-stat-label">👁 In Review</div>
-                            <div class="shotlist-stat-value" style="color: var(--neon-gold);">${inReview}</div>
+                            <div class="shotlist-stat-label">⚡ In Progress</div>
+                            <div class="shotlist-stat-value" style="color: #3b82f6;">${inProgress}</div>
                         </div>
                         <div class="shotlist-stat-card">
                             <div class="shotlist-stat-label">📝 Planned</div>
@@ -14808,25 +14974,28 @@ const Gantt = GanttEnhanced;
                         </div>
                     </div>
                     
-                    <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <span style="font-size: 12px; color: var(--text-50); font-family: var(--font-mono);">${shots.length} SHOTS TOTAL</span>
+                        <span style="font-size: 12px; color: var(--text-50); font-family: var(--font-mono);">COMPLETION: ${shots.length > 0 ? Math.round(completed/shots.length*100) : 0}%</span>
                     </div>
                     
                     <div class="shotlist-grid">
-                        ${shots.length === 0 ? '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-50);">No shots added yet. Click "+ Add Shot" to begin.</div>' : ''}
+                        ${shots.length === 0 ? '<div style="grid-column: 1/-1; text-align: center; padding: 60px; color: var(--text-50);"><div style="font-size: 48px; margin-bottom: 16px;">🎬</div><div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">No shots added yet</div><div>Click "+ Add Shot" to begin building your shot list.</div></div>' : ''}
                         ${shots.map((shot, idx) => {
-                            const status = shot.completed ? 'done' : (shot.status === 'review' ? 'review' : 'planned');
-                            const statusText = shot.completed ? 'Done' : (shot.status === 'review' ? 'Review' : 'Planned');
+                            const statusClass = shot.status === 'Completed' ? 'completed' : (shot.status === 'Review' ? 'review' : (shot.status === 'In Progress' ? 'in-progress' : 'planned'));
+                            const statusText = shot.status || 'Planned';
                             return `
                             <div class="shot-card">
                                 <div class="shot-card-header">
                                     <div>
                                         <div class="shot-number">${shot.number || (idx + 1) + 'A'}</div>
-                                        <div class="shot-scene-label">SC. ${shot.scene || '1'}</div>
+                                        <div class="shot-scene-label">SCENE ${shot.scene || '1'}</div>
                                     </div>
-                                    <span class="shot-badge ${status}">${statusText}</span>
+                                    <span class="shot-badge ${statusClass}">${statusText}</span>
                                 </div>
+                                
                                 <div class="shot-title">${shot.description || 'Untitled Shot'}</div>
+                                
                                 <div class="shot-meta">
                                     <div class="shot-meta-item">
                                         <div class="shot-meta-label">Type</div>
@@ -14834,17 +15003,39 @@ const Gantt = GanttEnhanced;
                                     </div>
                                     <div class="shot-meta-item">
                                         <div class="shot-meta-label">Size</div>
-                                        <div class="shot-meta-value">${shot.size || 'Wide'}</div>
+                                        <div class="shot-meta-value">${shot.size ? shot.size.split(' - ')[0] : 'WS'}</div>
                                     </div>
                                     <div class="shot-meta-item">
                                         <div class="shot-meta-label">Movement</div>
                                         <div class="shot-meta-value">${shot.movement || 'Static'}</div>
                                     </div>
+                                    <div class="shot-meta-item">
+                                        <div class="shot-meta-label">Angle</div>
+                                        <div class="shot-meta-value">${shot.angle || 'Eye Level'}</div>
+                                    </div>
                                 </div>
-                                ${shot.notes ? `<div class="shot-notes">${shot.notes}</div>` : ''}
+                                
+                                ${shot.lens || shot.fps || shot.equipment || shot.cast ? `
+                                <div class="shot-details">
+                                    ${shot.lens ? `<div class="shot-details-row"><span class="shot-details-label">Lens:</span><span class="shot-details-value">${shot.lens}</span></div>` : ''}
+                                    ${shot.fps ? `<div class="shot-details-row"><span class="shot-details-label">Frame Rate:</span><span class="shot-details-value">${shot.fps}</span></div>` : ''}
+                                    ${shot.equipment ? `<div class="shot-details-row"><span class="shot-details-label">Equipment:</span><span class="shot-details-value">${shot.equipment}</span></div>` : ''}
+                                    ${shot.cast ? `<div class="shot-details-row"><span class="shot-details-label">Cast:</span><span class="shot-details-value">${shot.cast}</span></div>` : ''}
+                                    ${shot.duration ? `<div class="shot-details-row"><span class="shot-details-label">Duration:</span><span class="shot-details-value">${shot.duration}</span></div>` : ''}
+                                </div>
+                                ` : ''}
+                                
+                                ${shot.notes || shot.vfx ? `
+                                <div class="shot-notes">
+                                    ${shot.vfx ? `<div style="margin-bottom: 8px;"><strong style="color: var(--neon-violet);">VFX:</strong> ${shot.vfx}</div>` : ''}
+                                    ${shot.notes ? `<div><strong>Notes:</strong> ${shot.notes}</div>` : ''}
+                                </div>
+                                ` : ''}
+                                
                                 <div class="shot-actions">
-                                    <button class="shot-btn" onclick="ShotList.toggleComplete(${idx})">${shot.completed ? '↩ Undo' : '✓ Complete'}</button>
-                                    <button class="shot-btn" onclick="ShotList.deleteShot(${idx})">× Delete</button>
+                                    <button class="shot-btn" onclick="ShotList.editShot(${idx})">✏️ Edit</button>
+                                    <button class="shot-btn" onclick="ShotList.toggleComplete(${idx})">${shot.status === 'Completed' ? '↩ Reopen' : '✓ Complete'}</button>
+                                    <button class="shot-btn delete" onclick="ShotList.deleteShot(${idx})">🗑️</button>
                                 </div>
                             </div>
                         `}).join('')}
@@ -14856,110 +15047,301 @@ const Gantt = GanttEnhanced;
                 alert('Group by scene feature - sorts shots by scene number');
             },
             
-            showAddShotModal() {
-                const modal = document.createElement('div');
-                modal.className = 'modal active';
-                modal.id = 'modal-add-shot';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <button class="modal-close" onclick="document.getElementById('modal-add-shot').remove()">×</button>
-                        <h2 class="modal-title">Add Shot</h2>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Shot #</label>
-                                <input type="text" id="shot-number" placeholder="1A">
-                            </div>
-                            <div class="form-group">
-                                <label>Scene</label>
-                                <input type="text" id="shot-scene" placeholder="1">
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Description</label>
-                                <input type="text" id="shot-desc" placeholder="Shot description">
-                            </div>
-                            <div class="form-group">
-                                <label>Shot Type</label>
-                                <select id="shot-type">
-                                    <option value="Master">Master</option>
-                                    <option value="Coverage">Coverage</option>
-                                    <option value="Insert">Insert</option>
-                                    <option value="Cutaway">Cutaway</option>
-                                    <option value="Establishing">Establishing</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Shot Size</label>
-                                <select id="shot-size">
-                                    <option value="EWS">Extreme Wide</option>
-                                    <option value="WS">Wide</option>
-                                    <option value="MWS">Medium Wide</option>
-                                    <option value="MS">Medium</option>
-                                    <option value="MCU">Medium Close-up</option>
-                                    <option value="CU">Close-up</option>
-                                    <option value="ECU">Extreme Close-up</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Camera Movement</label>
-                                <select id="shot-movement">
-                                    <option value="Static">Static</option>
-                                    <option value="Pan">Pan</option>
-                                    <option value="Tilt">Tilt</option>
-                                    <option value="Dolly">Dolly</option>
-                                    <option value="Tracking">Tracking</option>
-                                    <option value="Crane">Crane</option>
-                                    <option value="Handheld">Handheld</option>
-                                    <option value="Steadicam">Steadicam</option>
-                                </select>
-                            </div>
-                            <div class="form-group full-width">
-                                <label>Notes</label>
-                                <textarea id="shot-notes" placeholder="Additional notes"></textarea>
-                            </div>
-                        </div>
-                        <div class="modal-actions">
-                            <button class="btn" onclick="document.getElementById('modal-add-shot').remove()">Cancel</button>
-                            <button class="btn btn-primary" onclick="ShotList.addShot()">Add Shot</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-            },
-            
-            addShot() {
-                const shots = this.getData();
-                shots.push({
-                    number: document.getElementById('shot-number').value,
-                    scene: document.getElementById('shot-scene').value,
-                    description: document.getElementById('shot-desc').value,
-                    type: document.getElementById('shot-type').value,
-                    size: document.getElementById('shot-size').value,
-                    movement: document.getElementById('shot-movement').value,
-                    notes: document.getElementById('shot-notes').value,
-                    completed: false
-                });
-                Core.data.shotList = shots;
-                Core.save();
-                document.getElementById('modal-add-shot').remove();
-                this.render();
-            },
-            
             toggleComplete(idx) {
                 const shots = this.getData();
                 if (shots[idx]) {
-                    shots[idx].completed = !shots[idx].completed;
-                    Core.data.shotList = shots;
+                    if (shots[idx].status === 'Completed') {
+                        shots[idx].status = 'Planned';
+                        shots[idx].completed = false;
+                    } else {
+                        shots[idx].status = 'Completed';
+                        shots[idx].completed = true;
+                    }
+                    Core.data.shotlist = shots;
                     Core.save();
+                    
+                    // Immediate cloud sync
+                    if (Auth.user && !Auth.isDemoMode) {
+                        Core.syncToCloud();
+                    }
+                    
                     this.render();
                 }
             },
             
+            editShot(idx) {
+                const shots = this.getData();
+                const shot = shots[idx];
+                if (!shot) return;
+                
+                // Create edit popup with pre-filled values
+                const editConfig = {
+                    ...PopupConfigs.shot,
+                    title: 'Edit Shot',
+                    subtitle: `Editing Shot ${shot.number || idx + 1}`,
+                    onSubmit: (data) => {
+                        // Update the shot
+                        shots[idx] = {
+                            ...shots[idx],
+                            scene: data.shotScene,
+                            number: data.shotNumber,
+                            description: data.shotDescription,
+                            type: data.shotType,
+                            size: data.shotSize,
+                            angle: data.shotAngle || '',
+                            movement: data.shotMovement || 'Static',
+                            lens: data.shotLens || '',
+                            fps: data.shotFPS || '24 fps',
+                            cast: data.shotCast || '',
+                            equipment: data.shotEquipment || '',
+                            duration: data.shotDuration || '',
+                            vfx: data.shotVFX || '',
+                            notes: data.shotNotes || '',
+                            status: data.shotStatus || 'Planned',
+                            completed: (data.shotStatus === 'Completed')
+                        };
+                        
+                        Core.data.shotlist = shots;
+                        Core.save();
+                        
+                        // Immediate cloud sync
+                        if (Auth.user && !Auth.isDemoMode) {
+                            Core.syncToCloud();
+                        }
+                        
+                        this.render();
+                        PopupSystem.showToast(`✅ Shot ${data.shotNumber} updated`, 'success');
+                    }
+                };
+                
+                // Pre-fill form values
+                setTimeout(() => {
+                    const form = document.querySelector('.popup-form');
+                    if (form) {
+                        form.querySelector('#shotScene').value = shot.scene || '';
+                        form.querySelector('#shotNumber').value = shot.number || '';
+                        form.querySelector('#shotDescription').value = shot.description || '';
+                        form.querySelector('#shotType').value = shot.type || 'Master';
+                        form.querySelector('#shotSize').value = shot.size || 'WS - Wide';
+                        form.querySelector('#shotAngle').value = shot.angle || 'Eye Level';
+                        form.querySelector('#shotMovement').value = shot.movement || 'Static';
+                        form.querySelector('#shotLens').value = shot.lens || '';
+                        form.querySelector('#shotFPS').value = shot.fps || '24 fps';
+                        form.querySelector('#shotCast').value = shot.cast || '';
+                        form.querySelector('#shotEquipment').value = shot.equipment || '';
+                        form.querySelector('#shotDuration').value = shot.duration || '';
+                        form.querySelector('#shotVFX').value = shot.vfx || '';
+                        form.querySelector('#shotNotes').value = shot.notes || '';
+                        form.querySelector('#shotStatus').value = shot.status || 'Planned';
+                    }
+                }, 100);
+                
+                PopupSystem.show(editConfig);
+            },
+            
             deleteShot(idx) {
                 const shots = this.getData();
-                shots.splice(idx, 1);
-                Core.data.shotList = shots;
-                Core.save();
-                this.render();
+                const shot = shots[idx];
+                
+                if (confirm(`Delete shot ${shot.number || idx + 1}?\n\nThis action cannot be undone.`)) {
+                    shots.splice(idx, 1);
+                    Core.data.shotlist = shots;
+                    Core.save();
+                    
+                    // Immediate cloud sync
+                    if (Auth.user && !Auth.isDemoMode) {
+                        Core.syncToCloud();
+                    }
+                    
+                    this.render();
+                    PopupSystem.showToast('🗑️ Shot deleted', 'success');
+                }
+            },
+            
+            exportPDF() {
+                const shots = this.getData();
+                if (shots.length === 0) {
+                    alert('No shots to export. Add shots to your shot list first.');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                
+                const prodName = Core.data.name || Core.currentProduction;
+                const prodType = Core.data.type || 'Production';
+                const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                // Header
+                doc.setFillColor(0, 0, 0);
+                doc.rect(0, 0, 210, 40, 'F');
+                
+                doc.setTextColor(34, 211, 238);
+                doc.setFontSize(28);
+                doc.setFont('helvetica', 'bold');
+                doc.text('SHOT LIST', 105, 18, { align: 'center' });
+                
+                doc.setFontSize(14);
+                doc.setTextColor(255, 255, 255);
+                doc.text(prodName, 105, 27, { align: 'center' });
+                
+                doc.setFontSize(10);
+                doc.setTextColor(150, 150, 150);
+                doc.text(prodType, 105, 33, { align: 'center' });
+                
+                // Stats bar
+                const completed = shots.filter(s => s.status === 'Completed').length;
+                const completionRate = Math.round((completed / shots.length) * 100);
+                
+                doc.setFillColor(26, 26, 26);
+                doc.rect(10, 45, 190, 20, 'F');
+                
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.text('TOTAL SHOTS', 15, 52);
+                doc.text('COMPLETED', 65, 52);
+                doc.text('IN PROGRESS', 115, 52);
+                doc.text('COMPLETION RATE', 165, 52);
+                
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(34, 211, 238);
+                doc.text(shots.length.toString(), 15, 61);
+                doc.setTextColor(16, 185, 129);
+                doc.text(completed.toString(), 65, 61);
+                doc.setTextColor(59, 130, 246);
+                doc.text(shots.filter(s => s.status === 'In Progress').length.toString(), 115, 61);
+                doc.setTextColor(167, 139, 250);
+                doc.text(completionRate + '%', 165, 61);
+                
+                let y = 75;
+                
+                // Group shots by scene
+                const shotsByScene = {};
+                shots.forEach(shot => {
+                    const scene = shot.scene || '1';
+                    if (!shotsByScene[scene]) shotsByScene[scene] = [];
+                    shotsByScene[scene].push(shot);
+                });
+                
+                const scenes = Object.keys(shotsByScene).sort((a, b) => {
+                    const aNum = parseInt(a) || 0;
+                    const bNum = parseInt(b) || 0;
+                    return aNum - bNum;
+                });
+                
+                scenes.forEach((scene, sceneIdx) => {
+                    const sceneShots = shotsByScene[scene];
+                    
+                    // Scene header
+                    if (y > 250) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    doc.setFillColor(34, 211, 238);
+                    doc.rect(10, y, 190, 8, 'F');
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(`SCENE ${scene}`, 15, y + 5.5);
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(9);
+                    doc.text(`${sceneShots.length} shot${sceneShots.length !== 1 ? 's' : ''}`, 185, y + 5.5, { align: 'right' });
+                    
+                    y += 12;
+                    
+                    // Shots in this scene
+                    sceneShots.forEach((shot, shotIdx) => {
+                        if (y > 270) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                        
+                        // Shot card background
+                        doc.setFillColor(245, 245, 245);
+                        doc.rect(10, y, 190, 32, 'F');
+                        doc.setDrawColor(34, 211, 238);
+                        doc.setLineWidth(0.5);
+                        doc.rect(10, y, 190, 32);
+                        
+                        // Shot number
+                        doc.setFontSize(16);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(34, 211, 238);
+                        doc.text(shot.number || `${scene}${String.fromCharCode(65 + shotIdx)}`, 15, y + 8);
+                        
+                        // Status badge
+                        const statusColors = {
+                            'Completed': [16, 185, 129],
+                            'Review': [251, 191, 36],
+                            'In Progress': [59, 130, 246],
+                            'Planned': [167, 139, 250]
+                        };
+                        const statusColor = statusColors[shot.status] || [167, 139, 250];
+                        doc.setFillColor(...statusColor);
+                        doc.roundedRect(180, y + 2, 18, 6, 1, 1, 'F');
+                        doc.setFontSize(7);
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text(shot.status || 'Planned', 189, y + 5.5, { align: 'center' });
+                        
+                        // Shot details
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(40, 40, 40);
+                        const desc = shot.description || 'Untitled Shot';
+                        doc.text(desc.substring(0, 60) + (desc.length > 60 ? '...' : ''), 15, y + 14);
+                        
+                        // Technical specs
+                        doc.setFontSize(8);
+                        doc.setTextColor(100, 100, 100);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('TYPE:', 15, y + 20);
+                        doc.text('SIZE:', 55, y + 20);
+                        doc.text('MOVEMENT:', 95, y + 20);
+                        doc.text('ANGLE:', 145, y + 20);
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(60, 60, 60);
+                        doc.text(shot.type || 'Master', 15, y + 25);
+                        doc.text((shot.size || 'WS').split(' - ')[0], 55, y + 25);
+                        doc.text(shot.movement || 'Static', 95, y + 25);
+                        doc.text(shot.angle || 'Eye Level', 145, y + 25);
+                        
+                        // Additional info if available
+                        if (shot.lens || shot.equipment) {
+                            doc.setFontSize(7);
+                            doc.setTextColor(100, 100, 100);
+                            let additionalInfo = '';
+                            if (shot.lens) additionalInfo += `Lens: ${shot.lens}  `;
+                            if (shot.equipment) additionalInfo += `Equipment: ${shot.equipment}`;
+                            doc.text(additionalInfo, 15, y + 30);
+                        }
+                        
+                        y += 36;
+                    });
+                    
+                    y += 4; // Space between scenes
+                });
+                
+                // Footer on all pages
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`${prodName} - Shot List`, 10, 290);
+                    doc.text(`Page ${i} of ${pageCount}`, 200, 290, { align: 'right' });
+                    doc.text(today, 105, 290, { align: 'center' });
+                }
+                
+                // Save the PDF
+                const fileName = `${prodName.replace(/[^a-z0-9]/gi, '_')}_ShotList_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(fileName);
+                
+                PopupSystem.showToast('📄 Shot list PDF exported', 'success');
             }
         };
 
@@ -16683,14 +17065,14 @@ const Gantt = GanttEnhanced;
             handlers: {
                 milestone(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].milestones) Core.data[Core.currentProduction].milestones = [];
-                    Core.data[Core.currentProduction].milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
+                    if (!Core.data.milestones) Core.data.milestones = [];
+                    Core.data.milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
                     Core.save(); Core.renderMilestones();
                 },
                 risk(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].risks) Core.data[Core.currentProduction].risks = [];
-                    Core.data[Core.currentProduction].risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
+                    if (!Core.data.risks) Core.data.risks = [];
+                    Core.data.risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
                     Core.save(); Core.renderRisks();
                 },
                 contact(data) {
@@ -16701,32 +17083,32 @@ const Gantt = GanttEnhanced;
                 },
                 shoot(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-                    Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
+                    if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+                    Core.data.schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
                     Core.save(); Core.renderSchedule();
                 },
                 scene(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-                    Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
+                    if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+                    Core.data.schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
                     Core.save(); Core.renderSchedule();
                 },
                 banner(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-                    Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
+                    if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+                    Core.data.schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
                     Core.save(); Core.renderSchedule();
                 },
                 shot(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].shotlist) Core.data[Core.currentProduction].shotlist = [];
-                    Core.data[Core.currentProduction].shotlist.push({ id: Date.now(), scene: data.shotScene, number: data.shotNumber, size: data.shotSize, movement: data.shotMovement || '', description: data.shotDescription || '', notes: data.shotNotes || '' });
+                    if (!Core.data.shotlist) Core.data.shotlist = [];
+                    Core.data.shotlist.push({ id: Date.now(), scene: data.shotScene, number: data.shotNumber, size: data.shotSize, movement: data.shotMovement || '', description: data.shotDescription || '', notes: data.shotNotes || '' });
                     Core.save(); Core.renderShotlist();
                 },
                 continuity(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].continuity) Core.data[Core.currentProduction].continuity = [];
-                    Core.data[Core.currentProduction].continuity.push({ 
+                    if (!Core.data.continuity) Core.data.continuity = [];
+                    Core.data.continuity.push({ 
                         id: Date.now(), 
                         scene: data.continuityScene, 
                         take: data.continuityTake, 
@@ -16753,9 +17135,23 @@ const Gantt = GanttEnhanced;
                 },
                 task(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].tasks) Core.data[Core.currentProduction].tasks = [];
-                    Core.data[Core.currentProduction].tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
-                    Core.save(); Core.renderTasks();
+                    if (!Core.data.gantt) Core.data.gantt = { production: [], global: [] };
+                    if (!Core.data.gantt.production) Core.data.gantt.production = [];
+                    Core.data.gantt.production.push({ 
+                        id: Date.now(), 
+                        name: data.taskName, 
+                        assignee: data.taskAssignee || '', 
+                        start: data.taskStartDate, 
+                        end: data.taskEndDate, 
+                        status: data.taskStatus, 
+                        priority: data.taskPriority || 'Medium', 
+                        notes: data.taskNotes || '',
+                        dependencies: []
+                    });
+                    Core.save();
+                    if (typeof GanttEnhanced !== 'undefined' && GanttEnhanced.render) {
+                        GanttEnhanced.render();
+                    }
                 }
             },
             
@@ -16827,10 +17223,19 @@ const Gantt = GanttEnhanced;
             shot: { title: 'Add Shot', subtitle: 'Add a shot to the shot list', type: 'shot', submitText: 'Add Shot', fields: [
                 { id: 'shotScene', label: 'Scene Number', type: 'text', required: true, placeholder: 'e.g., 42' },
                 { id: 'shotNumber', label: 'Shot Number', type: 'text', required: true, placeholder: 'e.g., 42A' },
-                { id: 'shotSize', label: 'Shot Size', type: 'select', required: true, options: ['XWS', 'WS', 'MWS', 'MS', 'MCU', 'CU', 'XCU', 'INSERT'] },
-                { id: 'shotMovement', label: 'Camera Movement', type: 'text', placeholder: 'e.g., Dolly, Pan, Handheld' },
-                { id: 'shotDescription', label: 'Description', type: 'textarea', placeholder: 'Shot description and framing' },
-                { id: 'shotNotes', label: 'Notes', type: 'textarea', placeholder: 'Technical notes, equipment needed' }
+                { id: 'shotDescription', label: 'Description', type: 'textarea', required: true, placeholder: 'What happens in this shot?' },
+                { id: 'shotType', label: 'Shot Type', type: 'select', required: true, options: ['Master', 'Coverage', 'Insert', 'Cutaway', 'Establishing', 'POV', 'OTS', 'Two-Shot', 'Reaction'] },
+                { id: 'shotSize', label: 'Shot Size', type: 'select', required: true, options: ['EWS - Extreme Wide', 'WS - Wide', 'MWS - Medium Wide', 'MS - Medium', 'MCU - Medium Close-Up', 'CU - Close-Up', 'ECU - Extreme Close-Up', 'INSERT'] },
+                { id: 'shotAngle', label: 'Camera Angle', type: 'select', options: ['Eye Level', 'High Angle', 'Low Angle', 'Dutch/Canted', 'Birds Eye', 'Worms Eye', 'Over Shoulder'] },
+                { id: 'shotMovement', label: 'Camera Movement', type: 'select', options: ['Static', 'Pan', 'Tilt', 'Zoom', 'Dolly In', 'Dolly Out', 'Track', 'Crane', 'Handheld', 'Steadicam', 'Gimbal'] },
+                { id: 'shotLens', label: 'Lens/Focal Length', type: 'text', placeholder: 'e.g., 35mm, 50mm, 85mm' },
+                { id: 'shotFPS', label: 'Frame Rate', type: 'select', options: ['24 fps', '25 fps', '30 fps', '48 fps', '60 fps', '120 fps', '240 fps'] },
+                { id: 'shotCast', label: 'Cast in Shot', type: 'text', placeholder: 'e.g., Character 1, Character 2' },
+                { id: 'shotEquipment', label: 'Special Equipment', type: 'text', placeholder: 'Dolly, crane, drone, etc.' },
+                { id: 'shotDuration', label: 'Estimated Duration', type: 'text', placeholder: 'e.g., 15 seconds' },
+                { id: 'shotVFX', label: 'VFX Notes', type: 'textarea', placeholder: 'Any VFX or post-production notes' },
+                { id: 'shotNotes', label: 'Additional Notes', type: 'textarea', placeholder: 'Lighting, audio, or other technical notes' },
+                { id: 'shotStatus', label: 'Status', type: 'select', options: ['Planned', 'In Progress', 'Review', 'Completed'], defaultValue: 'Planned' }
             ]},
             continuity: { title: 'Add Continuity Entry', subtitle: 'Comprehensive continuity logging', type: 'continuity', submitText: 'Add Entry', fields: [
                 { id: 'continuityScene', label: 'Scene Number', type: 'text', required: true, placeholder: 'e.g., 42' },
@@ -16974,15 +17379,86 @@ const Gantt = GanttEnhanced;
         
         PopupConfigs.milestone.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].milestones) Core.data[Core.currentProduction].milestones = [];
-            Core.data[Core.currentProduction].milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
-            Core.save(); Core.renderMilestones();
+            if (!Core.data.milestones) Core.data.milestones = [];
+            Core.data.milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderMilestones();
         };
         PopupConfigs.risk.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].risks) Core.data[Core.currentProduction].risks = [];
-            Core.data[Core.currentProduction].risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
-            Core.save(); Core.renderRisks();
+            if (!Core.data.risks) Core.data.risks = [];
+            Core.data.risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderRisks();
+        };
+        PopupConfigs.shot.onSubmit = (data) => {
+            console.log('🎬 Shot onSubmit called with data:', data);
+            console.log('📊 Current production:', Core.currentProduction);
+            console.log('📊 Core.data exists:', !!Core.data);
+            console.log('📊 Core.data.shotlist before:', Core.data.shotlist);
+            
+            if (Core.currentProduction === 'GLOBAL') { 
+                alert('Please select a production first'); 
+                return; 
+            }
+            if (!Core.data.shotlist) {
+                console.log('⚠️ Initializing shotlist array');
+                Core.data.shotlist = [];
+            }
+            
+            const shot = {
+                id: Date.now(),
+                scene: data.shotScene,
+                number: data.shotNumber,
+                description: data.shotDescription,
+                type: data.shotType,
+                size: data.shotSize,
+                angle: data.shotAngle || '',
+                movement: data.shotMovement || 'Static',
+                lens: data.shotLens || '',
+                fps: data.shotFPS || '24 fps',
+                cast: data.shotCast || '',
+                equipment: data.shotEquipment || '',
+                duration: data.shotDuration || '',
+                vfx: data.shotVFX || '',
+                notes: data.shotNotes || '',
+                status: data.shotStatus || 'Planned',
+                completed: (data.shotStatus === 'Completed')
+            };
+            
+            console.log('✅ Shot object created:', shot);
+            
+            Core.data.shotlist.push(shot);
+            console.log('📊 Core.data.shotlist after push:', Core.data.shotlist);
+            console.log('💾 Calling Core.save()...');
+            Core.save();
+            
+            // Immediate cloud sync for better responsiveness
+            if (Auth.user && !Auth.isDemoMode) {
+                console.log('☁️ Triggering immediate cloud sync...');
+                Core.syncToCloud();
+            }
+            
+            // Refresh shot list view if it's active
+            if (document.querySelector('#view-shotlist.active')) {
+                console.log('🔄 Refreshing shot list view...');
+                ShotList.render();
+            }
+            
+            console.log('✅ Shot addition complete');
+            PopupSystem.showToast(`✅ Shot ${data.shotNumber} added`, 'success');
         };
         PopupConfigs.contact.onSubmit = (data) => {
             if (!Core.bizData.contacts) Core.bizData.contacts = {};
@@ -16992,32 +17468,47 @@ const Gantt = GanttEnhanced;
         };
         PopupConfigs.shoot.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-            Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
-            Core.save(); Core.renderSchedule();
+            if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+            Core.data.schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderSchedule();
         };
         PopupConfigs.scene.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-            Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
-            Core.save(); Core.renderSchedule();
+            if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+            Core.data.schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderSchedule();
         };
         PopupConfigs.banner.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-            Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
-            Core.save(); Core.renderSchedule();
-        };
-        PopupConfigs.shot.onSubmit = (data) => {
-            if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].shotlist) Core.data[Core.currentProduction].shotlist = [];
-            Core.data[Core.currentProduction].shotlist.push({ id: Date.now(), scene: data.shotScene, number: data.shotNumber, size: data.shotSize, movement: data.shotMovement || '', description: data.shotDescription || '', notes: data.shotNotes || '' });
-            Core.save(); Core.renderShotlist();
+            if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+            Core.data.schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderSchedule();
         };
         PopupConfigs.continuity.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].continuity) Core.data[Core.currentProduction].continuity = [];
-            Core.data[Core.currentProduction].continuity.push({ 
+            if (!Core.data.continuity) Core.data.continuity = [];
+            Core.data.continuity.push({ 
                 id: Date.now(), 
                 scene: data.continuityScene, 
                 take: data.continuityTake, 
@@ -17028,7 +17519,14 @@ const Gantt = GanttEnhanced;
                 additionalNotes: data.continuityAdditionalNotes || '',
                 timestamp: new Date().toISOString() 
             });
-            Core.save(); Core.renderContinuity();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderContinuity();
         };
         PopupConfigs.cast.onSubmit = (data) => {
             if (!Core.bizData.cast) Core.bizData.cast = {};
@@ -17043,10 +17541,43 @@ const Gantt = GanttEnhanced;
             Core.save(); Core.renderCrew();
         };
         PopupConfigs.task.onSubmit = (data) => {
-            if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].tasks) Core.data[Core.currentProduction].tasks = [];
-            Core.data[Core.currentProduction].tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
-            Core.save(); Core.renderTasks();
+            if (Core.currentProduction === 'GLOBAL') { 
+                alert('Please select a production first'); 
+                return; 
+            }
+            
+            // Initialize gantt structure if needed
+            if (!Core.data.gantt) Core.data.gantt = { production: [], global: [] };
+            if (!Core.data.gantt.production) Core.data.gantt.production = [];
+            
+            // Create task object
+            const task = {
+                id: Date.now(),
+                name: data.taskName,
+                assignee: data.taskAssignee || '',
+                start: data.taskStartDate,
+                end: data.taskEndDate,
+                status: data.taskStatus,
+                priority: data.taskPriority || 'Medium',
+                notes: data.taskNotes || '',
+                dependencies: []
+            };
+            
+            // Add to production tasks
+            Core.data.gantt.production.push(task);
+            Core.save();
+            
+            // Immediate cloud sync for better responsiveness
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            // Render Gantt chart if it exists
+            if (typeof GanttEnhanced !== 'undefined' && GanttEnhanced.render) {
+                GanttEnhanced.render();
+            }
+            
+            PopupSystem.showToast(`✅ Task "${data.taskName}" added`, 'success');
         };
         
         function openMilestonePopup() { PopupSystem.show(PopupConfigs.milestone); }
@@ -17090,24 +17621,23 @@ const Gantt = GanttEnhanced;
                 this.render();
             },
             
-            getProductions() {
-                // Get all productions from storage
-                const productions = [];
+            async getProductions() {
+                // Get all productions from storage and cloud
+                const productionMap = new Map();
                 const keys = Object.keys(localStorage);
                 
+                // First, load from localStorage
                 for (const key of keys) {
                     if (key.startsWith('dc_alacrity_prod_') && key !== 'dc_alacrity_prod_GLOBAL') {
                         try {
                             const data = JSON.parse(localStorage.getItem(key));
                             const prodId = key.replace('dc_alacrity_prod_', '');
                             
-                            // Check if this production exists in cloud
-                            const isCloudSynced = data._cloudSynced === true;
-                            
-                            productions.push({
+                            productionMap.set(prodId, {
                                 id: prodId,
-                                isCloudSynced: isCloudSynced,
-                                isOfflineOnly: !isCloudSynced && Auth.user && !Auth.isDemoMode,
+                                isCloudSynced: data._cloudSynced === true,
+                                isOfflineOnly: !(data._cloudSynced === true),
+                                source: 'local',
                                 ...data
                             });
                         } catch (e) {
@@ -17115,6 +17645,51 @@ const Gantt = GanttEnhanced;
                         }
                     }
                 }
+                
+                // Then, fetch from Firebase and merge
+                if (Auth.user && !Auth.isDemoMode) {
+                    try {
+                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions`);
+                        const snapshot = await window.firebaseGet(dbRef);
+                        
+                        if (snapshot.exists()) {
+                            const cloudProductions = snapshot.val();
+                            
+                            for (const [prodId, cloudData] of Object.entries(cloudProductions)) {
+                                if (productionMap.has(prodId)) {
+                                    // Production exists both locally and in cloud
+                                    const localProd = productionMap.get(prodId);
+                                    const localMod = localProd.lastModified || localProd.created || 0;
+                                    const cloudMod = cloudData.lastModified || cloudData.created || 0;
+                                    
+                                    // Update with cloud sync status
+                                    productionMap.set(prodId, {
+                                        ...localProd,
+                                        isCloudSynced: true,
+                                        isOfflineOnly: false,
+                                        cloudNewer: cloudMod > localMod,
+                                        cloudLastModified: cloudMod
+                                    });
+                                } else {
+                                    // Production only exists in cloud - add it
+                                    productionMap.set(prodId, {
+                                        id: prodId,
+                                        isCloudSynced: true,
+                                        isOfflineOnly: false,
+                                        source: 'cloud',
+                                        cloudOnly: true,
+                                        ...cloudData
+                                    });
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error fetching cloud productions:', e);
+                    }
+                }
+                
+                // Convert map to array
+                const productions = Array.from(productionMap.values());
                 
                 // Sort by last modified (most recent first)
                 productions.sort((a, b) => {
@@ -17126,8 +17701,8 @@ const Gantt = GanttEnhanced;
                 return productions;
             },
             
-            getFilteredProductions() {
-                let productions = this.getProductions();
+            async getFilteredProductions() {
+                let productions = await this.getProductions();
                 
                 // Apply type filter
                 if (this.currentFilter !== 'all') {
@@ -17193,10 +17768,17 @@ const Gantt = GanttEnhanced;
                 
                 // Storage badge
                 let storageBadge = '';
-                if (prod.isOfflineOnly) {
+                if (prod.cloudOnly) {
+                    storageBadge = '<div class="production-card-type" style="background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.4); color: #8b5cf6;">☁️ CLOUD ONLY</div>';
+                } else if (prod.isOfflineOnly) {
                     storageBadge = '<div class="production-card-type" style="background: rgba(251, 191, 36, 0.2); border-color: rgba(251, 191, 36, 0.4); color: #fbbf24;">💾 OFFLINE ONLY</div>';
                 } else if (prod.isCloudSynced) {
                     storageBadge = '<div class="production-card-type" style="background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.4); color: #10b981;">☁️ CLOUD SYNCED</div>';
+                }
+                
+                // Show newer version indicator if cloud is newer
+                if (prod.cloudNewer) {
+                    storageBadge += '<div class="production-card-type" style="background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); color: #3b82f6; margin-top: 8px;">⬇️ NEWER VERSION IN CLOUD</div>';
                 }
                 
                 // Upload button for offline productions
@@ -17241,7 +17823,7 @@ const Gantt = GanttEnhanced;
                         
                         <div class="production-card-footer">
                             <button class="production-card-btn production-card-btn-load" onclick="ProductionLibrary.loadProduction('${prod.id}')">
-                                Load Production
+                                ${prod.cloudOnly ? '⬇️ Download & Load' : 'Load Production'}
                             </button>
                             ${uploadButton}
                             <button class="production-card-btn production-card-btn-delete" onclick="ProductionLibrary.deleteProduction('${prod.id}')">
@@ -17252,11 +17834,11 @@ const Gantt = GanttEnhanced;
                 `;
             },
             
-            updateCloudUploadSection() {
+            async updateCloudUploadSection() {
                 const section = document.getElementById('cloud-upload-section');
                 if (!section) return;
                 
-                const productions = this.getProductions();
+                const productions = await this.getProductions();
                 const offlineProductions = productions.filter(p => p.isOfflineOnly);
                 
                 if (offlineProductions.length > 0 && Auth.user && !Auth.isDemoMode) {
@@ -17280,14 +17862,22 @@ const Gantt = GanttEnhanced;
                 }
             },
             
-            render() {
+            async render() {
                 const grid = document.getElementById('production-library-grid');
                 if (!grid) return;
                 
                 console.log('📚 ProductionLibrary.render() - Refreshing library view');
                 
-                const productions = this.getFilteredProductions();
-                const allProductions = this.getProductions();
+                // Show loading state
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-50);">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⚙️</div>
+                        <div>Loading productions...</div>
+                    </div>
+                `;
+                
+                const productions = await this.getFilteredProductions();
+                const allProductions = await this.getProductions();
                 
                 // Update production count
                 const countEl = document.getElementById('production-library-count');
@@ -17306,7 +17896,7 @@ const Gantt = GanttEnhanced;
                 }
                 
                 // Update cloud upload section
-                this.updateCloudUploadSection();
+                await this.updateCloudUploadSection();
                 
                 if (productions.length === 0) {
                     grid.innerHTML = `
@@ -17335,7 +17925,33 @@ const Gantt = GanttEnhanced;
             },
             
             async loadProduction(productionId) {
-                const prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
+                // First check if production exists locally
+                let prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
+                
+                // If not local but user is logged in, try to fetch from cloud
+                if (!prodData && Auth.user && !Auth.isDemoMode) {
+                    try {
+                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${productionId}`);
+                        const snapshot = await window.firebaseGet(dbRef);
+                        
+                        if (snapshot.exists()) {
+                            prodData = snapshot.val();
+                            // Save to local storage for offline access
+                            localStorage.setItem(`dc_alacrity_prod_${productionId}`, JSON.stringify(prodData));
+                            console.log(`✅ Downloaded production ${productionId} from cloud`);
+                        }
+                    } catch (e) {
+                        console.error('Error fetching production from cloud:', e);
+                        alert(`Failed to load production from cloud: ${e.message}`);
+                        return;
+                    }
+                }
+                
+                if (!prodData) {
+                    alert('Production not found!');
+                    return;
+                }
+                
                 const prodName = prodData?.name || productionId;
                 const prodType = prodData?.type || 'Production';
                 const castCount = Object.keys(prodData?.cast || {}).length;
@@ -17392,9 +18008,30 @@ const Gantt = GanttEnhanced;
             },
             
             async deleteProduction(productionId) {
-                const prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
+                // Try to get from local first, then cloud
+                let prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
+                let isCloudSynced = prodData?._cloudSynced;
+                
+                // If not found locally but user is logged in, check cloud
+                if (!prodData && Auth.user && !Auth.isDemoMode) {
+                    try {
+                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${productionId}`);
+                        const snapshot = await window.firebaseGet(dbRef);
+                        if (snapshot.exists()) {
+                            prodData = snapshot.val();
+                            isCloudSynced = true;
+                        }
+                    } catch (e) {
+                        console.error('Error checking cloud for production:', e);
+                    }
+                }
+                
+                if (!prodData) {
+                    alert('Production not found!');
+                    return;
+                }
+                
                 const prodName = prodData?.name || productionId;
-                const isCloudSynced = prodData?._cloudSynced;
                 const castCount = Object.keys(prodData?.cast || {}).length;
                 const crewCount = Object.keys(prodData?.crew || {}).length;
                 
@@ -17512,7 +18149,7 @@ const Gantt = GanttEnhanced;
                     return;
                 }
                 
-                const productions = this.getProductions();
+                const productions = await this.getProductions();
                 const offlineProductions = productions.filter(p => p.isOfflineOnly);
                 
                 if (offlineProductions.length === 0) {
@@ -17603,6 +18240,8 @@ const Gantt = GanttEnhanced;
         
         // Enhanced Core.save to update lastModified and check cloud sync
         const originalSave = Core.save;
+        let cloudSyncTimeout = null;
+        
         Core.save = async function() {
             // Update lastModified timestamp
             if (this.currentProduction && this.currentProduction !== 'GLOBAL') {
@@ -17617,22 +18256,49 @@ const Gantt = GanttEnhanced;
                 console.log(`💾 Saving ${this.currentProduction}...`);
                 console.log(`📊 Cast: ${Object.keys(this.data.cast || {}).length}, Crew: ${Object.keys(this.data.crew || {}).length}`);
                 
-                // If cloud synced, automatically sync changes
+                // Call original save (which saves to localStorage) - IMMEDIATE
+                originalSave.call(this);
+                
+                // Debounced cloud sync for better performance
                 if (this.data._cloudSynced && Auth.user && !Auth.isDemoMode) {
-                    try {
-                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
-                        await window.firebaseSet(dbRef, this.data);
-                        console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
-                    } catch (e) {
-                        console.error('Auto-sync failed:', e);
+                    // Clear any pending sync
+                    if (cloudSyncTimeout) {
+                        clearTimeout(cloudSyncTimeout);
                     }
+                    
+                    // Schedule cloud sync after 500ms of no changes
+                    cloudSyncTimeout = setTimeout(async () => {
+                        try {
+                            const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                            await window.firebaseSet(dbRef, this.data);
+                            console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
+                            
+                            // Show subtle sync indicator
+                            const indicator = document.querySelector('.sync-indicator');
+                            if (indicator) {
+                                indicator.textContent = '✓ Synced';
+                                indicator.style.color = '#10b981';
+                                setTimeout(() => {
+                                    indicator.textContent = '☁️ Cloud';
+                                    indicator.style.color = '';
+                                }, 1500);
+                            }
+                        } catch (e) {
+                            console.error('Auto-sync failed:', e);
+                            const indicator = document.querySelector('.sync-indicator');
+                            if (indicator) {
+                                indicator.textContent = '⚠️ Sync Error';
+                                indicator.style.color = '#f59e0b';
+                            }
+                        }
+                    }, 500);
                 }
+            } else {
+                // Call original save for non-production data
+                originalSave.call(this);
             }
             
-            // Call original save (which saves to localStorage)
-            originalSave.call(this);
-            
-            // Refresh Production Library if it's currently open
+            // Refresh Production Library if it's currently open (debounced)
             if (document.getElementById('view-production-library')?.classList.contains('active')) {
                 console.log('🔄 Refreshing Production Library after save...');
                 setTimeout(() => ProductionLibrary.render(), 100);
