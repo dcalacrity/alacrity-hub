@@ -8982,6 +8982,20 @@ Target is on the move. Headed north on 8th."></textarea>
                 // Use deep merge to preserve loaded data, especially nested objects like cast/crew
                 this.data = this.deepMerge(defaults, productionData);
                 
+                // PHASE 5: Migrate old property names to new ones (for backward compatibility)
+                console.log(`🔄 Migrating legacy property names...`);
+                const hadMigrations = this.migrateOldPropertyNames();
+                
+                // If migrations occurred, save the updated data
+                if (hadMigrations) {
+                    console.log(`💾 Saving migrated data...`);
+                    localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
+                    // Also sync to cloud if in cloud mode
+                    if (Auth.user && !Auth.isDemoMode && dataSource === 'cloud') {
+                        await this.syncToCloud();
+                    }
+                }
+                
                 // Debug cast/crew data
                 console.log(`🎭 Cast members loaded: ${Object.keys(this.data.cast || {}).length}`);
                 console.log(`🎬 Crew members loaded: ${Object.keys(this.data.crew || {}).length}`);
@@ -9003,6 +9017,82 @@ Target is on the move. Headed north on 8th."></textarea>
                 console.log(`✅ ═══════════════════════════════════════════`);
                 
                 this.log(`Loaded production: ${name} (${dataSource})`);
+            },
+            
+            migrateOldPropertyNames() {
+                let hadMigrations = false;
+                
+                // Migrate shotList (old camelCase) to shotlist (new lowercase)
+                if (this.data.shotList && !this.data.shotlist) {
+                    console.log(`📦 Migrating shotList → shotlist (${this.data.shotList.length} shots)`);
+                    this.data.shotlist = this.data.shotList;
+                    delete this.data.shotList;
+                    hadMigrations = true;
+                }
+                
+                // Ensure shotlist exists
+                if (!this.data.shotlist) {
+                    this.data.shotlist = [];
+                }
+                
+                // Ensure budget structure exists with proper format
+                if (!this.data.budget || !this.data.budget.lines) {
+                    console.log(`📦 Initializing budget structure`);
+                    this.data.budget = JSON.parse(JSON.stringify(DEFAULT_BUDGET));
+                    hadMigrations = true;
+                }
+                
+                // Ensure budget.pos exists
+                if (!this.data.budget.pos) {
+                    this.data.budget.pos = [];
+                    hadMigrations = true;
+                }
+                
+                // Ensure all required arrays exist
+                if (!this.data.milestones) {
+                    this.data.milestones = [];
+                    hadMigrations = true;
+                }
+                if (!this.data.risks) {
+                    this.data.risks = [];
+                    hadMigrations = true;
+                }
+                if (!this.data.continuity) {
+                    this.data.continuity = [];
+                    hadMigrations = true;
+                }
+                if (!this.data.tasks) {
+                    this.data.tasks = [];
+                    hadMigrations = true;
+                }
+                
+                // Ensure gantt structure exists
+                if (!this.data.gantt) {
+                    this.data.gantt = { production: [], global: [] };
+                    hadMigrations = true;
+                } else {
+                    // Ensure both production and global arrays exist
+                    if (!this.data.gantt.production) {
+                        this.data.gantt.production = [];
+                        hadMigrations = true;
+                    }
+                    if (!this.data.gantt.global) {
+                        this.data.gantt.global = [];
+                        hadMigrations = true;
+                    }
+                }
+                
+                // Ensure schedule structure exists
+                if (!this.data.schedule) {
+                    this.data.schedule = { strips: [] };
+                    hadMigrations = true;
+                } else if (!this.data.schedule.strips) {
+                    this.data.schedule.strips = [];
+                    hadMigrations = true;
+                }
+                
+                console.log(`✅ Migration complete (had changes: ${hadMigrations})`);
+                return hadMigrations;
             },
 
             async loadBizData() {
@@ -14955,6 +15045,12 @@ const Gantt = GanttEnhanced;
                     }
                     Core.data.shotlist = shots;
                     Core.save();
+                    
+                    // Immediate cloud sync
+                    if (Auth.user && !Auth.isDemoMode) {
+                        Core.syncToCloud();
+                    }
+                    
                     this.render();
                 }
             },
@@ -14993,6 +15089,12 @@ const Gantt = GanttEnhanced;
                         
                         Core.data.shotlist = shots;
                         Core.save();
+                        
+                        // Immediate cloud sync
+                        if (Auth.user && !Auth.isDemoMode) {
+                            Core.syncToCloud();
+                        }
+                        
                         this.render();
                         PopupSystem.showToast(`✅ Shot ${data.shotNumber} updated`, 'success');
                     }
@@ -15031,6 +15133,12 @@ const Gantt = GanttEnhanced;
                     shots.splice(idx, 1);
                     Core.data.shotlist = shots;
                     Core.save();
+                    
+                    // Immediate cloud sync
+                    if (Auth.user && !Auth.isDemoMode) {
+                        Core.syncToCloud();
+                    }
+                    
                     this.render();
                     PopupSystem.showToast('🗑️ Shot deleted', 'success');
                 }
@@ -17013,9 +17121,23 @@ const Gantt = GanttEnhanced;
                 },
                 task(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data.tasks) Core.data.tasks = [];
-                    Core.data.tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
-                    Core.save(); Core.renderTasks();
+                    if (!Core.data.gantt) Core.data.gantt = { production: [], global: [] };
+                    if (!Core.data.gantt.production) Core.data.gantt.production = [];
+                    Core.data.gantt.production.push({ 
+                        id: Date.now(), 
+                        name: data.taskName, 
+                        assignee: data.taskAssignee || '', 
+                        start: data.taskStartDate, 
+                        end: data.taskEndDate, 
+                        status: data.taskStatus, 
+                        priority: data.taskPriority || 'Medium', 
+                        notes: data.taskNotes || '',
+                        dependencies: []
+                    });
+                    Core.save();
+                    if (typeof GanttEnhanced !== 'undefined' && GanttEnhanced.render) {
+                        GanttEnhanced.render();
+                    }
                 }
             },
             
@@ -17245,13 +17367,27 @@ const Gantt = GanttEnhanced;
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
             if (!Core.data.milestones) Core.data.milestones = [];
             Core.data.milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
-            Core.save(); Core.renderMilestones();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderMilestones();
         };
         PopupConfigs.risk.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
             if (!Core.data.risks) Core.data.risks = [];
             Core.data.risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
-            Core.save(); Core.renderRisks();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderRisks();
         };
         PopupConfigs.shot.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { 
@@ -17283,6 +17419,11 @@ const Gantt = GanttEnhanced;
             Core.data.shotlist.push(shot);
             Core.save();
             
+            // Immediate cloud sync for better responsiveness
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
             // Refresh shot list view if it's active
             if (document.querySelector('#view-shotlist.active')) {
                 ShotList.render();
@@ -17300,19 +17441,40 @@ const Gantt = GanttEnhanced;
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
             if (!Core.data.schedule) Core.data.schedule = { strips: [] };
             Core.data.schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
-            Core.save(); Core.renderSchedule();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderSchedule();
         };
         PopupConfigs.scene.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
             if (!Core.data.schedule) Core.data.schedule = { strips: [] };
             Core.data.schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
-            Core.save(); Core.renderSchedule();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderSchedule();
         };
         PopupConfigs.banner.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
             if (!Core.data.schedule) Core.data.schedule = { strips: [] };
             Core.data.schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
-            Core.save(); Core.renderSchedule();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderSchedule();
         };
         PopupConfigs.continuity.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
@@ -17328,7 +17490,14 @@ const Gantt = GanttEnhanced;
                 additionalNotes: data.continuityAdditionalNotes || '',
                 timestamp: new Date().toISOString() 
             });
-            Core.save(); Core.renderContinuity();
+            Core.save();
+            
+            // Immediate cloud sync
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            Core.renderContinuity();
         };
         PopupConfigs.cast.onSubmit = (data) => {
             if (!Core.bizData.cast) Core.bizData.cast = {};
@@ -17343,10 +17512,43 @@ const Gantt = GanttEnhanced;
             Core.save(); Core.renderCrew();
         };
         PopupConfigs.task.onSubmit = (data) => {
-            if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data.tasks) Core.data.tasks = [];
-            Core.data.tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
-            Core.save(); Core.renderTasks();
+            if (Core.currentProduction === 'GLOBAL') { 
+                alert('Please select a production first'); 
+                return; 
+            }
+            
+            // Initialize gantt structure if needed
+            if (!Core.data.gantt) Core.data.gantt = { production: [], global: [] };
+            if (!Core.data.gantt.production) Core.data.gantt.production = [];
+            
+            // Create task object
+            const task = {
+                id: Date.now(),
+                name: data.taskName,
+                assignee: data.taskAssignee || '',
+                start: data.taskStartDate,
+                end: data.taskEndDate,
+                status: data.taskStatus,
+                priority: data.taskPriority || 'Medium',
+                notes: data.taskNotes || '',
+                dependencies: []
+            };
+            
+            // Add to production tasks
+            Core.data.gantt.production.push(task);
+            Core.save();
+            
+            // Immediate cloud sync for better responsiveness
+            if (Auth.user && !Auth.isDemoMode) {
+                Core.syncToCloud();
+            }
+            
+            // Render Gantt chart if it exists
+            if (typeof GanttEnhanced !== 'undefined' && GanttEnhanced.render) {
+                GanttEnhanced.render();
+            }
+            
+            PopupSystem.showToast(`✅ Task "${data.taskName}" added`, 'success');
         };
         
         function openMilestonePopup() { PopupSystem.show(PopupConfigs.milestone); }
@@ -18009,6 +18211,8 @@ const Gantt = GanttEnhanced;
         
         // Enhanced Core.save to update lastModified and check cloud sync
         const originalSave = Core.save;
+        let cloudSyncTimeout = null;
+        
         Core.save = async function() {
             // Update lastModified timestamp
             if (this.currentProduction && this.currentProduction !== 'GLOBAL') {
@@ -18023,22 +18227,49 @@ const Gantt = GanttEnhanced;
                 console.log(`💾 Saving ${this.currentProduction}...`);
                 console.log(`📊 Cast: ${Object.keys(this.data.cast || {}).length}, Crew: ${Object.keys(this.data.crew || {}).length}`);
                 
-                // If cloud synced, automatically sync changes
+                // Call original save (which saves to localStorage) - IMMEDIATE
+                originalSave.call(this);
+                
+                // Debounced cloud sync for better performance
                 if (this.data._cloudSynced && Auth.user && !Auth.isDemoMode) {
-                    try {
-                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
-                        await window.firebaseSet(dbRef, this.data);
-                        console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
-                    } catch (e) {
-                        console.error('Auto-sync failed:', e);
+                    // Clear any pending sync
+                    if (cloudSyncTimeout) {
+                        clearTimeout(cloudSyncTimeout);
                     }
+                    
+                    // Schedule cloud sync after 500ms of no changes
+                    cloudSyncTimeout = setTimeout(async () => {
+                        try {
+                            const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                            await window.firebaseSet(dbRef, this.data);
+                            console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
+                            
+                            // Show subtle sync indicator
+                            const indicator = document.querySelector('.sync-indicator');
+                            if (indicator) {
+                                indicator.textContent = '✓ Synced';
+                                indicator.style.color = '#10b981';
+                                setTimeout(() => {
+                                    indicator.textContent = '☁️ Cloud';
+                                    indicator.style.color = '';
+                                }, 1500);
+                            }
+                        } catch (e) {
+                            console.error('Auto-sync failed:', e);
+                            const indicator = document.querySelector('.sync-indicator');
+                            if (indicator) {
+                                indicator.textContent = '⚠️ Sync Error';
+                                indicator.style.color = '#f59e0b';
+                            }
+                        }
+                    }, 500);
                 }
+            } else {
+                // Call original save for non-production data
+                originalSave.call(this);
             }
             
-            // Call original save (which saves to localStorage)
-            originalSave.call(this);
-            
-            // Refresh Production Library if it's currently open
+            // Refresh Production Library if it's currently open (debounced)
             if (document.getElementById('view-production-library')?.classList.contains('active')) {
                 console.log('🔄 Refreshing Production Library after save...');
                 setTimeout(() => ProductionLibrary.render(), 100);
