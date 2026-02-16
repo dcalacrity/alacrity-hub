@@ -8686,7 +8686,18 @@ Target is on the move. Headed north on 8th."></textarea>
                 days: [],
                 crm: { leads: [], ledger: [] },
                 gantt: { production: [], global: [] },
-                notes: ''
+                notes: '',
+                shotlist: [],
+                continuity: [],
+                risks: [],
+                milestones: [],
+                tasks: [],
+                financials: {
+                    categories: {},
+                    budget: 0,
+                    spent: 0,
+                    remaining: 0
+                }
             },
             bizData: { leads: [], ledger: [], income: [] },
             activityLog: [],
@@ -9064,6 +9075,17 @@ Target is on the move. Headed north on 8th."></textarea>
                     hadMigrations = true;
                 }
                 
+                // Ensure financials structure exists
+                if (!this.data.financials) {
+                    this.data.financials = {
+                        categories: {},
+                        budget: 0,
+                        spent: 0,
+                        remaining: 0
+                    };
+                    hadMigrations = true;
+                }
+                
                 // Ensure gantt structure exists
                 if (!this.data.gantt) {
                     this.data.gantt = { production: [], global: [] };
@@ -9139,7 +9161,14 @@ Target is on the move. Headed north on 8th."></textarea>
                     continuity: [],
                     risks: [],
                     contacts: [],
-                    milestones: []
+                    milestones: [],
+                    tasks: [],
+                    financials: {
+                        categories: {},
+                        budget: 0,
+                        spent: 0,
+                        remaining: 0
+                    }
                 };
             },
 
@@ -17925,12 +17954,15 @@ const Gantt = GanttEnhanced;
             },
             
             async loadProduction(productionId) {
+                console.log(`🎯 ProductionLibrary.loadProduction called for: ${productionId}`);
+                
                 // First check if production exists locally
                 let prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
                 
                 // If not local but user is logged in, try to fetch from cloud
                 if (!prodData && Auth.user && !Auth.isDemoMode) {
                     try {
+                        console.log(`☁️ Fetching ${productionId} from cloud...`);
                         const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${productionId}`);
                         const snapshot = await window.firebaseGet(dbRef);
                         
@@ -17952,11 +17984,33 @@ const Gantt = GanttEnhanced;
                     return;
                 }
                 
+                // Ensure all required data structures exist
+                prodData.cast = prodData.cast || {};
+                prodData.crew = prodData.crew || {};
+                prodData.shotlist = prodData.shotlist || [];
+                prodData.schedule = prodData.schedule || { strips: [] };
+                prodData.schedule.strips = prodData.schedule.strips || [];
+                prodData.financials = prodData.financials || {
+                    categories: {},
+                    budget: 0,
+                    spent: 0,
+                    remaining: 0
+                };
+                prodData.tasks = prodData.tasks || [];
+                prodData.milestones = prodData.milestones || [];
+                prodData.risks = prodData.risks || [];
+                prodData.continuity = prodData.continuity || [];
+                
+                // Save sanitized data back
+                localStorage.setItem(`dc_alacrity_prod_${productionId}`, JSON.stringify(prodData));
+                
                 const prodName = prodData?.name || productionId;
                 const prodType = prodData?.type || 'Production';
                 const castCount = Object.keys(prodData?.cast || {}).length;
                 const crewCount = Object.keys(prodData?.crew || {}).length;
                 const sceneCount = (prodData?.schedule?.strips || []).length;
+                
+                console.log(`📊 Production data loaded: Cast=${castCount}, Crew=${crewCount}, Scenes=${sceneCount}, Shots=${(prodData.shotlist || []).length}`);
                 
                 PopupSystem.show({
                     title: `Load Production?`,
@@ -17997,9 +18051,16 @@ const Gantt = GanttEnhanced;
                     ],
                     submitText: 'Load Production',
                     onSubmit: async (data) => {
+                        console.log(`🔄 Loading production ${productionId} into Core...`);
                         await Core.loadProduction(productionId);
                         Core.renderProductionDropdown();
                         Core.navigate('dashboard');
+                        
+                        // Ensure all views are refreshed
+                        setTimeout(() => {
+                            Core.renderAll();
+                            console.log(`✅ Production ${productionId} loaded and all views refreshed`);
+                        }, 100);
                         
                         // Show success toast
                         PopupSystem.showToast(`✅ Loaded "${prodName}"`, 'success');
@@ -18222,7 +18283,13 @@ const Gantt = GanttEnhanced;
                 milestones: [],
                 risks: [],
                 tasks: [],
-                continuity: []
+                continuity: [],
+                financials: {
+                    categories: {},
+                    budget: 0,
+                    spent: 0,
+                    remaining: 0
+                }
             };
             
             this.currentProduction = id;
@@ -18250,28 +18317,54 @@ const Gantt = GanttEnhanced;
                     return;
                 }
                 
+                // Ensure all required structures exist before saving
+                this.data.cast = this.data.cast || {};
+                this.data.crew = this.data.crew || {};
+                this.data.shotlist = this.data.shotlist || [];
+                this.data.schedule = this.data.schedule || { strips: [] };
+                this.data.schedule.strips = this.data.schedule.strips || [];
+                this.data.financials = this.data.financials || {
+                    categories: {},
+                    budget: 0,
+                    spent: 0,
+                    remaining: 0
+                };
+                this.data.tasks = this.data.tasks || [];
+                this.data.milestones = this.data.milestones || [];
+                this.data.risks = this.data.risks || [];
+                this.data.continuity = this.data.continuity || [];
+                
                 // Update timestamp
                 this.data.lastModified = Date.now();
                 
                 console.log(`💾 Saving ${this.currentProduction}...`);
-                console.log(`📊 Cast: ${Object.keys(this.data.cast || {}).length}, Crew: ${Object.keys(this.data.crew || {}).length}`);
+                console.log(`📊 Cast: ${Object.keys(this.data.cast || {}).length}, Crew: ${Object.keys(this.data.crew || {}).length}, Shots: ${(this.data.shotlist || []).length}`);
                 
                 // Call original save (which saves to localStorage) - IMMEDIATE
                 originalSave.call(this);
                 
-                // Debounced cloud sync for better performance
-                if (this.data._cloudSynced && Auth.user && !Auth.isDemoMode) {
+                // Immediate cloud sync if user is logged in (not debounced for critical data)
+                if (Auth.user && !Auth.isDemoMode) {
                     // Clear any pending sync
                     if (cloudSyncTimeout) {
                         clearTimeout(cloudSyncTimeout);
                     }
                     
-                    // Schedule cloud sync after 500ms of no changes
+                    // Schedule cloud sync after 300ms (reduced from 500ms for faster sync)
                     cloudSyncTimeout = setTimeout(async () => {
                         try {
                             const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
-                            await window.firebaseSet(dbRef, this.data);
+                            
+                            // Create a clean copy of data for cloud sync
+                            const dataToSync = JSON.parse(JSON.stringify(this.data));
+                            dataToSync._cloudSynced = true;
+                            
+                            await window.firebaseSet(dbRef, dataToSync);
                             console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
+                            
+                            // Update local data to mark as synced
+                            this.data._cloudSynced = true;
+                            localStorage.setItem(`dc_alacrity_prod_${this.currentProduction}`, JSON.stringify(this.data));
                             
                             // Show subtle sync indicator
                             const indicator = document.querySelector('.sync-indicator');
@@ -18291,7 +18384,7 @@ const Gantt = GanttEnhanced;
                                 indicator.style.color = '#f59e0b';
                             }
                         }
-                    }, 500);
+                    }, 300);
                 }
             } else {
                 // Call original save for non-production data
