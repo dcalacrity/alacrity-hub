@@ -9047,7 +9047,7 @@ Target is on the move. Headed north on 8th."></textarea>
                     gantt: { production: [], global: [] },
                     notes: '',
                     budget: JSON.parse(JSON.stringify(DEFAULT_BUDGET)),
-                    shotList: [],
+                    shotlist: [],
                     continuity: [],
                     risks: [],
                     contacts: [],
@@ -14608,7 +14608,7 @@ const Gantt = GanttEnhanced;
             },
             
             getData() {
-                return Core.data.shotList || [];
+                return Core.data.shotlist || [];
             },
             
             render() {
@@ -14953,7 +14953,7 @@ const Gantt = GanttEnhanced;
                         shots[idx].status = 'Completed';
                         shots[idx].completed = true;
                     }
-                    Core.data.shotList = shots;
+                    Core.data.shotlist = shots;
                     Core.save();
                     this.render();
                 }
@@ -14991,7 +14991,7 @@ const Gantt = GanttEnhanced;
                             completed: (data.shotStatus === 'Completed')
                         };
                         
-                        Core.data.shotList = shots;
+                        Core.data.shotlist = shots;
                         Core.save();
                         this.render();
                         PopupSystem.showToast(`✅ Shot ${data.shotNumber} updated`, 'success');
@@ -15029,7 +15029,7 @@ const Gantt = GanttEnhanced;
                 
                 if (confirm(`Delete shot ${shot.number || idx + 1}?\n\nThis action cannot be undone.`)) {
                     shots.splice(idx, 1);
-                    Core.data.shotList = shots;
+                    Core.data.shotlist = shots;
                     Core.save();
                     this.render();
                     PopupSystem.showToast('🗑️ Shot deleted', 'success');
@@ -16943,14 +16943,14 @@ const Gantt = GanttEnhanced;
             handlers: {
                 milestone(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].milestones) Core.data[Core.currentProduction].milestones = [];
-                    Core.data[Core.currentProduction].milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
+                    if (!Core.data.milestones) Core.data.milestones = [];
+                    Core.data.milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
                     Core.save(); Core.renderMilestones();
                 },
                 risk(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].risks) Core.data[Core.currentProduction].risks = [];
-                    Core.data[Core.currentProduction].risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
+                    if (!Core.data.risks) Core.data.risks = [];
+                    Core.data.risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
                     Core.save(); Core.renderRisks();
                 },
                 contact(data) {
@@ -16961,32 +16961,32 @@ const Gantt = GanttEnhanced;
                 },
                 shoot(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-                    Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
+                    if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+                    Core.data.schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
                     Core.save(); Core.renderSchedule();
                 },
                 scene(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-                    Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
+                    if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+                    Core.data.schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
                     Core.save(); Core.renderSchedule();
                 },
                 banner(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-                    Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
+                    if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+                    Core.data.schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
                     Core.save(); Core.renderSchedule();
                 },
                 shot(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].shotlist) Core.data[Core.currentProduction].shotlist = [];
-                    Core.data[Core.currentProduction].shotlist.push({ id: Date.now(), scene: data.shotScene, number: data.shotNumber, size: data.shotSize, movement: data.shotMovement || '', description: data.shotDescription || '', notes: data.shotNotes || '' });
+                    if (!Core.data.shotlist) Core.data.shotlist = [];
+                    Core.data.shotlist.push({ id: Date.now(), scene: data.shotScene, number: data.shotNumber, size: data.shotSize, movement: data.shotMovement || '', description: data.shotDescription || '', notes: data.shotNotes || '' });
                     Core.save(); Core.renderShotlist();
                 },
                 continuity(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].continuity) Core.data[Core.currentProduction].continuity = [];
-                    Core.data[Core.currentProduction].continuity.push({ 
+                    if (!Core.data.continuity) Core.data.continuity = [];
+                    Core.data.continuity.push({ 
                         id: Date.now(), 
                         scene: data.continuityScene, 
                         take: data.continuityTake, 
@@ -17013,8 +17013,8 @@ const Gantt = GanttEnhanced;
                 },
                 task(data) {
                     if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-                    if (!Core.data[Core.currentProduction].tasks) Core.data[Core.currentProduction].tasks = [];
-                    Core.data[Core.currentProduction].tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
+                    if (!Core.data.tasks) Core.data.tasks = [];
+                    Core.data.tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
                     Core.save(); Core.renderTasks();
                 }
             },
@@ -17243,14 +17243,14 @@ const Gantt = GanttEnhanced;
         
         PopupConfigs.milestone.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].milestones) Core.data[Core.currentProduction].milestones = [];
-            Core.data[Core.currentProduction].milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
+            if (!Core.data.milestones) Core.data.milestones = [];
+            Core.data.milestones.push({ id: Date.now(), name: data.milestoneName, date: data.milestoneDate, status: data.milestoneStatus, notes: data.milestoneNotes || '' });
             Core.save(); Core.renderMilestones();
         };
         PopupConfigs.risk.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].risks) Core.data[Core.currentProduction].risks = [];
-            Core.data[Core.currentProduction].risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
+            if (!Core.data.risks) Core.data.risks = [];
+            Core.data.risks.push({ id: Date.now(), risk: data.riskDescription, severity: data.riskSeverity, mitigation: data.riskMitigation || '', status: data.riskStatus });
             Core.save(); Core.renderRisks();
         };
         PopupConfigs.shot.onSubmit = (data) => {
@@ -17258,7 +17258,7 @@ const Gantt = GanttEnhanced;
                 alert('Please select a production first'); 
                 return; 
             }
-            if (!Core.data.shotList) Core.data.shotList = [];
+            if (!Core.data.shotlist) Core.data.shotlist = [];
             
             const shot = {
                 id: Date.now(),
@@ -17280,7 +17280,7 @@ const Gantt = GanttEnhanced;
                 completed: (data.shotStatus === 'Completed')
             };
             
-            Core.data.shotList.push(shot);
+            Core.data.shotlist.push(shot);
             Core.save();
             
             // Refresh shot list view if it's active
@@ -17298,26 +17298,26 @@ const Gantt = GanttEnhanced;
         };
         PopupConfigs.shoot.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-            Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
+            if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+            Core.data.schedule.strips.push({ id: Date.now(), type: 'shoot', date: data.shootDate, scene: data.shootScene || '', location: data.shootLocation || '', callTime: data.shootCallTime || '', notes: data.shootNotes || '' });
             Core.save(); Core.renderSchedule();
         };
         PopupConfigs.scene.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-            Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
+            if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+            Core.data.schedule.strips.push({ id: Date.now(), type: 'scene', scene: data.sceneNumber, intext: data.sceneIntExt, daynight: data.sceneDayNight, location: data.sceneLocation, description: data.sceneDescription || '', pages: data.scenePages || '', cast: data.sceneCast || '' });
             Core.save(); Core.renderSchedule();
         };
         PopupConfigs.banner.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].schedule) Core.data[Core.currentProduction].schedule = { strips: [] };
-            Core.data[Core.currentProduction].schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
+            if (!Core.data.schedule) Core.data.schedule = { strips: [] };
+            Core.data.schedule.strips.push({ id: Date.now(), type: 'banner', text: data.bannerText, color: data.bannerColor });
             Core.save(); Core.renderSchedule();
         };
         PopupConfigs.continuity.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].continuity) Core.data[Core.currentProduction].continuity = [];
-            Core.data[Core.currentProduction].continuity.push({ 
+            if (!Core.data.continuity) Core.data.continuity = [];
+            Core.data.continuity.push({ 
                 id: Date.now(), 
                 scene: data.continuityScene, 
                 take: data.continuityTake, 
@@ -17344,8 +17344,8 @@ const Gantt = GanttEnhanced;
         };
         PopupConfigs.task.onSubmit = (data) => {
             if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
-            if (!Core.data[Core.currentProduction].tasks) Core.data[Core.currentProduction].tasks = [];
-            Core.data[Core.currentProduction].tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
+            if (!Core.data.tasks) Core.data.tasks = [];
+            Core.data.tasks.push({ id: Date.now(), name: data.taskName, assignee: data.taskAssignee || '', startDate: data.taskStartDate, endDate: data.taskEndDate, status: data.taskStatus, priority: data.taskPriority || 'Medium', notes: data.taskNotes || '' });
             Core.save(); Core.renderTasks();
         };
         
