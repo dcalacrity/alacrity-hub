@@ -6828,10 +6828,35 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-2">
+                    <!-- Tab Navigation -->
+                    <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 2px solid var(--border-subtle);">
+                        <button class="cast-crew-tab active" data-tab="cast" onclick="CastCrew.switchTab('cast')" style="padding: 12px 24px; background: transparent; border: none; color: var(--text-60); font-size: 14px; font-weight: 600; cursor: pointer; position: relative; transition: all 0.3s;">
+                            <span>👥 Cast</span>
+                        </button>
+                        <button class="cast-crew-tab" data-tab="crew" onclick="CastCrew.switchTab('crew')" style="padding: 12px 24px; background: transparent; border: none; color: var(--text-60); font-size: 14px; font-weight: 600; cursor: pointer; position: relative; transition: all 0.3s;">
+                            <span>🎬 Crew</span>
+                        </button>
+                    </div>
+                    
+                    <style>
+                        .cast-crew-tab {
+                            border-bottom: 2px solid transparent;
+                            margin-bottom: -2px;
+                        }
+                        .cast-crew-tab:hover {
+                            color: var(--text-90);
+                        }
+                        .cast-crew-tab.active {
+                            color: var(--neon-cyan);
+                            border-bottom-color: var(--neon-cyan);
+                        }
+                    </style>
+                    
+                    <!-- Cast Content -->
+                    <div id="cast-content" style="display: block;">
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">Cast</div>
+                                <div class="card-title">Cast Members</div>
                                 <button class="btn btn-sm btn-primary" onclick="CastCrew.addMember('cast')">+ Add Cast</button>
                             </div>
                             <div class="card-body" id="cast-list"></div>
@@ -6839,9 +6864,13 @@
                                 <button class="btn btn-sm btn-export" onclick="PDFExport.castAndCrew()">📄 Export Cast & Crew PDF</button>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Crew Content -->
+                    <div id="crew-content" style="display: none;">
                         <div class="card">
                             <div class="card-header">
-                                <div class="card-title">Crew</div>
+                                <div class="card-title">Crew Members</div>
                                 <button class="btn btn-sm btn-primary" onclick="CastCrew.addMember('crew')">+ Add Crew</button>
                             </div>
                             <div class="card-body" id="crew-list"></div>
@@ -8949,16 +8978,18 @@ Target is on the move. Headed north on 8th."></textarea>
                 // PHASE 4: Merge with defaults to ensure all fields exist
                 console.log(`🔄 Merging with defaults to ensure data integrity...`);
                 const defaults = this.getDefaultData();
-                this.data = {...defaults, ...productionData};
+                
+                // Use deep merge to preserve loaded data, especially nested objects like cast/crew
+                this.data = this.deepMerge(defaults, productionData);
                 
                 // Debug cast/crew data
                 console.log(`🎭 Cast members loaded: ${Object.keys(this.data.cast || {}).length}`);
                 console.log(`🎬 Crew members loaded: ${Object.keys(this.data.crew || {}).length}`);
                 if (Object.keys(this.data.cast || {}).length > 0) {
-                    console.log(`📋 Cast data:`, this.data.cast);
+                    console.log(`📋 Cast data sample:`, Object.keys(this.data.cast)[0], this.data.cast[Object.keys(this.data.cast)[0]]);
                 }
                 if (Object.keys(this.data.crew || {}).length > 0) {
-                    console.log(`📋 Crew data:`, this.data.crew);
+                    console.log(`📋 Crew data sample:`, Object.keys(this.data.crew)[0], this.data.crew[Object.keys(this.data.crew)[0]]);
                 }
                 
                 // Ensure the production is in the productions list
@@ -9037,6 +9068,38 @@ Target is on the move. Headed north on 8th."></textarea>
                     description: '',
                     elements: {}
                 };
+            },
+
+            deepMerge(defaults, loaded) {
+                // Deep merge that prioritizes loaded data to prevent data loss
+                const result = {};
+                
+                // First, add all default keys
+                for (const key in defaults) {
+                    result[key] = defaults[key];
+                }
+                
+                // Then, override with loaded data
+                for (const key in loaded) {
+                    if (loaded[key] !== null && loaded[key] !== undefined) {
+                        // For objects (but not arrays), check if we need deep merge
+                        if (typeof loaded[key] === 'object' && !Array.isArray(loaded[key]) && loaded[key] !== null) {
+                            // If loaded object has content, use it entirely
+                            if (Object.keys(loaded[key]).length > 0) {
+                                result[key] = loaded[key];
+                            } else if (!result[key]) {
+                                // If no default exists, use empty loaded object
+                                result[key] = loaded[key];
+                            }
+                            // Otherwise keep the default
+                        } else {
+                            // For arrays and primitives, use loaded value
+                            result[key] = loaded[key];
+                        }
+                    }
+                }
+                
+                return result;
             },
 
             save() {
@@ -9956,6 +10019,10 @@ Target is on the move. Headed north on 8th."></textarea>
                     let inputHTML = '';
                     
                     switch(field.type) {
+                        case 'custom':
+                            // Allow custom HTML to be injected
+                            fieldsHTML += field.html || '';
+                            return;
                         case 'text':
                         case 'email':
                         case 'tel':
@@ -10114,12 +10181,53 @@ Target is on the move. Headed north on 8th."></textarea>
                         this.currentFields = null;
                     }, 300);
                 }
+            },
+            
+            showToast(message, type = 'info') {
+                // Create toast notification
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 24px;
+                    background: ${type === 'success' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95))' : 
+                                type === 'warning' ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.95), rgba(245, 158, 11, 0.95))' :
+                                type === 'error' ? 'linear-gradient(135deg, rgba(244, 63, 94, 0.95), rgba(225, 29, 72, 0.95))' :
+                                'linear-gradient(135deg, rgba(34, 211, 238, 0.95), rgba(6, 182, 212, 0.95))'};
+                    color: #fff;
+                    padding: 16px 24px;
+                    border-radius: 12px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+                    z-index: 10001;
+                    transform: translateX(400px);
+                    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    max-width: 400px;
+                    backdrop-filter: blur(12px);
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                // Slide in
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateX(0)';
+                });
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(400px)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
             }
         };
         
         /* ═══════════════════════════════════════════════════════════════════════ */
         
         const CastCrew = {
+            currentTab: 'cast', // Track which tab is active
+            
             render() {
                 console.log('🎭 CastCrew.render() called');
                 console.log('📊 Core.data.cast:', Core.data.cast);
@@ -10137,8 +10245,50 @@ Target is on the move. Headed north on 8th."></textarea>
                 console.log(`📋 Cast members: ${Object.keys(Core.data.cast).length}`);
                 console.log(`📋 Crew members: ${Object.keys(Core.data.crew).length}`);
                 
+                // Render both lists immediately
                 this.renderList('cast');
                 this.renderList('crew');
+                
+                // Update tab UI to match current tab
+                this.updateTabUI();
+            },
+            
+            switchTab(tab) {
+                console.log(`🔄 Switching to ${tab} tab`);
+                this.currentTab = tab;
+                this.updateTabUI();
+                // Force render the active list to show fresh data
+                this.renderList(tab);
+            },
+            
+            updateTabUI() {
+                // Update tab buttons
+                const castTab = document.querySelector('.cast-crew-tab[data-tab="cast"]');
+                const crewTab = document.querySelector('.cast-crew-tab[data-tab="crew"]');
+                
+                if (castTab && crewTab) {
+                    if (this.currentTab === 'cast') {
+                        castTab.classList.add('active');
+                        crewTab.classList.remove('active');
+                    } else {
+                        crewTab.classList.add('active');
+                        castTab.classList.remove('active');
+                    }
+                }
+                
+                // Update tab content visibility
+                const castContent = document.getElementById('cast-content');
+                const crewContent = document.getElementById('crew-content');
+                
+                if (castContent && crewContent) {
+                    if (this.currentTab === 'cast') {
+                        castContent.style.display = 'block';
+                        crewContent.style.display = 'none';
+                    } else {
+                        crewContent.style.display = 'block';
+                        castContent.style.display = 'none';
+                    }
+                }
             },
             
             renderList(type) {
@@ -16749,7 +16899,13 @@ const Gantt = GanttEnhanced;
                 return;
             }
             
-            Core.data[id] = {
+            console.log(`🆕 Creating NEW production: ${name}`);
+            console.log(`📊 Initializing with EMPTY cast and crew...`);
+            
+            console.log(`✅ New production initialized with empty cast/crew`);
+            
+            // CRITICAL: First, save the empty production to localStorage
+            const emptyProductionData = {
                 name: name,
                 type: type,
                 description: description,
@@ -16759,29 +16915,48 @@ const Gantt = GanttEnhanced;
                 lastModified: Date.now(),
                 _cloudSynced: false,
                 budget: budget,
+                cast: {},
+                crew: {},
                 schedule: { strips: [] },
                 shotlist: [],
                 milestones: [],
                 risks: [],
                 tasks: [],
-                continuity: []
+                continuity: [],
+                days: [],
+                tech: [],
+                vault: [],
+                breakdowns: [],
+                crm: { leads: [], ledger: [] },
+                notes: '',
+                contacts: []
             };
             
+            localStorage.setItem(`dc_alacrity_prod_${id}`, JSON.stringify(emptyProductionData));
+            console.log(`💾 Saved empty production to localStorage`);
+            
+            // Now load it properly to ensure clean state
             Core.currentProduction = id;
+            await Core.loadProduction(id);
+            
+            console.log(`📂 Loaded new production, verifying isolation...`);
+            console.log(`📊 Cast count: ${Object.keys(Core.data.cast || {}).length}`);
+            console.log(`📊 Crew count: ${Object.keys(Core.data.crew || {}).length}`);
             
             // Add to productions list
             await Core.createProduction(id);
             
-            Core.save();
+            // Render all views with the new empty production
             Core.renderProductionDropdown();
+            Core.renderAll();
             
             // Upload to cloud if requested and user is logged in
             if (uploadToCloud && Auth.user && !Auth.isDemoMode) {
                 try {
-                    Core.data[id]._cloudSynced = true;
+                    Core.data._cloudSynced = true;
                     const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${id}`);
-                    await window.firebaseSet(dbRef, Core.data[id]);
-                    localStorage.setItem(`dc_alacrity_prod_${id}`, JSON.stringify(Core.data[id]));
+                    await window.firebaseSet(dbRef, Core.data);
+                    localStorage.setItem(`dc_alacrity_prod_${id}`, JSON.stringify(Core.data));
                     alert(`✅ Production "${name}" created and uploaded to cloud!`);
                 } catch (e) {
                     console.error('Cloud upload failed:', e);
@@ -17109,6 +17284,8 @@ const Gantt = GanttEnhanced;
                 const grid = document.getElementById('production-library-grid');
                 if (!grid) return;
                 
+                console.log('📚 ProductionLibrary.render() - Refreshing library view');
+                
                 const productions = this.getFilteredProductions();
                 const allProductions = this.getProductions();
                 
@@ -17160,25 +17337,114 @@ const Gantt = GanttEnhanced;
             async loadProduction(productionId) {
                 const prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
                 const prodName = prodData?.name || productionId;
+                const prodType = prodData?.type || 'Production';
+                const castCount = Object.keys(prodData?.cast || {}).length;
+                const crewCount = Object.keys(prodData?.crew || {}).length;
+                const sceneCount = (prodData?.schedule?.strips || []).length;
                 
-                if (confirm(`Load production "${prodName}"?\n\nAny unsaved changes to the current production will be lost.`)) {
-                    await Core.loadProduction(productionId);
-                    Core.renderProductionDropdown(); // Sync dropdown
-                    Core.navigate('dashboard');
-                    alert(`Production "${prodName}" loaded successfully!`);
-                }
+                PopupSystem.show({
+                    title: `Load Production?`,
+                    subtitle: `Switch to "${prodName}"`,
+                    fields: [
+                        { 
+                            id: 'info', 
+                            type: 'custom',
+                            html: `
+                                <div style="background: var(--surface-3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                                    <div style="font-size: 18px; font-weight: 700; color: var(--neon-cyan); margin-bottom: 12px;">
+                                        ${prodName}
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                                        <div>
+                                            <div style="color: var(--text-50); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Type</div>
+                                            <div style="color: var(--text-90); font-weight: 600;">${prodType}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-50); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Scenes</div>
+                                            <div style="color: var(--neon-cyan); font-weight: 700; font-family: var(--font-mono);">${sceneCount}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-50); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Cast</div>
+                                            <div style="color: var(--neon-cyan); font-weight: 700; font-family: var(--font-mono);">${castCount}</div>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--text-50); font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Crew</div>
+                                            <div style="color: var(--neon-cyan); font-weight: 700; font-family: var(--font-mono);">${crewCount}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 6px; padding: 12px; font-size: 12px; color: var(--text-70);">
+                                    ⚠️ Any unsaved changes to your current production will be lost.
+                                </div>
+                            `
+                        }
+                    ],
+                    submitText: 'Load Production',
+                    onSubmit: async (data) => {
+                        await Core.loadProduction(productionId);
+                        Core.renderProductionDropdown();
+                        Core.navigate('dashboard');
+                        
+                        // Show success toast
+                        PopupSystem.showToast(`✅ Loaded "${prodName}"`, 'success');
+                    }
+                });
             },
             
             async deleteProduction(productionId) {
                 const prodData = JSON.parse(localStorage.getItem(`dc_alacrity_prod_${productionId}`));
                 const prodName = prodData?.name || productionId;
+                const isCloudSynced = prodData?._cloudSynced;
+                const castCount = Object.keys(prodData?.cast || {}).length;
+                const crewCount = Object.keys(prodData?.crew || {}).length;
                 
-                if (confirm(`Are you sure you want to DELETE production "${prodName}"?\n\nThis action cannot be undone!`)) {
-                    // Double confirmation for safety
-                    if (confirm(`FINAL CONFIRMATION:\n\nDelete "${prodName}" permanently from ${prodData._cloudSynced ? 'cloud AND' : ''} local storage?`)) {
+                PopupSystem.show({
+                    title: `⚠️ Delete Production?`,
+                    subtitle: `This action cannot be undone!`,
+                    fields: [
+                        {
+                            id: 'warning',
+                            type: 'custom',
+                            html: `
+                                <div style="background: rgba(244, 63, 94, 0.15); border: 2px solid rgba(244, 63, 94, 0.4); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                                    <div style="font-size: 16px; font-weight: 700; color: var(--neon-rose); margin-bottom: 12px;">
+                                        🗑️ ${prodName}
+                                    </div>
+                                    <div style="color: var(--text-70); font-size: 13px; line-height: 1.6; margin-bottom: 12px;">
+                                        You're about to permanently delete this production from ${isCloudSynced ? '<strong style="color: var(--neon-cyan);">cloud AND</strong>' : ''} local storage.
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(244, 63, 94, 0.3);">
+                                        <div>
+                                            <span style="color: var(--text-50);">Cast:</span>
+                                            <span style="color: var(--text-90); font-weight: 600; margin-left: 4px;">${castCount} members</span>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--text-50);">Crew:</span>
+                                            <span style="color: var(--text-90); font-weight: 600; margin-left: 4px;">${crewCount} members</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="background: var(--surface-3); border-radius: 6px; padding: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                                        <input type="checkbox" id="delete-confirm-checkbox" style="width: 20px; height: 20px; cursor: pointer;">
+                                        <span style="color: var(--text-90); font-size: 13px;">
+                                            I understand this will permanently delete all data
+                                        </span>
+                                    </label>
+                                </div>
+                            `
+                        }
+                    ],
+                    submitText: 'Delete Forever',
+                    onSubmit: async (data) => {
+                        const checkbox = document.getElementById('delete-confirm-checkbox');
+                        if (!checkbox || !checkbox.checked) {
+                            PopupSystem.showToast('⚠️ Please confirm deletion', 'warning');
+                            return;
+                        }
                         
-                        // Delete from cloud if it exists there
-                        if (prodData._cloudSynced && Auth.user && !Auth.isDemoMode) {
+                        // Delete from cloud if exists
+                        if (isCloudSynced && Auth.user && !Auth.isDemoMode) {
                             try {
                                 const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${productionId}`);
                                 await window.firebaseRemove(dbRef);
@@ -17194,7 +17460,7 @@ const Gantt = GanttEnhanced;
                         // Remove from productions list
                         await Core.deleteProduction(productionId);
                         
-                        // If this was the current production, switch to GLOBAL or first available
+                        // If this was the current production, switch to first available
                         if (Core.currentProduction === productionId) {
                             const productions = Core.getProductions();
                             Core.currentProduction = productions.length > 0 ? productions[0] : 'GLOBAL';
@@ -17204,10 +17470,10 @@ const Gantt = GanttEnhanced;
                         // Update dropdown
                         Core.renderProductionDropdown();
                         
-                        alert(`Production "${prodName}" has been deleted.`);
+                        PopupSystem.showToast(`✅ "${prodName}" deleted`, 'success');
                         this.render();
                     }
-                }
+                });
             },
             
             async uploadToCloud(productionId) {
@@ -17338,33 +17604,60 @@ const Gantt = GanttEnhanced;
         // Enhanced Core.save to update lastModified and check cloud sync
         const originalSave = Core.save;
         Core.save = async function() {
+            // Update lastModified timestamp
             if (this.currentProduction && this.currentProduction !== 'GLOBAL') {
-                if (this.data[this.currentProduction]) {
-                    this.data[this.currentProduction].lastModified = Date.now();
-                    
-                    // If cloud synced, automatically sync changes
-                    if (this.data[this.currentProduction]._cloudSynced && Auth.user && !Auth.isDemoMode) {
-                        try {
-                            const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
-                            await window.firebaseSet(dbRef, this.data[this.currentProduction]);
-                            console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
-                        } catch (e) {
-                            console.error('Auto-sync failed:', e);
-                        }
+                if (!this.data) {
+                    console.error('⚠️ Core.data is undefined in save!');
+                    return;
+                }
+                
+                // Update timestamp
+                this.data.lastModified = Date.now();
+                
+                console.log(`💾 Saving ${this.currentProduction}...`);
+                console.log(`📊 Cast: ${Object.keys(this.data.cast || {}).length}, Crew: ${Object.keys(this.data.crew || {}).length}`);
+                
+                // If cloud synced, automatically sync changes
+                if (this.data._cloudSynced && Auth.user && !Auth.isDemoMode) {
+                    try {
+                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                        await window.firebaseSet(dbRef, this.data);
+                        console.log(`☁️ Auto-synced ${this.currentProduction} to cloud`);
+                    } catch (e) {
+                        console.error('Auto-sync failed:', e);
                     }
                 }
             }
+            
+            // Call original save (which saves to localStorage)
             originalSave.call(this);
+            
+            // Refresh Production Library if it's currently open
+            if (document.getElementById('view-production-library')?.classList.contains('active')) {
+                console.log('🔄 Refreshing Production Library after save...');
+                setTimeout(() => ProductionLibrary.render(), 100);
+            }
         };
         
         // Add navigation handler for production-library view
         const originalNavigate = Core.navigate;
         Core.navigate = function(view) {
+            // Track previous view
+            const previousView = document.querySelector('.view.active')?.id;
+            
             originalNavigate.call(this, view);
             
             // If navigating to production library, render it
             if (view === 'production-library') {
                 setTimeout(() => ProductionLibrary.render(), 100);
+            }
+            
+            // If leaving cast-crew or any data-editing view, refresh library
+            if (previousView === 'view-cast-crew' || 
+                previousView === 'view-schedule' || 
+                previousView === 'view-shotlist') {
+                console.log(`🔄 Left ${previousView}, refreshing library data...`);
+                // Don't render if not visible, but data will be fresh when opened
             }
         };
         
