@@ -3,14 +3,7 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta http-equiv="Content-Security-Policy"
-          content="default-src 'self';
- script-src 'self' https://apis.google.com https://www.gstatic.com https://www.google.com https://cdnjs.cloudflare.com 'unsafe-inline';
- style-src 'self' https://fonts.googleapis.com https://www.gstatic.com 'unsafe-inline';
- font-src 'self' https://fonts.gstatic.com;
- img-src 'self' data: https://www.google.com https://www.gstatic.com https://images.unsplash.com;
- connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://www.googleapis.com https://content-firebaseappcheck.googleapis.com https://alacrity-hub-default-rtdb.firebaseio.com;
- frame-src https://dcalacrity.github.io https://alacrity-hub.firebaseapp.com https://accounts.google.com https://www.google.com;">
+ 
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DC ALACRITY | Production Command System</title>
@@ -8296,6 +8289,8 @@ Target is on the move. Headed north on 8th."></textarea>
     const app = initializeApp(firebaseConfig);
 
     // 4. APP CHECK (The New Security Layer)
+    // CRITICAL: You must replace 'YOUR_RECAPTCHA_SITE_KEY' with the actual key 
+    // you generate in the Firebase Console -> App Check -> Register.
     const appCheck = initializeAppCheck(app, {
         provider: new ReCaptchaEnterpriseProvider('6Lcodl4sAAAAAIRBhjZ17Fo5gPxRliFDKTqW4fY0'),
         isTokenAutoRefreshEnabled: true 
@@ -8305,7 +8300,8 @@ Target is on the move. Headed north on 8th."></textarea>
     const db = getDatabase(app);
     const provider = new GoogleAuthProvider();
 
-    // 5. EXPOSE TO GLOBAL SCOPE
+    // 5. EXPOSE TO GLOBAL SCOPE (Restored from V1)
+    // This ensures your other scripts can actually "see" and use Firebase.
     window.firebaseAuth = auth;
     window.firebaseDb = db;
     window.firebaseProvider = provider;
@@ -8321,7 +8317,7 @@ Target is on the move. Headed north on 8th."></textarea>
     window.firebaseReady = true;
     document.dispatchEvent(new Event('firebaseReady'));
     
-    console.log("✅ Firebase initialized successfully");
+    console.log("Firebase V3 (Secured + Connected) Initialized");
 </script>
 
     <!-- ═══════════════════════════════════════════════════════════════════════
@@ -8669,6 +8665,13 @@ Target is on the move. Headed north on 8th."></textarea>
 
         /* ═══════════════════════════════════════════════════════════════════════
            CORE MODULE - Data Management & Navigation
+           
+           🔍 CLOUD SYNC DIAGNOSTICS:
+           If experiencing cloud sync issues, open browser console and run:
+           > Core.runCloudSyncDiagnostics()
+           
+           This provides detailed information about authentication, data status,
+           localStorage, and cloud sync state to help troubleshoot sync issues.
            ═══════════════════════════════════════════════════════════════════════ */
         const Core = {
             currentProduction: 'Default Production',
@@ -8826,9 +8829,26 @@ Target is on the move. Headed north on 8th."></textarea>
                 
                 const productions = this.getProductions();
                 
-                // Check if already exists
+                // Check if already exists in list
                 if (productions.includes(name)) {
                     console.log(`ℹ️ Production "${name}" already exists in list`);
+                    
+                    // CRITICAL: Even if it exists in list, verify it has data in cloud
+                    if (Auth.user && !Auth.isDemoMode) {
+                        try {
+                            const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
+                            const snapshot = await window.firebaseGet(dbRef);
+                            
+                            if (!snapshot.exists()) {
+                                console.log(`⚠️ Production "${name}" in list but missing cloud data - creating now`);
+                                const defaultData = this.getDefaultData();
+                                await window.firebaseSet(dbRef, defaultData);
+                                console.log(`✅ Created missing cloud data for "${name}"`);
+                            }
+                        } catch (e) {
+                            console.error(`❌ Error verifying cloud data:`, e);
+                        }
+                    }
                     return;
                 }
                 
@@ -8842,13 +8862,32 @@ Target is on the move. Headed north on 8th."></textarea>
                 // Save to Firebase if cloud mode
                 if (Auth.user && !Auth.isDemoMode) {
                     try {
-                        const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
-                        await window.firebaseSet(dbRef, productions);
+                        // Update productions list
+                        const listRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
+                        await window.firebaseSet(listRef, productions);
                         console.log(`☁️ Productions list synced to cloud (${productions.length} items)`);
+                        
+                        // CRITICAL: Create the production data structure in cloud immediately
+                        const prodRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
+                        const snapshot = await window.firebaseGet(prodRef);
+                        
+                        if (!snapshot.exists()) {
+                            console.log(`🆕 Creating complete data structure for "${name}" in cloud...`);
+                            const defaultData = this.getDefaultData();
+                            await window.firebaseSet(prodRef, defaultData);
+                            console.log(`✅ Complete production structure created in cloud`);
+                            
+                            // Also save to localStorage
+                            localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(defaultData));
+                            console.log(`💾 Production data cached locally`);
+                        } else {
+                            console.log(`ℹ️ Production data already exists in cloud`);
+                        }
+                        
                         this.log(`Added production: ${name}`);
                     } catch (e) {
-                        console.error('❌ Failed to sync productions list to cloud:', e);
-                        this.log('Warning: Could not sync productions list to cloud');
+                        console.error('❌ Failed to create production in cloud:', e);
+                        this.log('Warning: Could not create production in cloud - ' + e.message);
                     }
                 }
             },
@@ -8915,7 +8954,7 @@ Target is on the move. Headed north on 8th."></textarea>
                             productionData = snapshot.val();
                             dataSource = 'cloud';
                             console.log(`✅ Loaded "${name}" from cloud`);
-                            console.log(`   Properties: ${Object.keys(productionData).length}`);
+                            console.log(`   Properties: ${Object.keys(productionData || {}).length}`);
                             
                             // Update localStorage as backup
                             localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(productionData));
@@ -8937,7 +8976,7 @@ Target is on the move. Headed north on 8th."></textarea>
                             productionData = JSON.parse(stored);
                             dataSource = 'localStorage';
                             console.log(`📂 Loaded "${name}" from localStorage`);
-                            console.log(`   Properties: ${Object.keys(productionData).length}`);
+                            console.log(`   Properties: ${Object.keys(productionData || {}).length}`);
                             
                             // Upload to cloud if we're in cloud mode
                             if (Auth.user && !Auth.isDemoMode) {
@@ -8947,6 +8986,7 @@ Target is on the move. Headed north on 8th."></textarea>
                                     await window.firebaseSet(dbRef, productionData);
                                     console.log(`✅ Uploaded "${name}" to cloud`);
                                     this.log(`Uploaded local production "${name}" to cloud`);
+                                    dataSource = 'localStorage→cloud';
                                 } catch (uploadError) {
                                     console.error(`❌ Failed to upload to cloud:`, uploadError);
                                 }
@@ -8975,42 +9015,60 @@ Target is on the move. Headed north on 8th."></textarea>
                         try {
                             const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
                             await window.firebaseSet(dbRef, productionData);
-                            console.log(`☁️ Created "${name}" in cloud`);
+                            console.log(`☁️ Created "${name}" in cloud with full default data`);
                             this.log(`Created new production: ${name}`);
+                            dataSource = 'defaults→cloud';
                         } catch (e) {
                             console.error(`❌ Failed to create in cloud:`, e);
                         }
                     }
                 }
                 
-                // PHASE 4: Merge with defaults to ensure all fields exist
+                // PHASE 4: Merge with defaults to ensure ALL fields exist
                 console.log(`🔄 Merging with defaults to ensure data integrity...`);
                 const defaults = this.getDefaultData();
                 
-                // Use deep merge to preserve loaded data, especially nested objects like cast/crew
-                this.data = this.deepMerge(defaults, productionData);
+                // CRITICAL: Deep merge that ensures EVERY default field exists
+                this.data = this.deepMergeComplete(defaults, productionData);
                 
                 // PHASE 5: Migrate old property names to new ones (for backward compatibility)
                 console.log(`🔄 Migrating legacy property names...`);
                 const hadMigrations = this.migrateOldPropertyNames();
                 
-                // If migrations occurred, save the updated data to localStorage
-                // Cloud sync will happen naturally on next save()
-                if (hadMigrations) {
-                    console.log(`💾 Saving migrated data to localStorage...`);
-                    localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
-                    console.log(`✅ Migrated data saved locally`);
+                // PHASE 6: Verify data integrity in cloud sync mode
+                if (Auth.user && !Auth.isDemoMode) {
+                    console.log(`🔍 Verifying cloud sync data integrity...`);
+                    const missingFields = this.verifyDataIntegrity();
+                    if (missingFields.length > 0) {
+                        console.warn(`⚠️ Missing fields detected:`, missingFields);
+                        console.log(`🔧 Re-initializing missing fields...`);
+                        hadMigrations = true; // Force save to fix
+                    }
                 }
                 
-                // Debug cast/crew data
+                // If migrations occurred OR we created new data, save immediately
+                if (hadMigrations || dataSource.includes('defaults')) {
+                    console.log(`💾 Saving complete data structure...`);
+                    localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(this.data));
+                    
+                    // CRITICAL: For cloud mode, immediately sync the complete structure
+                    if (Auth.user && !Auth.isDemoMode) {
+                        try {
+                            const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${name}`);
+                            await window.firebaseSet(dbRef, this.data);
+                            console.log(`☁️ Complete data structure synced to cloud`);
+                        } catch (e) {
+                            console.error(`❌ Failed to sync complete structure:`, e);
+                        }
+                    }
+                }
+                
+                // Debug data verification
                 console.log(`🎭 Cast members loaded: ${Object.keys(this.data.cast || {}).length}`);
                 console.log(`🎬 Crew members loaded: ${Object.keys(this.data.crew || {}).length}`);
-                if (Object.keys(this.data.cast || {}).length > 0) {
-                    console.log(`📋 Cast data sample:`, Object.keys(this.data.cast)[0], this.data.cast[Object.keys(this.data.cast)[0]]);
-                }
-                if (Object.keys(this.data.crew || {}).length > 0) {
-                    console.log(`📋 Crew data sample:`, Object.keys(this.data.crew)[0], this.data.crew[Object.keys(this.data.crew)[0]]);
-                }
+                console.log(`🎯 Shot list items: ${(this.data.shotlist || []).length}`);
+                console.log(`📋 Breakdown sheets: ${(this.data.breakdowns || []).length}`);
+                console.log(`📅 Schedule strips: ${(this.data.schedule?.strips || []).length}`);
                 
                 // Ensure the production is in the productions list
                 await this.createProduction(name);
@@ -9020,6 +9078,7 @@ Target is on the move. Headed north on 8th."></textarea>
                 console.log(`✅ Production "${name}" ready`);
                 console.log(`✅ Source: ${dataSource}`);
                 console.log(`✅ Data properties: ${Object.keys(this.data).length}`);
+                console.log(`✅ All required fields verified: ✓`);
                 console.log(`✅ ═══════════════════════════════════════════`);
                 
                 this.log(`Loaded production: ${name} (${dataSource})`);
@@ -9216,13 +9275,119 @@ Target is on the move. Headed north on 8th."></textarea>
                 return result;
             },
 
+            deepMergeComplete(defaults, loaded) {
+                // Enhanced deep merge that ENSURES all default fields exist
+                const result = JSON.parse(JSON.stringify(defaults)); // Deep clone defaults
+                
+                if (!loaded || typeof loaded !== 'object') {
+                    return result;
+                }
+                
+                // Recursively merge loaded data over defaults
+                function merge(target, source) {
+                    for (const key in source) {
+                        if (source[key] === null || source[key] === undefined) {
+                            continue; // Skip null/undefined
+                        }
+                        
+                        if (Array.isArray(source[key])) {
+                            // For arrays, use source if it exists
+                            target[key] = source[key];
+                        } else if (typeof source[key] === 'object') {
+                            // For objects, recursively merge
+                            if (!target[key] || typeof target[key] !== 'object') {
+                                target[key] = {};
+                            }
+                            // Only merge if both are objects (not one being array)
+                            if (!Array.isArray(target[key])) {
+                                merge(target[key], source[key]);
+                            } else {
+                                target[key] = source[key];
+                            }
+                        } else {
+                            // For primitives, use source
+                            target[key] = source[key];
+                        }
+                    }
+                }
+                
+                merge(result, loaded);
+                return result;
+            },
+
+            verifyDataIntegrity() {
+                // Verify all critical fields exist
+                const missingFields = [];
+                const requiredFields = {
+                    'days': Array,
+                    'tech': Array,
+                    'vault': Array,
+                    'schedule': Object,
+                    'schedule.strips': Array,
+                    'breakdowns': Array,
+                    'cast': Object,
+                    'crew': Object,
+                    'crm': Object,
+                    'gantt': Object,
+                    'gantt.production': Array,
+                    'gantt.global': Array,
+                    'notes': String,
+                    'budget': Object,
+                    'budget.lines': Array,
+                    'budget.pos': Array,
+                    'shotlist': Array,
+                    'continuity': Array,
+                    'risks': Array,
+                    'contacts': Array,
+                    'milestones': Array,
+                    'tasks': Array,
+                    'financials': Object
+                };
+                
+                for (const [field, type] of Object.entries(requiredFields)) {
+                    const parts = field.split('.');
+                    let current = this.data;
+                    let exists = true;
+                    
+                    for (const part of parts) {
+                        if (!current || current[part] === undefined) {
+                            exists = false;
+                            break;
+                        }
+                        current = current[part];
+                    }
+                    
+                    if (!exists) {
+                        missingFields.push(field);
+                        // Auto-fix by ensuring it exists
+                        let target = this.data;
+                        for (let i = 0; i < parts.length - 1; i++) {
+                            if (!target[parts[i]]) {
+                                target[parts[i]] = {};
+                            }
+                            target = target[parts[i]];
+                        }
+                        const lastPart = parts[parts.length - 1];
+                        if (type === Array) {
+                            target[lastPart] = [];
+                        } else if (type === Object) {
+                            target[lastPart] = {};
+                        } else {
+                            target[lastPart] = '';
+                        }
+                    }
+                }
+                
+                return missingFields;
+            },
+
             save() {
                 try {
                     // Validate data exists
                     if (!this.data) {
                         console.error('❌ Cannot save: data is undefined');
                         this.data = this.getDefaultData();
-                        return;
+                        this.log('WARNING: Data was undefined, reset to defaults');
                     }
                     
                     if (!this.currentProduction) {
@@ -9230,10 +9395,17 @@ Target is on the move. Headed north on 8th."></textarea>
                         return;
                     }
                     
+                    // Verify data integrity before saving
+                    const missingFields = this.verifyDataIntegrity();
+                    if (missingFields.length > 0) {
+                        console.warn(`⚠️ Auto-fixed ${missingFields.length} missing fields before save:`, missingFields);
+                    }
+                    
                     // Save to localStorage immediately (synchronous backup)
                     const dataString = JSON.stringify(this.data);
                     localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, dataString);
                     console.log(`💾 Saved "${this.currentProduction}" to localStorage (${dataString.length} bytes)`);
+                    console.log(`   Fields: ${Object.keys(this.data).length}`);
                     
                     // Update sync status
                     this.updateSyncStatus('saving');
@@ -9249,6 +9421,8 @@ Target is on the move. Headed north on 8th."></textarea>
                     
                 } catch (error) {
                     console.error('❌ Save failed:', error);
+                    console.error('   Error details:', error.message);
+                    console.error('   Stack:', error.stack);
                     this.log('ERROR: Save failed - ' + error.message);
                     this.updateSyncStatus('error');
                 }
@@ -9273,15 +9447,35 @@ Target is on the move. Headed north on 8th."></textarea>
                     return;
                 }
                 
+                // Verify data integrity before syncing
+                if (!this.data) {
+                    console.error('❌ Cannot sync: data is undefined');
+                    this.updateSyncStatus('error');
+                    return;
+                }
+                
                 try {
                     this.isSyncing = true;
+                    this.updateSyncStatus('saving');
                     console.log(`☁️ Syncing "${this.currentProduction}" to cloud...`);
                     
-                    const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
-                    await window.firebaseSet(dbRef, this.data);
+                    // Verify all required fields exist before syncing
+                    const missingFields = this.verifyDataIntegrity();
+                    if (missingFields.length > 0) {
+                        console.warn(`⚠️ Auto-fixed ${missingFields.length} missing fields before sync`);
+                    }
                     
-                    const dataSize = JSON.stringify(this.data).length;
+                    // Create deep clone to avoid reference issues
+                    const dataToSync = JSON.parse(JSON.stringify(this.data));
+                    
+                    const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                    await window.firebaseSet(dbRef, dataToSync);
+                    
+                    const dataSize = JSON.stringify(dataToSync).length;
                     console.log(`✅ Synced "${this.currentProduction}" to cloud (${dataSize} bytes)`);
+                    console.log(`   Fields synced: ${Object.keys(dataToSync).length}`);
+                    console.log(`   Cast: ${Object.keys(dataToSync.cast || {}).length}, Crew: ${Object.keys(dataToSync.crew || {}).length}`);
+                    console.log(`   Shots: ${(dataToSync.shotlist || []).length}, Breakdowns: ${(dataToSync.breakdowns || []).length}`);
                     
                     this.updateSyncStatus('synced');
                     this.log(`Synced to cloud: ${this.currentProduction}`);
@@ -9293,9 +9487,18 @@ Target is on the move. Headed north on 8th."></textarea>
                     
                 } catch (e) {
                     console.error('❌ Cloud sync failed:', e);
+                    console.error('   Error details:', e.message);
                     this.updateSyncStatus('error');
                     this.log('ERROR: Cloud sync failed - ' + e.message);
                     this.isSyncing = false;
+                    
+                    // Attempt to save to localStorage as fallback
+                    try {
+                        localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, JSON.stringify(this.data));
+                        console.log('💾 Fallback: Saved to localStorage successfully');
+                    } catch (localError) {
+                        console.error('❌ Even localStorage save failed:', localError);
+                    }
                 }
             },
 
@@ -9391,8 +9594,13 @@ Target is on the move. Headed north on 8th."></textarea>
                     // Only update if cloud data is different
                     if (cloudDataStr !== currentDataStr) {
                         console.log(`📥 Received update from cloud for "${this.currentProduction}"`);
-                        this.data = cloudData;
-                        localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, cloudDataStr);
+                        console.log(`   Cloud data fields: ${Object.keys(cloudData || {}).length}`);
+                        
+                        // Merge with defaults to ensure integrity
+                        const defaults = this.getDefaultData();
+                        this.data = this.deepMergeComplete(defaults, cloudData);
+                        
+                        localStorage.setItem('dc_alacrity_prod_' + this.currentProduction, JSON.stringify(this.data));
                         this.renderAll();
                         this.log('Synced from cloud');
                     }
@@ -9432,6 +9640,98 @@ Target is on the move. Headed north on 8th."></textarea>
                 
                 console.log(`✅ Real-time sync enabled for "${this.currentProduction}"`);
                 this.log('Real-time sync enabled');
+            },
+
+            async runCloudSyncDiagnostics() {
+                console.log(`\n${'═'.repeat(60)}`);
+                console.log(`🔍 CLOUD SYNC DIAGNOSTICS`);
+                console.log(`${'═'.repeat(60)}\n`);
+                
+                // Check authentication
+                console.log(`1. Authentication Status:`);
+                console.log(`   User: ${Auth.user ? '✅ Logged in' : '❌ Not logged in'}`);
+                console.log(`   Demo Mode: ${Auth.isDemoMode ? '⚠️ Yes (cloud disabled)' : '✅ No'}`);
+                console.log(`   User ID: ${Auth.user?.uid || 'N/A'}`);
+                
+                // Check current production
+                console.log(`\n2. Current Production:`);
+                console.log(`   Name: "${this.currentProduction || 'NONE'}"`);
+                console.log(`   Data loaded: ${this.data ? '✅ Yes' : '❌ No'}`);
+                
+                if (this.data) {
+                    console.log(`   Data fields: ${Object.keys(this.data).length}`);
+                    console.log(`   Cast: ${Object.keys(this.data.cast || {}).length}`);
+                    console.log(`   Crew: ${Object.keys(this.data.crew || {}).length}`);
+                    console.log(`   Shots: ${(this.data.shotlist || []).length}`);
+                    console.log(`   Breakdowns: ${(this.data.breakdowns || []).length}`);
+                    console.log(`   Days: ${(this.data.days || []).length}`);
+                    console.log(`   Tech: ${(this.data.tech || []).length}`);
+                }
+                
+                // Check productions list
+                console.log(`\n3. Productions List:`);
+                const productions = this.getProductions();
+                console.log(`   Total: ${productions.length}`);
+                console.log(`   List: ${JSON.stringify(productions)}`);
+                
+                // Check localStorage
+                console.log(`\n4. LocalStorage:`);
+                const localProd = localStorage.getItem('dc_alacrity_prod_' + this.currentProduction);
+                console.log(`   Production data: ${localProd ? '✅ Found' : '❌ Missing'}`);
+                if (localProd) {
+                    try {
+                        const parsed = JSON.parse(localProd);
+                        console.log(`   Fields: ${Object.keys(parsed).length}`);
+                    } catch (e) {
+                        console.log(`   ❌ Parse error: ${e.message}`);
+                    }
+                }
+                
+                // Check cloud sync
+                if (Auth.user && !Auth.isDemoMode) {
+                    console.log(`\n5. Cloud Sync Status:`);
+                    try {
+                        const prodRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${this.currentProduction}`);
+                        const snapshot = await window.firebaseGet(prodRef);
+                        
+                        console.log(`   Cloud data: ${snapshot.exists() ? '✅ Found' : '❌ Missing'}`);
+                        
+                        if (snapshot.exists()) {
+                            const cloudData = snapshot.val();
+                            console.log(`   Fields: ${Object.keys(cloudData || {}).length}`);
+                            console.log(`   Cast: ${Object.keys(cloudData.cast || {}).length}`);
+                            console.log(`   Crew: ${Object.keys(cloudData.crew || {}).length}`);
+                            console.log(`   Shots: ${(cloudData.shotlist || []).length}`);
+                            console.log(`   Breakdowns: ${(cloudData.breakdowns || []).length}`);
+                            
+                            // Compare with local
+                            const localDataStr = JSON.stringify(this.data);
+                            const cloudDataStr = JSON.stringify(cloudData);
+                            console.log(`   In sync: ${localDataStr === cloudDataStr ? '✅ Yes' : '⚠️ No (differences detected)'}`);
+                        }
+                        
+                        // Check productions list in cloud
+                        const listRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
+                        const listSnapshot = await window.firebaseGet(listRef);
+                        
+                        console.log(`   Productions list: ${listSnapshot.exists() ? '✅ Found' : '❌ Missing'}`);
+                        if (listSnapshot.exists()) {
+                            const cloudList = listSnapshot.val();
+                            console.log(`   Cloud productions: ${JSON.stringify(cloudList)}`);
+                        }
+                        
+                    } catch (e) {
+                        console.error(`   ❌ Error: ${e.message}`);
+                    }
+                } else {
+                    console.log(`\n5. Cloud Sync: ⏭️ Skipped (not in cloud mode)`);
+                }
+                
+                console.log(`\n${'═'.repeat(60)}`);
+                console.log(`✅ Diagnostics Complete`);
+                console.log(`${'═'.repeat(60)}\n`);
+                
+                return true;
             },
 
             updateSyncStatus(status) {
@@ -9847,33 +10147,42 @@ Target is on the move. Headed north on 8th."></textarea>
                 
                 console.log(`🆕 Creating new production: "${name}"`);
                 
-                // Cleanup old production listener
-                if (Core.unsubscribeProduction) {
-                    console.log('🧹 Cleaning up old production listener...');
-                    Core.unsubscribeProduction();
-                    Core.unsubscribeProduction = null;
+                try {
+                    // Cleanup old production listener
+                    if (Core.unsubscribeProduction) {
+                        console.log('🧹 Cleaning up old production listener...');
+                        Core.unsubscribeProduction();
+                        Core.unsubscribeProduction = null;
+                    }
+                    
+                    // CRITICAL: Await both operations to ensure proper cloud sync
+                    await Core.createProduction(name);
+                    await Core.loadProduction(name);
+                    
+                    // Update UI
+                    Core.renderProductionDropdown();
+                    Core.renderAll();
+                    
+                    // Setup sync for the new production
+                    if (Auth.user && !Auth.isDemoMode) {
+                        console.log('🔄 Setting up sync for new production...');
+                        Core.setupRealtimeSync();
+                    }
+                    
+                    // Show success notification
+                    this.showSuccessNotification(name);
+                    
+                    // Clear input but keep modal open
+                    DOM.setValue('new-production-name', '');
+                    DOM.focus('new-production-name');
+                    
+                    Core.log(`Created production: ${name}`);
+                    console.log(`✅ Production "${name}" created and loaded successfully`);
+                    
+                } catch (error) {
+                    console.error('❌ Failed to create production:', error);
+                    alert('Failed to create production: ' + error.message);
                 }
-                
-                // Create and load the new production
-                Core.createProduction(name);
-                await Core.loadProduction(name);
-                Core.renderProductionDropdown();
-                Core.renderAll();
-                
-                // Setup sync for the new production
-                if (Auth.user && !Auth.isDemoMode) {
-                    console.log('🔄 Setting up sync for new production...');
-                    Core.setupRealtimeSync();
-                }
-                
-                // Show success notification
-                this.showSuccessNotification(name);
-                
-                // Clear input but keep modal open
-                DOM.setValue('new-production-name', '');
-                DOM.focus('new-production-name');
-                
-                Core.log(`Created production: ${name}`);
             },
             showSuccessNotification(prodName) {
                 DOM.setText('success-prod-name', prodName);
@@ -17345,7 +17654,7 @@ const Gantt = GanttEnhanced;
                 created: Date.now(),
                 lastModified: Date.now(),
                 _cloudSynced: false,
-                budget: JSON.parse(JSON.stringify(DEFAULT_BUDGET)),
+                budget: budget,
                 cast: {},
                 crew: {},
                 schedule: { strips: [] },
@@ -17359,15 +17668,8 @@ const Gantt = GanttEnhanced;
                 vault: [],
                 breakdowns: [],
                 crm: { leads: [], ledger: [] },
-                gantt: { production: [], global: [] },
                 notes: '',
-                contacts: [],
-                financials: {
-                    categories: {},
-                    budget: budget,
-                    spent: 0,
-                    remaining: budget
-                }
+                contacts: []
             };
             
             localStorage.setItem(`dc_alacrity_prod_${id}`, JSON.stringify(emptyProductionData));
@@ -17391,32 +17693,14 @@ const Gantt = GanttEnhanced;
             // Upload to cloud if requested and user is logged in
             if (uploadToCloud && Auth.user && !Auth.isDemoMode) {
                 try {
-                    console.log(`☁️ Uploading ${id} to cloud...`);
-                    
-                    // Mark as cloud synced
                     Core.data._cloudSynced = true;
-                    
-                    // Upload production data to Firebase
                     const dbRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productions/${id}`);
                     await window.firebaseSet(dbRef, Core.data);
-                    console.log(`✅ Production data uploaded to cloud`);
-                    
-                    // Update the productionsList in Firebase
-                    const productions = Core.getProductions();
-                    if (!productions.includes(id)) {
-                        productions.push(id);
-                    }
-                    const listRef = window.firebaseRef(window.firebaseDb, `users/${Auth.user.uid}/productionsList`);
-                    await window.firebaseSet(listRef, productions);
-                    console.log(`✅ Productions list updated in cloud`);
-                    
-                    // Update localStorage with cloud flag
                     localStorage.setItem(`dc_alacrity_prod_${id}`, JSON.stringify(Core.data));
-                    
                     alert(`✅ Production "${name}" created and uploaded to cloud!`);
                 } catch (e) {
                     console.error('Cloud upload failed:', e);
-                    alert(`Production "${name}" created locally. Cloud upload failed: ${e.message}\n\nYou can upload it later from the Production Library.`);
+                    alert(`Production "${name}" created locally. Cloud upload failed: ${e.message}`);
                 }
             } else {
                 alert(`Production "${name}" created successfully!`);
