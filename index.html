@@ -7634,6 +7634,9 @@ Target is on the move. Headed north on 8th."></textarea>
                             <button class="btn btn-primary" onclick="DataManager.exportEverything()">
                                 💾 Export Everything (Full Backup)
                             </button>
+                            <button class="btn btn-export" onclick="DataManager.exportSystemReadable()">
+                                📋 Export Complete System Report (TXT)
+                            </button>
                         </div>
                     </div>
 
@@ -10289,6 +10292,7 @@ Target is on the move. Headed north on 8th."></textarea>
             },
             render() {
                 const tbody = document.getElementById('table-days');
+                if (!tbody) return;
                 if (!Core.data.days?.length) {
                     tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No shoot days scheduled</td></tr>';
                     return;
@@ -10341,6 +10345,7 @@ Target is on the move. Headed north on 8th."></textarea>
             },
             render() {
                 const tbody = document.getElementById('table-tech');
+                if (!tbody) return;
                 if (!Core.data.tech?.length) {
                     tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No equipment logged</td></tr>';
                     return;
@@ -10397,6 +10402,7 @@ Target is on the move. Headed north on 8th."></textarea>
             },
             render() {
                 const tbody = document.getElementById('table-vault');
+                if (!tbody) return;
                 if (!Core.data.vault?.length) {
                     tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No media assets logged</td></tr>';
                     return;
@@ -13448,11 +13454,11 @@ const Gantt = GanttEnhanced;
            ═══════════════════════════════════════════════════════════════════════ */
         const Notes = {
             load() {
-                document.getElementById('notes-textarea').value = Core.data.notes || '';
+                const _nel = document.getElementById('production-notes') || document.getElementById('notes-textarea'); if (_nel) _nel.value = Core.data.notes || '';
             },
 
             save() {
-                Core.data.notes = document.getElementById('notes-textarea').value;
+                const _nel2 = document.getElementById('production-notes') || document.getElementById('notes-textarea'); if (_nel2) Core.data.notes = _nel2.value;
                 Core.save();
                 Core.log('Notes saved');
             }
@@ -17050,223 +17056,980 @@ const Gantt = GanttEnhanced;
                     version: '1.0',
                     bizData: Core.bizData
                 };
-                
                 this.downloadJSON(data, `GlobalCRM_${this.getDateString()}.json`);
                 Core.log('Global CRM data exported');
                 alert('Global CRM data exported successfully!');
             },
-            
-            // Export Current Production Only
+
+            // Export Current Production Only (JSON)
             exportProductionData() {
-                if (Core.currentProduction === 'GLOBAL') {
-                    alert('Please select a production to export');
-                    return;
-                }
-                
+                if (Core.currentProduction === 'GLOBAL') { alert('Please select a production to export'); return; }
                 const data = {
                     exportType: 'production',
                     exportDate: new Date().toISOString(),
                     version: '1.0',
                     productionName: Core.currentProduction,
-                    productionData: Core.data[Core.currentProduction]
+                    productionData: Core.data  // Core.data IS the active production
                 };
-                
                 this.downloadJSON(data, `${clean(Core.currentProduction)}_${this.getDateString()}.json`);
                 Core.log(`Production "${Core.currentProduction}" exported`);
                 alert('Production data exported successfully!');
             },
-            
-            // Export Readable Production Report
-            exportProductionReadable() {
-                if (Core.currentProduction === 'GLOBAL') {
-                    alert('Please select a production to export');
-                    return;
+
+            // ─── SHARED REPORT HELPERS ────────────────────────────────────────────────
+            _reportHelpers() {
+                const has   = v => v !== undefined && v !== null && String(v).trim() !== '';
+                const money = v => '$' + (parseFloat(v)||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+                const pct   = (a, b) => b > 0 ? ((a/b)*100).toFixed(1) + '%' : '0.0%';
+                const prog  = (d, t, w=30) => { const f = t>0 ? Math.min(Math.round((d/t)*w), w) : 0; return '[' + '█'.repeat(f) + '░'.repeat(w-f) + ']'; };
+                // Only emit a line if the value has content
+                const fld   = (label, val, indent=6) => has(val) ? ' '.repeat(indent) + label.padEnd(18) + String(val).trim() + '\n' : '';
+                const SEC   = t => '\n' + '═'.repeat(72) + '\n  ' + t + '\n' + '═'.repeat(72) + '\n';
+                const PSEC  = t => '\n' + '─'.repeat(72) + '\n  ── ' + t + '\n' + '─'.repeat(72) + '\n';
+                const NONE  = msg => '  ' + msg + '\n';
+                const dl    = (blob, name) => { const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u); };
+                return { has, money, pct, prog, fld, SEC, PSEC, NONE, dl };
+            },
+
+            // ─── BUILD PRODUCTION REPORT BLOCK ───────────────────────────────────────
+            // Takes a prod data object + prod name, returns a report string.
+            // This is the single source of truth for BOTH the single-production
+            // report AND each production's section inside the full system report.
+            _buildProductionBlock(prod, prodName, verbose) {
+                const { has, money, pct, prog, fld, SEC, PSEC, NONE } = this._reportHelpers();
+
+                // ── extract all data ──────────────────────────────────────────────────
+                const sched      = prod.schedule    || { strips: [] };
+                const strips     = sched.strips     || [];
+                const scenes     = strips.filter(s => s.type === 'scene');
+                const banners    = strips.filter(s => s.type === 'banner');
+                const shootDays  = strips.filter(s => s.type === 'shoot');
+                const budget     = prod.budget      || { lines: [], pos: [] };
+                const budLines   = budget.lines     || [];
+                const poList     = budget.pos       || [];
+                const milestones = prod.milestones  || [];
+                const ganttProd  = (prod.gantt && prod.gantt.production) || [];
+                const ganttGlob  = (prod.gantt && prod.gantt.global)     || [];
+                const allTasks   = [...ganttProd, ...ganttGlob];
+                const risks      = prod.risks       || [];
+                const shots      = prod.shotlist    || [];
+                const continuity = prod.continuity  || [];
+                const contacts   = prod.contacts    || [];
+                const castMap    = prod.cast        || {};
+                const crewMap    = prod.crew        || {};
+                const days       = prod.days        || [];
+                const tech       = prod.tech        || [];
+                const vault      = prod.vault       || [];
+                const breakdowns = prod.breakdowns  || [];
+                const crm        = prod.crm         || { leads: [], ledger: [] };
+                const crmLeads   = crm.leads        || [];
+                const crmLedger  = crm.ledger       || [];
+                const notes      = prod.notes       || '';
+
+                const castList   = Object.values(castMap).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+                const crewList   = Object.values(crewMap).sort((a,b) => (a.name||'').localeCompare(b.name||''));
+
+                // ── stats ─────────────────────────────────────────────────────────────
+                const totalEst    = budLines.reduce((s,l) => s+(parseFloat(l.est)||0), 0);
+                const totalAct    = budLines.reduce((s,l) => s+(parseFloat(l.act)||0), 0);
+                const overLines   = budLines.filter(l => (parseFloat(l.act)||0) > (parseFloat(l.est)||0));
+                const poTotal     = poList.reduce((s,p) => s+(parseFloat(p.amount)||0), 0);
+                const doneMile    = milestones.filter(m => m.completed);
+                const overdueMile = milestones.filter(m => !m.completed && has(m.dueDate||m.date) && new Date(m.dueDate||m.date) < new Date());
+                const doneTasks   = allTasks.filter(t => t.status==='Completed' || (t.progress||0)===100);
+                const openRisks   = risks.filter(r => !r.resolved && r.status !== 'Resolved');
+                const highRisks   = risks.filter(r => ['High','Critical'].includes(r.level||r.severity||r.riskSeverity||''));
+                const shotDone    = shots.filter(s => s.status==='Completed' || s.completed);
+                const shotIP      = shots.filter(s => s.status==='In Progress');
+                const shotPlan    = shots.filter(s => !s.status || s.status==='Planned');
+                const intSc       = scenes.filter(s => s.intext==='INT');
+                const extSc       = scenes.filter(s => s.intext==='EXT');
+                const daySc       = scenes.filter(s => s.daynight==='DAY');
+                const nightSc     = scenes.filter(s => s.daynight==='NIGHT');
+                const dawnSc      = scenes.filter(s => s.daynight==='DAWN');
+                const duskSc      = scenes.filter(s => s.daynight==='DUSK');
+                const totalPages  = scenes.reduce((s,sc) => s+(parseFloat(sc.pages)||0), 0);
+                const uniqueLocs  = [...new Set(scenes.map(s=>s.location).filter(Boolean))];
+                const crmVal      = crmLeads.reduce((s,l) => s+(parseFloat(l.value)||0), 0);
+                const ledgTotal   = crmLedger.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+
+                let R = '';
+
+                // ── PRODUCTION META ───────────────────────────────────────────────────
+                R += SEC('PRODUCTION INFORMATION');
+                R += fld('Production Name', prodName);
+                R += fld('Type',            prod.type);
+                R += fld('Description',     prod.description);
+                R += fld('Client / Studio', prod.client);
+                R += fld('Director',        prod.director);
+                if (prod.created)      R += fld('Created',       new Date(prod.created).toLocaleString());
+                if (prod.lastModified) R += fld('Last Modified', new Date(prod.lastModified).toLocaleString());
+
+                // ── EXECUTIVE SUMMARY ─────────────────────────────────────────────────
+                R += SEC('EXECUTIVE SUMMARY');
+                R += '  SCHEDULE\n';
+                if (scenes.length > 0) {
+                    R += fld('Total Scenes',  `${scenes.length}   (INT: ${intSc.length}  EXT: ${extSc.length}  INT/EXT: ${scenes.length-intSc.length-extSc.length})`);
+                    R += fld('Day/Night',     `DAY: ${daySc.length}  NIGHT: ${nightSc.length}` + (dawnSc.length?`  DAWN: ${dawnSc.length}`:'') + (duskSc.length?`  DUSK: ${duskSc.length}`:''));
+                    R += fld('Total Pages',   totalPages.toFixed(1));
+                    R += fld('Locations',     uniqueLocs.length + ' unique: ' + (uniqueLocs.length<=6 ? uniqueLocs.join(', ') : uniqueLocs.slice(0,6).join(', ') + ` + ${uniqueLocs.length-6} more`));
+                } else {
+                    R += NONE('  No scenes scheduled yet.');
                 }
-                
-                const prod = Core.data[Core.currentProduction];
-                const schedule = prod?.schedule || {};
-                const budget = prod?.budget || {};
-                const milestones = prod?.milestones || [];
-                
-                let report = `PRODUCTION REPORT: ${Core.currentProduction}\n`;
-                report += `Generated: ${new Date().toLocaleString()}\n`;
-                report += `${'='.repeat(60)}\n\n`;
-                
-                // Schedule Summary
-                report += `SCHEDULE\n${'-'.repeat(60)}\n`;
-                const scenes = schedule.strips?.filter(s => s.type === 'scene') || [];
-                scenes.forEach(s => {
-                    report += `Scene ${s.scene}: ${s.intext} ${s.location} - ${s.daynight}\n`;
-                    report += `  Cast: ${s.cast || 'N/A'} | Pages: ${s.pages || 'N/A'}\n\n`;
-                });
-                
-                // Budget Summary
-                report += `\nBUDGET\n${'-'.repeat(60)}\n`;
-                const total = budget.items?.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) || 0;
-                report += `Total Budget: $${total.toLocaleString()}\n\n`;
-                budget.items?.forEach(item => {
-                    report += `${item.category}: $${parseFloat(item.amount || 0).toLocaleString()}\n`;
-                    report += `  ${item.description}\n\n`;
-                });
-                
-                // Milestones
-                report += `\nMILESTONES\n${'-'.repeat(60)}\n`;
-                milestones.forEach(m => {
-                    report += `${m.completed ? '✓' : '○'} ${m.title} (${m.phase})\n`;
-                    report += `  Due: ${m.dueDate}\n\n`;
-                });
-                
-                const blob = new Blob([report], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${clean(Core.currentProduction)}_Report_${this.getDateString()}.txt`;
-                a.click();
-                URL.revokeObjectURL(url);
-                
-                Core.log('Readable production report exported');
+                R += fld('Shoot Days',    days.length > 0 ? days.length : 'None entered');
+                R += '\n  TEAM\n';
+                R += fld('Cast Members', castList.length > 0 ? castList.length : 'None entered');
+                R += fld('Crew Members', crewList.length > 0 ? crewList.length : 'None entered');
+                if (contacts.length) R += fld('Contacts', contacts.length);
+                R += '\n  BUDGET\n';
+                if (totalEst > 0 || totalAct > 0) {
+                    R += fld('Estimated',    money(totalEst));
+                    R += fld('Actual Spend', money(totalAct) + `  (${pct(totalAct, totalEst)} used)`);
+                    R += fld('Remaining',    money(totalEst - totalAct) + (overLines.length > 0 ? `  ⚠ OVER IN ${overLines.length} LINE(S)` : '  ✓ On track'));
+                    if (poList.length) R += fld('POs Issued', `${poList.length} purchase orders  |  ${money(poTotal)} total`);
+                } else {
+                    R += NONE('  No budget data entered yet.');
+                }
+                R += '\n  STATUS\n';
+                R += fld('Milestones',   milestones.length > 0
+                    ? `${doneMile.length}/${milestones.length} complete  ${prog(doneMile.length,milestones.length)}  ${pct(doneMile.length,milestones.length)}` + (overdueMile.length ? `  ⚠ ${overdueMile.length} OVERDUE` : '')
+                    : 'None entered');
+                R += fld('Tasks',        allTasks.length > 0
+                    ? `${doneTasks.length}/${allTasks.length} complete  ${prog(doneTasks.length,allTasks.length)}  ${pct(doneTasks.length,allTasks.length)}`
+                    : 'None entered');
+                R += fld('Open Risks',   risks.length > 0
+                    ? `${openRisks.length} open  (${highRisks.length} HIGH/CRITICAL)`
+                    : 'None entered');
+                R += '\n  ASSETS\n';
+                R += fld('Shot List',     shots.length > 0
+                    ? `${shots.length} shots  |  Done: ${shotDone.length}  In Progress: ${shotIP.length}  Planned: ${shotPlan.length}  ${prog(shotDone.length,shots.length,20)}  ${pct(shotDone.length,shots.length)}`
+                    : 'None entered');
+                R += fld('Breakdowns',    breakdowns.length > 0 ? breakdowns.length : 'None entered');
+                R += fld('Equipment',     tech.length > 0 ? tech.length + ' items' : 'None entered');
+                R += fld('Media Vault',   vault.length > 0 ? vault.length + ' assets' : 'None entered');
+                if (allTasks.length) R += fld('Timeline Tasks', allTasks.length);
+                if (crmLeads.length) R += fld('CRM Pipeline',   `${crmLeads.length} leads  |  ${money(crmVal)} total value`);
+
+                // ── SCHEDULE ──────────────────────────────────────────────────────────
+                R += SEC('STRIPBOARD / SCHEDULE');
+                if (scenes.length === 0 && banners.length === 0 && shootDays.length === 0) {
+                    R += NONE('No schedule has been built yet.');
+                } else {
+                    if (scenes.length > 0) {
+                        R += `  ${scenes.length} scenes  |  ${totalPages.toFixed(1)} pages  |  INT: ${intSc.length}  EXT: ${extSc.length}  |  DAY: ${daySc.length}  NIGHT: ${nightSc.length}\n`;
+                        if (uniqueLocs.length) R += `  Locations: ${uniqueLocs.join(', ')}\n`;
+                        R += '\n';
+                        R += `  ${'#'.padEnd(5)} ${'SCENE'.padEnd(7)} ${'IN/EXT'.padEnd(8)} ${'DAY/NGT'.padEnd(9)} LOCATION\n`;
+                        R += '  ' + '─'.repeat(68) + '\n';
+                        scenes.forEach((s, i) => {
+                            R += `  ${String(i+1).padStart(3,'0')}  `;
+                            R += `${String(s.scene||'?').padEnd(7)}`;
+                            R += `${(s.intext||'').padEnd(8)}`;
+                            R += `${(s.daynight||'').padEnd(9)}`;
+                            R += `${s.location||'Location not set'}\n`;
+                            if (has(s.shootLocation) && s.shootLocation !== s.location)
+                                R += `            Shoot Location: ${s.shootLocation}\n`;
+                            if (has(s.description)) R += `            Description:    ${s.description}\n`;
+                            if (has(s.cast))        R += `            Cast:           ${s.cast}\n`;
+                            if (has(s.pages))       R += `            Pages:          ${s.pages}\n`;
+                        });
+                    }
+                    if (banners.length > 0) {
+                        R += PSEC('BANNERS / DAY MARKERS');
+                        banners.forEach(b => R += `  ▶  ${b.text || b.type || 'Banner'}\n`);
+                    }
+                    if (shootDays.length > 0) {
+                        R += PSEC('QUICK-ADD SHOOT DAYS (from stripboard)');
+                        shootDays.forEach(s => {
+                            R += `  ${(s.date||'No date').padEnd(14)}`;
+                            if (has(s.callTime)) R += `  Call: ${s.callTime}`;
+                            if (has(s.location)) R += `  ${s.location}`;
+                            if (has(s.scene))    R += `  Scenes: ${s.scene}`;
+                            R += '\n';
+                            if (has(s.notes))    R += `    Notes: ${s.notes}\n`;
+                        });
+                    }
+                }
+
+                // ── SHOOT DAYS ────────────────────────────────────────────────────────
+                R += SEC('SHOOT DAYS');
+                if (days.length === 0) {
+                    R += NONE('No shoot days have been scheduled yet.');
+                } else {
+                    R += `  ${days.length} shoot days logged\n\n`;
+                    R += `  ${'DAY'.padEnd(5)} ${'DATE'.padEnd(14)} ${'CALL'.padEnd(10)} ${'WRAP'.padEnd(10)} LOCATION\n`;
+                    R += '  ' + '─'.repeat(62) + '\n';
+                    days.forEach((d, i) => {
+                        R += `  ${String(i+1).padStart(2,'0')}.  `;
+                        R += `${(d.date||'No date').padEnd(14)}`;
+                        R += `${(d.call||'').padEnd(10)}`;
+                        R += `${(d.wrap||'').padEnd(10)}`;
+                        R += `${d.location||''}\n`;
+                        if (has(d.notes)) R += `         Notes: ${d.notes}\n`;
+                    });
+                }
+
+                // ── BUDGET ────────────────────────────────────────────────────────────
+                R += SEC('BUDGET');
+                if (budLines.length === 0) {
+                    R += NONE('No budget lines have been entered yet.');
+                } else {
+                    R += `  ESTIMATED TOTAL   ${money(totalEst).padStart(14)}\n`;
+                    R += `  ACTUAL SPEND      ${money(totalAct).padStart(14)}  (${pct(totalAct, totalEst)} used)\n`;
+                    R += `  REMAINING         ${money(totalEst - totalAct).padStart(14)}  ${overLines.length > 0 ? '⚠ OVER BUDGET' : '✓ On track'}\n`;
+                    if (poList.length) R += `  POs ISSUED        ${(poList.length + ' POs').padStart(14)}  ${money(poTotal)} total\n`;
+                    R += '\n';
+                    R += `  ${'CODE'.padEnd(8)} ${'CATEGORY'.padEnd(24)} ${'ESTIMATED'.padStart(13)} ${'ACTUAL'.padStart(13)} ${'VARIANCE'.padStart(13)}  STATUS\n`;
+                    R += '  ' + '─'.repeat(80) + '\n';
+                    budLines.forEach(l => {
+                        const est = parseFloat(l.est)||0, act = parseFloat(l.act)||0;
+                        const variance = est - act;
+                        R += `  ${(l.code||'').padEnd(8)} ${(l.name||'').padEnd(24)} ${money(est).padStart(13)} ${money(act).padStart(13)} ${money(variance).padStart(13)}  ${act > est ? '⚠ OVER' : act > 0 ? '✓' : ''}\n`;
+                    });
+                    R += '  ' + '─'.repeat(80) + '\n';
+                    R += `  ${''.padEnd(33)} ${money(totalEst).padStart(13)} ${money(totalAct).padStart(13)} ${money(totalEst-totalAct).padStart(13)}\n`;
+
+                    if (overLines.length > 0) {
+                        R += PSEC('OVER-BUDGET LINES');
+                        overLines.forEach(l => {
+                            const over = (parseFloat(l.act)||0) - (parseFloat(l.est)||0);
+                            R += `  ⚠  [${l.code||'?'}] ${l.name||''}  —  over by ${money(over)}\n`;
+                        });
+                    }
+                    if (poList.length > 0) {
+                        R += PSEC('PURCHASE ORDERS');
+                        R += `  ${'DATE'.padEnd(12)} ${'PO #'.padEnd(12)} ${'VENDOR'.padEnd(24)} ${'AMOUNT'.padStart(12)}  DESCRIPTION\n`;
+                        R += '  ' + '─'.repeat(72) + '\n';
+                        poList.forEach(p => {
+                            R += `  ${(p.date||'').padEnd(12)} ${(p.poNum||'').padEnd(12)} ${(p.vendor||'').padEnd(24)} ${money(p.amount).padStart(12)}`;
+                            if (has(p.desc)) R += `  ${p.desc}`;
+                            R += '\n';
+                        });
+                        R += `\n  ${'TOTAL PO SPEND'.padEnd(52)} ${money(poTotal).padStart(12)}\n`;
+                    }
+                }
+
+                // ── CAST ──────────────────────────────────────────────────────────────
+                R += SEC('CAST');
+                if (castList.length === 0) {
+                    R += NONE('No cast members have been entered yet.');
+                } else {
+                    castList.forEach((c, i) => {
+                        const role = c.role || c.character || c.position || '';
+                        R += `  [${String(i+1).padStart(2,'0')}]  ${c.name || 'Unnamed'}`;
+                        if (has(role)) R += `  —  ${role}`;
+                        R += '\n';
+                        R += fld('  ID',         c.id);
+                        R += fld('  Phone',      c.phone);
+                        R += fld('  Email',      c.email);
+                        R += fld('  Agent',      c.agent);
+                        R += fld('  Union',      c.union);
+                        R += fld('  Rate',       c.rate);
+                        R += fld('  Notes',      c.notes);
+                    });
+                }
+
+                // ── CREW ──────────────────────────────────────────────────────────────
+                R += SEC('CREW');
+                if (crewList.length === 0) {
+                    R += NONE('No crew members have been entered yet.');
+                } else {
+                    crewList.forEach((c, i) => {
+                        const role = c.role || c.position || '';
+                        R += `  [${String(i+1).padStart(2,'0')}]  ${c.name || 'Unnamed'}`;
+                        if (has(role)) R += `  —  ${role}`;
+                        R += '\n';
+                        R += fld('  ID',          c.id);
+                        R += fld('  Department',  c.department);
+                        R += fld('  Phone',       c.phone);
+                        R += fld('  Email',       c.email);
+                        R += fld('  Rate',        c.rate);
+                        R += fld('  Notes',       c.notes);
+                    });
+                }
+
+                // ── SHOT LIST ─────────────────────────────────────────────────────────
+                R += SEC('SHOT LIST');
+                if (shots.length === 0) {
+                    R += NONE('No shots have been logged yet.');
+                } else {
+                    const types={}, sizes={}, movements={}, angles={};
+                    shots.forEach(s => {
+                        if(s.type)     types[s.type]     = (types[s.type]||0)+1;
+                        if(s.size)     sizes[s.size]     = (sizes[s.size]||0)+1;
+                        if(s.movement) movements[s.movement] = (movements[s.movement]||0)+1;
+                        if(s.angle)    angles[s.angle]   = (angles[s.angle]||0)+1;
+                    });
+                    R += `  Total: ${shots.length} shots  |  Done: ${shotDone.length}  In Progress: ${shotIP.length}  Planned: ${shotPlan.length}\n`;
+                    R += `  Completion: ${prog(shotDone.length, shots.length)}  ${pct(shotDone.length, shots.length)}\n`;
+                    if (Object.keys(types).length)     R += `  Types:     ${Object.entries(types).map(([k,v])=>`${k}(${v})`).join('  ')}\n`;
+                    if (Object.keys(sizes).length)     R += `  Sizes:     ${Object.entries(sizes).map(([k,v])=>`${k.split(' - ')[0]}(${v})`).join('  ')}\n`;
+                    if (Object.keys(movements).length) R += `  Movement:  ${Object.entries(movements).map(([k,v])=>`${k}(${v})`).join('  ')}\n`;
+                    if (Object.keys(angles).length)    R += `  Angles:    ${Object.entries(angles).map(([k,v])=>`${k}(${v})`).join('  ')}\n`;
+                    R += '\n';
+
+                    const byScene = {};
+                    shots.forEach(s => { const sc = s.scene||'Unassigned'; if(!byScene[sc]) byScene[sc]=[]; byScene[sc].push(s); });
+                    Object.entries(byScene).sort(([a],[b]) => (parseFloat(a)||0)-(parseFloat(b)||0)||(a>b?1:-1)).forEach(([scene, ss]) => {
+                        R += `  SCENE ${scene}  (${ss.length} shot${ss.length===1?'':'s'})\n`;
+                        ss.forEach(s => {
+                            R += `    Shot ${String(s.number||'?').padEnd(6)}`;
+                            if (has(s.type))     R += `  ${s.type.padEnd(12)}`;
+                            if (has(s.size))     R += `  ${s.size.padEnd(22)}`;
+                            if (has(s.angle))    R += `  ${s.angle}`;
+                            R += `\n`;
+                            if (has(s.description)) R += `              ${s.description}\n`;
+                            if (has(s.movement))    R += `              Movement:  ${s.movement}\n`;
+                            if (has(s.lens))         R += `              Lens:      ${s.lens}\n`;
+                            if (has(s.fps))          R += `              FPS:       ${s.fps}\n`;
+                            if (has(s.cast))         R += `              Cast:      ${s.cast}\n`;
+                            if (has(s.equipment))    R += `              Equipment: ${s.equipment}\n`;
+                            if (has(s.duration))     R += `              Duration:  ${s.duration}\n`;
+                            if (has(s.vfx))          R += `              VFX:       ${s.vfx}\n`;
+                            if (has(s.notes))        R += `              Notes:     ${s.notes}\n`;
+                            R += `              Status:    ${s.status||'Planned'}\n`;
+                        });
+                        R += '\n';
+                    });
+                }
+
+                // ── SCENE BREAKDOWNS ──────────────────────────────────────────────────
+                R += SEC('SCENE BREAKDOWNS');
+                if (breakdowns.length === 0) {
+                    R += NONE('No breakdown sheets have been created yet.');
+                } else {
+                    breakdowns.forEach((bd, i) => {
+                        R += `\n  SHEET ${bd.sheet || (i+1)}\n`;
+                        R += fld('  Scene',       bd.scene);
+                        R += fld('  INT/EXT',     bd.intext);
+                        R += fld('  Day/Night',   bd.daynight);
+                        R += fld('  Location',    bd.location);
+                        R += fld('  Pages',       bd.pages);
+                        R += fld('  Date',        bd.date);
+                        R += fld('  Project',     bd.project);
+                        R += fld('  Description', bd.description);
+                        if (bd.elements && typeof bd.elements === 'object') {
+                            const populated = Object.entries(bd.elements).filter(([,v]) => Array.isArray(v) ? v.length > 0 : has(v));
+                            if (populated.length > 0) {
+                                R += '    Elements:\n';
+                                populated.forEach(([k,v]) => {
+                                    R += `      ${k.padEnd(24)}${Array.isArray(v) ? v.join(', ') : String(v)}\n`;
+                                });
+                            }
+                        }
+                    });
+                }
+
+                // ── MILESTONES ────────────────────────────────────────────────────────
+                R += SEC('MILESTONES');
+                if (milestones.length === 0) {
+                    R += NONE('No milestones have been entered yet.');
+                } else {
+                    R += `  ${doneMile.length} of ${milestones.length} complete  ${prog(doneMile.length, milestones.length)}  ${pct(doneMile.length, milestones.length)}\n`;
+                    if (overdueMile.length) R += `  ⚠ ${overdueMile.length} overdue\n`;
+                    R += '\n';
+                    const phases = [...new Set(milestones.map(m => m.phase || 'General'))];
+                    phases.forEach(ph => {
+                        const pm = milestones.filter(m => (m.phase||'General') === ph);
+                        const phDone = pm.filter(m => m.completed).length;
+                        R += `  ${ph.toUpperCase()}  (${phDone}/${pm.length})\n`;
+                        pm.sort((a,b) => new Date(a.dueDate||a.date||0) - new Date(b.dueDate||b.date||0)).forEach(m => {
+                            const od = !m.completed && has(m.dueDate||m.date) && new Date(m.dueDate||m.date) < new Date();
+                            R += `    ${m.completed ? '[✓]' : '[ ]'}  ${(m.title||m.name||'Untitled').padEnd(40)}`;
+                            if (has(m.dueDate||m.date)) R += `  Due: ${m.dueDate||m.date}`;
+                            if (od) R += '  ⚠ OVERDUE';
+                            if (has(m.status)) R += `  [${m.status}]`;
+                            R += '\n';
+                            if (has(m.description)) R += `           ${m.description}\n`;
+                            if (has(m.notes))       R += `           Notes: ${m.notes}\n`;
+                        });
+                        R += '\n';
+                    });
+                }
+
+                // ── TASKS / GANTT ─────────────────────────────────────────────────────
+                R += SEC('TASKS / GANTT TIMELINE');
+                if (allTasks.length === 0) {
+                    R += NONE('No tasks have been entered yet.');
+                } else {
+                    const ganttOver = allTasks.filter(t => has(t.end) && new Date(t.end) < new Date() && (t.progress||0) < 100 && t.status !== 'Completed').length;
+                    R += `  Total: ${allTasks.length}  |  Complete: ${doneTasks.length}  |  Overdue: ${ganttOver}\n\n`;
+                    const byPhase = {};
+                    allTasks.forEach(t => { const ph = t.phase||t.status||'General'; if(!byPhase[ph]) byPhase[ph]=[]; byPhase[ph].push(t); });
+                    Object.entries(byPhase).forEach(([ph, pts]) => {
+                        R += `  ${ph.toUpperCase()}  (${pts.length})\n`;
+                        pts.forEach(t => {
+                            const p = t.progress !== undefined ? t.progress : (t.status==='Completed' ? 100 : 0);
+                            R += `    ${(t.name||t.title||'Untitled').padEnd(38)}`;
+                            if (has(t.start)) R += `  Start: ${t.start}`;
+                            if (has(t.end))   R += `  End: ${t.end}`;
+                            R += '\n';
+                            if (p > 0 || has(t.status))  R += `           Progress: ${p}%  ${prog(p, 100, 20)}${has(t.status) ? '  ['+t.status+']' : ''}\n`;
+                            if (has(t.assignee))          R += `           Assigned: ${t.assignee}\n`;
+                            if (has(t.priority))          R += `           Priority: ${t.priority}\n`;
+                            if (has(t.notes))             R += `           Notes:    ${t.notes}\n`;
+                        });
+                        R += '\n';
+                    });
+                }
+
+                // ── RISK ASSESSMENT ───────────────────────────────────────────────────
+                R += SEC('RISK ASSESSMENT');
+                if (risks.length === 0) {
+                    R += NONE('No risks have been logged yet.');
+                } else {
+                    const resolvedRisks = risks.filter(r => r.resolved || r.status === 'Resolved');
+                    R += `  Total: ${risks.length}  |  Open: ${openRisks.length}  |  HIGH/CRITICAL: ${highRisks.length}  |  Resolved: ${resolvedRisks.length}\n\n`;
+                    ['High','Critical','Medium','Low'].forEach(level => {
+                        const lr = risks.filter(r => (r.level||r.severity||r.riskSeverity||'Low') === level);
+                        if (!lr.length) return;
+                        R += `  ${level.toUpperCase()} RISK  (${lr.length})\n`;
+                        lr.forEach(r => {
+                            const resolved = r.resolved || r.status === 'Resolved';
+                            const desc = r.description || r.risk || r.riskDescription || r.title || 'No description';
+                            const cat  = r.category || r.riskCategory || '';
+                            R += `    ${resolved ? '[RESOLVED]' : '[OPEN]    '}  `;
+                            if (has(cat)) R += `[${cat}]  `;
+                            R += `${desc}\n`;
+                            const mit = r.mitigation || r.riskMitigation || '';
+                            if (has(mit))     R += `              Mitigation: ${mit}\n`;
+                            if (has(r.status) && !resolved) R += `              Status:     ${r.status}\n`;
+                        });
+                        R += '\n';
+                    });
+                }
+
+                // ── CONTINUITY LOG ────────────────────────────────────────────────────
+                R += SEC('CONTINUITY LOG');
+                if (continuity.length === 0) {
+                    R += NONE('No continuity entries have been logged yet.');
+                } else {
+                    R += `  Total entries: ${continuity.length}\n\n`;
+                    const byScene = {};
+                    continuity.forEach(c => { const sc = c.scene||'General'; if(!byScene[sc]) byScene[sc]=[]; byScene[sc].push(c); });
+                    Object.entries(byScene).sort().forEach(([scene, entries]) => {
+                        R += `  SCENE ${scene}  (${entries.length} entr${entries.length===1?'y':'ies'})\n`;
+                        entries.forEach((c, i) => {
+                            R += `    Entry ${i+1}`;
+                            if (has(c.take))      R += `  —  Take ${c.take}`;
+                            if (has(c.timestamp)) R += `  —  ${c.timestamp}`;
+                            R += '\n';
+                            if (has(c.wardrobe))   R += `      Wardrobe:        ${c.wardrobe}\n`;
+                            if (has(c.props))      R += `      Props:           ${c.props}\n`;
+                            const hair = c.hairMakeup || c.hair || c.continuityHairMakeup || '';
+                            if (has(hair))         R += `      Hair/Makeup:     ${hair}\n`;
+                            const pos = c.position || c.actorPositions || c.continuityActorPositions || '';
+                            if (has(pos))          R += `      Actor Positions: ${pos}\n`;
+                            const notes = c.notes || c.additionalNotes || c.continuityAdditionalNotes || '';
+                            if (has(notes))        R += `      Notes:           ${notes}\n`;
+                        });
+                        R += '\n';
+                    });
+                }
+
+                // ── EQUIPMENT INVENTORY ───────────────────────────────────────────────
+                R += SEC('EQUIPMENT INVENTORY');
+                if (tech.length === 0) {
+                    R += NONE('No equipment has been logged yet.');
+                } else {
+                    const byCat = {};
+                    tech.forEach(t => { const cat = t.category||'Uncategorized'; if(!byCat[cat]) byCat[cat]=[]; byCat[cat].push(t); });
+                    R += `  Total: ${tech.length} items  |  Categories: ${Object.keys(byCat).join(', ')}\n\n`;
+                    Object.entries(byCat).forEach(([cat, items]) => {
+                        R += `  ${cat.toUpperCase()}  (${items.length})\n`;
+                        items.forEach(t => {
+                            R += `    ${(t.name||'Unnamed').padEnd(34)}`;
+                            if (has(t.serial)) R += `  Serial: ${String(t.serial).padEnd(18)}`;
+                            if (has(t.owner))  R += `  Owner: ${t.owner}`;
+                            if (has(t.status)) R += `  [${t.status}]`;
+                            R += '\n';
+                        });
+                        R += '\n';
+                    });
+                }
+
+                // ── MEDIA VAULT ───────────────────────────────────────────────────────
+                R += SEC('MEDIA VAULT');
+                if (vault.length === 0) {
+                    R += NONE('No media assets have been logged yet.');
+                } else {
+                    const byCam = {};
+                    vault.forEach(v => { const cam = v.camera||'Unknown Camera'; if(!byCam[cam]) byCam[cam]=0; byCam[cam]++; });
+                    R += `  Total: ${vault.length} assets  |  By Camera: ${Object.entries(byCam).map(([k,v])=>`${k}(${v})`).join('  |  ')}\n\n`;
+                    vault.forEach(v => {
+                        R += `  ${(v.filename||'Unnamed').padEnd(36)}`;
+                        if (has(v.scene))   R += `  Scene: ${String(v.scene).padEnd(8)}`;
+                        if (has(v.camera))  R += `  Cam: ${String(v.camera).padEnd(12)}`;
+                        if (has(v.storage)) R += `  Storage: ${v.storage}`;
+                        R += '\n';
+                        if (has(v.notes))   R += `    Notes: ${v.notes}\n`;
+                    });
+                }
+
+                // ── CONTACT DIRECTORY ─────────────────────────────────────────────────
+                R += SEC('CONTACT DIRECTORY');
+                if (contacts.length === 0) {
+                    R += NONE('No contacts have been entered yet.');
+                } else {
+                    const byDept = {};
+                    contacts.forEach(c => { const d = c.department||'General'; if(!byDept[d]) byDept[d]=[]; byDept[d].push(c); });
+                    Object.entries(byDept).forEach(([dept, people]) => {
+                        R += `\n  ${dept.toUpperCase()}  (${people.length})\n`;
+                        people.forEach(c => {
+                            R += `    ${(c.name||'Unnamed').padEnd(30)}`;
+                            if (has(c.role||c.title)) R += `  ${c.role||c.title}`;
+                            R += '\n';
+                            if (has(c.phone))   R += `      Phone:   ${c.phone}\n`;
+                            if (has(c.email))   R += `      Email:   ${c.email}\n`;
+                            if (has(c.company)) R += `      Company: ${c.company}\n`;
+                            if (has(c.notes))   R += `      Notes:   ${c.notes}\n`;
+                        });
+                    });
+                }
+
+                // ── PRODUCTION CRM ────────────────────────────────────────────────────
+                R += SEC('PRODUCTION CRM / PIPELINE');
+                if (crmLeads.length === 0 && crmLedger.length === 0) {
+                    R += NONE('No CRM data has been entered yet.');
+                } else {
+                    if (crmLeads.length > 0) {
+                        const byStage = {};
+                        crmLeads.forEach(l => { byStage[l.status||'Unknown'] = (byStage[l.status||'Unknown']||0)+1; });
+                        R += `  ${crmLeads.length} leads  |  Total Pipeline Value: ${money(crmVal)}\n`;
+                        R += `  By Stage: ${Object.entries(byStage).map(([k,v])=>`${k}(${v})`).join('  |  ')}\n\n`;
+                        crmLeads.forEach(l => {
+                            R += `  [${(l.status||'New').padEnd(14)}]  ${(l.name||'Unnamed').padEnd(32)}`;
+                            if (has(l.interest)) R += `  ${String(l.interest).padEnd(14)}`;
+                            if (has(l.value))    R += `  ${money(l.value)}`;
+                            R += '\n';
+                            if (has(l.phone)) R += `    Phone:  ${l.phone}\n`;
+                            if (has(l.email)) R += `    Email:  ${l.email}\n`;
+                            if (has(l.notes)) R += `    Notes:  ${l.notes}\n`;
+                        });
+                    }
+                    if (crmLedger.length > 0) {
+                        R += PSEC('INCOME LEDGER');
+                        R += `  Total Recorded Income: ${money(ledgTotal)}\n\n`;
+                        crmLedger.forEach(e => {
+                            R += `  ${(e.date||'No date').padEnd(14)}  ${(e.source||'').padEnd(28)}  ${money(e.amount)}`;
+                            if (has(e.notes)) R += `  ${e.notes}`;
+                            R += '\n';
+                        });
+                    }
+                }
+
+                // ── PRODUCTION NOTES ──────────────────────────────────────────────────
+                R += SEC('PRODUCTION NOTES');
+                if (!has(notes)) {
+                    R += NONE('No production notes have been entered yet.');
+                } else {
+                    notes.trim().split('\n').forEach(line => R += `  ${line}\n`);
+                }
+
+                return R;
+            },
+
+            // ─── SINGLE PRODUCTION READABLE REPORT ───────────────────────────────────
+            exportProductionReadable() {
+                if (Core.currentProduction === 'GLOBAL') { alert('Please select a production to export'); return; }
+                const { dl } = this._reportHelpers();
+
+                let R = '';
+                R += '█'.repeat(72) + '\n';
+                R += '██\n';
+                R += '██  DC ALACRITY — COMPLETE PRODUCTION INTELLIGENCE REPORT\n';
+                R += `██  ${Core.currentProduction}\n`;
+                R += `██  Generated: ${new Date().toLocaleString()}\n`;
+                R += '██\n';
+                R += '█'.repeat(72) + '\n';
+
+                // Core.data IS the active production — never index by production name
+                R += this._buildProductionBlock(Core.data, Core.currentProduction, true);
+
+                R += '\n' + '█'.repeat(72) + '\n';
+                R += `██  END OF REPORT  —  ${Core.currentProduction}\n`;
+                R += `██  ${new Date().toLocaleString()}\n`;
+                R += `██  DC ALACRITY Production Command System\n`;
+                R += '█'.repeat(72) + '\n';
+
+                dl(new Blob([R], {type:'text/plain'}), `${clean(Core.currentProduction)}_FULL_REPORT_${this.getDateString()}.txt`);
+                Core.log('Full production report exported');
                 alert('Production report exported successfully!');
             },
-            
-            // Export Everything (Full System Backup)
+
+            // ─── FULL SYSTEM BACKUP (JSON) ────────────────────────────────────────────
             exportEverything() {
+                // Core.data is only the ACTIVE production — collect ALL from localStorage
+                const productionNames = Core.getProductions();
+                const allProductions  = {};
+                if (Core.currentProduction && Core.currentProduction !== 'GLOBAL') {
+                    allProductions[Core.currentProduction] = Core.data;
+                }
+                productionNames.forEach(name => {
+                    if (name !== Core.currentProduction) {
+                        try {
+                            const stored = localStorage.getItem('dc_alacrity_prod_' + name);
+                            if (stored) allProductions[name] = JSON.parse(stored);
+                        } catch(e) { console.warn(`Could not load "${name}" for backup:`, e); }
+                    }
+                });
                 const data = {
-                    exportType: 'full_backup',
-                    exportDate: new Date().toISOString(),
-                    version: '1.0',
-                    bizData: Core.bizData,
-                    productions: Core.data
+                    exportType:      'full_backup',
+                    exportDate:      new Date().toISOString(),
+                    version:         '2.0',
+                    bizData:         Core.bizData,
+                    productionsList: productionNames,
+                    productions:     allProductions
                 };
-                
                 this.downloadJSON(data, `FullBackup_${this.getDateString()}.json`);
                 Core.log('Full system backup exported');
-                alert('Full system backup exported successfully!');
+                alert(`Full backup exported — ${productionNames.length} production(s) + Global CRM included.`);
             },
-            
-            // Import Data
+
+            // ─── COMPLETE SYSTEM READABLE REPORT ─────────────────────────────────────
+            exportSystemReadable() {
+                const { has, money, pct, prog, fld, SEC, PSEC, NONE, dl } = this._reportHelpers();
+                const productionNames = Core.getProductions();
+                const biz = Core.bizData || {};
+
+                const bizLeads    = biz.leads    || [];
+                const bizLedger   = biz.ledger   || [];
+                const bizCast     = Object.values(biz.cast     || {});
+                const bizCrew     = Object.values(biz.crew     || {});
+                const bizContacts = Object.values(biz.contacts || {});
+                const bizLeadVal  = bizLeads.reduce((s,l) => s+(parseFloat(l.value)||0), 0);
+                const bizLedgTot  = bizLedger.reduce((s,e) => s+(parseFloat(e.amount)||0), 0);
+
+                let R = '';
+
+                // SYSTEM HEADER
+                R += '█'.repeat(72) + '\n';
+                R += '██\n';
+                R += '██  DC ALACRITY — COMPLETE SYSTEM INTELLIGENCE REPORT\n';
+                R += '██  ALL PRODUCTIONS + GLOBAL CRM\n';
+                R += `██  Generated: ${new Date().toLocaleString()}\n`;
+                R += '██\n';
+                R += '█'.repeat(72) + '\n';
+
+                // SYSTEM OVERVIEW
+                R += '\n' + '═'.repeat(72) + '\n';
+                R += '  SYSTEM OVERVIEW\n';
+                R += '═'.repeat(72) + '\n';
+                R += fld('Total Productions',   productionNames.length || 'None', 22);
+                R += fld('Production List',     productionNames.join(', ') || 'None', 22);
+                R += fld('Global CRM Leads',    bizLeads.length || 'None', 22);
+                R += fld('Global Pipeline Val', bizLeads.length > 0 ? money(bizLeadVal) : 'N/A', 22);
+                R += fld('Global Income',       bizLedger.length > 0 ? money(bizLedgTot) + ' recorded' : 'None', 22);
+                R += fld('Global Cast DB',      bizCast.length || 'None', 22);
+                R += fld('Global Crew DB',      bizCrew.length || 'None', 22);
+                R += fld('Global Contacts',     bizContacts.length || 'None', 22);
+
+                // Aggregate stats across all productions
+                let totalScenes=0, totalShots=0, totalBudgEst=0, totalBudgAct=0, totalRisks=0, totalMiles=0, totalDays=0;
+                productionNames.forEach(name => {
+                    let prod = name === Core.currentProduction ? Core.data : null;
+                    if (!prod) { try { const s=localStorage.getItem('dc_alacrity_prod_'+name); if(s) prod=JSON.parse(s); } catch(e){} }
+                    if (!prod) return;
+                    totalScenes  += (prod.schedule?.strips||[]).filter(s=>s.type==='scene').length;
+                    totalShots   += (prod.shotlist||[]).length;
+                    totalBudgEst += (prod.budget?.lines||[]).reduce((s,l)=>s+(parseFloat(l.est)||0),0);
+                    totalBudgAct += (prod.budget?.lines||[]).reduce((s,l)=>s+(parseFloat(l.act)||0),0);
+                    totalRisks   += (prod.risks||[]).length;
+                    totalMiles   += (prod.milestones||[]).length;
+                    totalDays    += (prod.days||[]).length;
+                });
+                R += '\n  AGGREGATE ACROSS ALL PRODUCTIONS\n';
+                R += fld('Total Scenes',    totalScenes, 22);
+                R += fld('Total Shoot Days', totalDays,  22);
+                R += fld('Total Shots',     totalShots,  22);
+                R += fld('Total Milestones', totalMiles, 22);
+                R += fld('Total Risks',     totalRisks,  22);
+                if (totalBudgEst > 0) {
+                    R += fld('Total Est. Budget', money(totalBudgEst), 22);
+                    R += fld('Total Actual Spend', money(totalBudgAct)+`  (${pct(totalBudgAct,totalBudgEst)} used)`, 22);
+                    R += fld('Total Remaining',   money(totalBudgEst-totalBudgAct), 22);
+                }
+
+                // GLOBAL BIZ CRM
+                R += SEC('GLOBAL BUSINESS CRM');
+                if (bizLeads.length === 0) {
+                    R += NONE('No business CRM leads have been entered yet.');
+                } else {
+                    const byStage = {};
+                    bizLeads.forEach(l => { byStage[l.status||'Unknown'] = (byStage[l.status||'Unknown']||0)+1; });
+                    R += `  ${bizLeads.length} leads  |  Pipeline Value: ${money(bizLeadVal)}\n`;
+                    R += `  By Stage: ${Object.entries(byStage).map(([k,v])=>`${k}(${v})`).join('  |  ')}\n\n`;
+                    bizLeads.forEach(l => {
+                        R += `  [${(l.status||'New').padEnd(14)}]  ${(l.name||'Unnamed').padEnd(32)}`;
+                        if (has(l.interest)) R += `  ${l.interest}`;
+                        if (has(l.value))    R += `  ${money(l.value)}`;
+                        R += '\n';
+                        if (has(l.phone)) R += `    Phone:  ${l.phone}\n`;
+                        if (has(l.email)) R += `    Email:  ${l.email}\n`;
+                        if (has(l.notes)) R += `    Notes:  ${l.notes}\n`;
+                    });
+                }
+                if (bizLedger.length > 0) {
+                    R += PSEC('GLOBAL INCOME LEDGER');
+                    R += `  Total Recorded Income: ${money(bizLedgTot)}\n\n`;
+                    bizLedger.forEach(e => {
+                        R += `  ${(e.date||'').padEnd(14)}  ${(e.source||'').padEnd(28)}  ${money(e.amount)}`;
+                        if (has(e.notes)) R += `  ${e.notes}`;
+                        R += '\n';
+                    });
+                }
+                if (bizCast.length > 0) {
+                    R += PSEC('GLOBAL CAST DATABASE');
+                    bizCast.forEach(c => {
+                        R += `  ${(c.name||'Unnamed').padEnd(30)}  ${c.role||''}\n`;
+                        if (has(c.phone)) R += `    Phone: ${c.phone}\n`;
+                        if (has(c.email)) R += `    Email: ${c.email}\n`;
+                        if (has(c.agent)) R += `    Agent: ${c.agent}\n`;
+                        if (has(c.notes)) R += `    Notes: ${c.notes}\n`;
+                    });
+                }
+                if (bizCrew.length > 0) {
+                    R += PSEC('GLOBAL CREW DATABASE');
+                    bizCrew.forEach(c => {
+                        R += `  ${(c.name||'Unnamed').padEnd(30)}  ${c.position||c.role||''}`;
+                        if (has(c.department)) R += `  [${c.department}]`;
+                        R += '\n';
+                        if (has(c.phone)) R += `    Phone: ${c.phone}\n`;
+                        if (has(c.email)) R += `    Email: ${c.email}\n`;
+                        if (has(c.notes)) R += `    Notes: ${c.notes}\n`;
+                    });
+                }
+                if (bizContacts.length > 0) {
+                    R += PSEC('GLOBAL CONTACTS');
+                    bizContacts.forEach(c => {
+                        R += `  ${(c.name||'Unnamed').padEnd(30)}  ${c.role||c.title||''}`;
+                        if (has(c.company)) R += `  [${c.company}]`;
+                        R += '\n';
+                        if (has(c.phone)) R += `    Phone: ${c.phone}\n`;
+                        if (has(c.email)) R += `    Email: ${c.email}\n`;
+                        if (has(c.notes)) R += `    Notes: ${c.notes}\n`;
+                    });
+                }
+
+                // EACH PRODUCTION (full report block)
+                if (productionNames.length === 0) {
+                    R += SEC('PRODUCTIONS');
+                    R += NONE('No productions have been created yet.');
+                } else {
+                    productionNames.forEach((prodName, pi) => {
+                        let prod = null;
+                        if (prodName === Core.currentProduction) {
+                            prod = Core.data;
+                        } else {
+                            try {
+                                const stored = localStorage.getItem('dc_alacrity_prod_' + prodName);
+                                if (stored) prod = JSON.parse(stored);
+                            } catch(e) {}
+                        }
+
+                        R += '\n' + '█'.repeat(72) + '\n';
+                        R += `██  PRODUCTION ${pi+1} OF ${productionNames.length}: ${prodName}\n`;
+                        R += '█'.repeat(72) + '\n';
+
+                        if (!prod) {
+                            R += NONE('Data could not be loaded for this production.');
+                            return;
+                        }
+
+                        // Use the shared builder for full detail
+                        R += this._buildProductionBlock(prod, prodName, true);
+                    });
+                }
+
+                // SYSTEM FOOTER
+                R += '\n' + '█'.repeat(72) + '\n';
+                R += '██  END OF COMPLETE SYSTEM REPORT\n';
+                R += `██  ${productionNames.length} production(s)  |  Generated: ${new Date().toLocaleString()}\n`;
+                R += '██  DC ALACRITY Production Command System\n';
+                R += '█'.repeat(72) + '\n';
+
+                dl(new Blob([R], {type:'text/plain'}), `SYSTEM_COMPLETE_REPORT_${this.getDateString()}.txt`);
+                Core.log('Complete system readable report exported');
+                alert(`Complete system report exported!\n\n${productionNames.length} production(s) + Global CRM — every field, every module.`);
+            },
+
+            // ─── IMPORT DATA ──────────────────────────────────────────────────────────
             importData() {
                 const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json';
+                input.type = 'file'; input.accept = '.json';
                 input.onchange = (e) => {
                     const file = e.target.files[0];
                     if (!file) return;
-                    
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         try {
                             const imported = JSON.parse(event.target.result);
-                            
-                            // Validate import
                             if (!imported.exportType || !imported.version) {
-                                alert('Invalid export file format');
+                                alert('Invalid file — missing exportType or version.');
                                 return;
                             }
-                            
-                            // Handle different import types
+
+                            // ── GLOBAL CRM ────────────────────────────────────
                             if (imported.exportType === 'global_crm') {
                                 if (confirm('Import Global CRM data? This will merge with existing data.')) {
                                     Core.bizData = { ...Core.bizData, ...imported.bizData };
-                                    Core.save();
+                                    localStorage.setItem('dc_alacrity_biz', JSON.stringify(Core.bizData));
                                     Core.renderAll();
-                                    alert('Global CRM data imported successfully!');
+                                    alert('Global CRM imported successfully!');
                                 }
+
+                            // ── SINGLE PRODUCTION ─────────────────────────────
                             } else if (imported.exportType === 'production') {
-                                if (confirm(`Import production "${imported.productionName}"?`)) {
-                                    Core.data[imported.productionName] = imported.productionData;
-                                    Core.save();
-                                    Core.updateProductionSelect();
-                                    alert(`Production "${imported.productionName}" imported successfully!`);
+                                const prodName = imported.productionName;
+                                const prodData = imported.productionData;
+                                if (!prodName) { alert('Import failed: production name missing.'); return; }
+                                if (!prodData || typeof prodData !== 'object') {
+                                    alert(`Import failed: "${prodName}" has no production data.\n\nThis file was exported before a bug was fixed. Please re-export from the source device.`);
+                                    return;
                                 }
-                            } else if (imported.exportType === 'full_backup') {
-                                if (confirm('Import full backup? This will replace ALL current data!')) {
-                                    if (confirm('⚠️ FINAL WARNING: This will overwrite everything. Continue?')) {
-                                        Core.bizData = imported.bizData;
-                                        Core.data = imported.productions;
-                                        Core.save();
-                                        Core.updateProductionSelect();
-                                        Core.renderAll();
-                                        alert('Full backup imported successfully!');
+                                if (confirm(`Import production "${prodName}"?`)) {
+                                    localStorage.setItem('dc_alacrity_prod_' + prodName, JSON.stringify(prodData));
+                                    const list = Core.getProductions();
+                                    if (!list.includes(prodName)) {
+                                        list.push(prodName);
+                                        localStorage.setItem('dc_alacrity_productions', JSON.stringify(list));
                                     }
+                                    Core.renderProductionDropdown();
+                                    alert(`Production "${prodName}" imported!\n\nSelect it from the dropdown to load it.`);
                                 }
+
+                            // ── FULL BACKUP ───────────────────────────────────
+                            } else if (imported.exportType === 'full_backup') {
+                                const productionsList = imported.productionsList || Object.keys(imported.productions || {});
+                                const allProductions  = imported.productions || {};
+                                const count = productionsList.length;
+
+                                if (!confirm(`Import full backup?\n\n• ${count} production(s)\n• Global CRM data\n\nThis will REPLACE all existing data.`)) return;
+                                if (!confirm('⚠️ FINAL WARNING: All current data will be overwritten. Continue?')) return;
+
+                                // Restore bizData
+                                if (imported.bizData) {
+                                    Core.bizData = imported.bizData;
+                                    localStorage.setItem('dc_alacrity_biz', JSON.stringify(Core.bizData));
+                                }
+                                // Write each production individually to localStorage
+                                productionsList.forEach(name => {
+                                    if (allProductions[name]) {
+                                        localStorage.setItem('dc_alacrity_prod_' + name, JSON.stringify(allProductions[name]));
+                                    }
+                                });
+                                // Restore the productions list
+                                localStorage.setItem('dc_alacrity_productions', JSON.stringify(productionsList));
+
+                                // Load first production into memory properly
+                                if (productionsList.length > 0) {
+                                    const firstName = productionsList[0];
+                                    Core.currentProduction = firstName;
+                                    try {
+                                        const stored = localStorage.getItem('dc_alacrity_prod_' + firstName);
+                                        Core.data = stored
+                                            ? Core.deepMergeComplete(Core.getDefaultData(), JSON.parse(stored))
+                                            : Core.getDefaultData();
+                                    } catch(e) { Core.data = Core.getDefaultData(); }
+
+                                    Core.renderProductionDropdown();
+                                    const sel = document.getElementById('project-select');
+                                    if (sel) sel.value = firstName;
+
+                                    // Render dashboard first (always safe)
+                                    Core.renderDashboard();
+
+                                    // Render each module with individual guards —
+                                    // one broken module cannot crash the whole restore
+                                    const safeRender = (name, fn) => { try { fn(); } catch(e) { console.warn(name + ' render failed:', e); } };
+                                    safeRender('Days',            () => Days.render());
+                                    safeRender('Tech',            () => Tech.render());
+                                    safeRender('Vault',           () => Vault.render());
+                                    safeRender('Schedule',        () => Schedule.render());
+                                    safeRender('Breakdown',       () => Breakdown.render());
+                                    safeRender('CastCrew',        () => CastCrew.render());
+                                    safeRender('Financials',      () => Financials.render());
+                                    safeRender('ShotList',        () => ShotList.render());
+                                    safeRender('ContinuityLog',   () => ContinuityLog.render());
+                                    safeRender('RiskAssessment',  () => RiskAssessment.render());
+                                    safeRender('ContactDirectory',() => ContactDirectory.render());
+                                    safeRender('Milestones',      () => Milestones.render());
+                                    safeRender('ProdCRM pipeline',() => ProdCRM.renderPipeline());
+                                    safeRender('ProdCRM dialer',  () => ProdCRM.renderDialer());
+                                    safeRender('ProdCRM intel',   () => ProdCRM.renderIntel());
+                                    safeRender('BizCRM pipeline', () => BizCRM.renderPipeline());
+                                    safeRender('BizCRM dialer',   () => BizCRM.renderDialer());
+                                    safeRender('BizCRM intel',    () => BizCRM.renderIntel());
+                                    safeRender('Gantt',           () => Gantt.init());
+                                    safeRender('Calendar',        () => Calendar.render());
+                                    safeRender('Notes',           () => Notes.load());
+                                }
+                                alert(`✅ Full backup imported!\n\n${count} production(s) restored.\nCurrently loaded: "${productionsList[0]}"`);
+
+                            } else {
+                                alert(`Unknown export type: "${imported.exportType}"`);
                             }
                         } catch (err) {
                             alert('Error importing data: ' + err.message);
-                            console.error(err);
+                            console.error('Import error:', err);
                         }
                     };
                     reader.readAsText(file);
                 };
                 input.click();
             },
-            
+
             // Export to CSV
             exportToCSV(type) {
-                let csv = '';
-                let filename = '';
-                
+                let csv = '', filename = '';
                 switch(type) {
                     case 'schedule':
-                        if (Core.currentProduction === 'GLOBAL') {
-                            alert('Please select a production first');
-                            return;
-                        }
-                        const strips = Core.data[Core.currentProduction]?.schedule?.strips || [];
-                        csv = 'Scene,INT/EXT,DAY/NIGHT,Location,Cast,Pages,Description\n';
+                        if (Core.currentProduction === 'GLOBAL') { alert('Please select a production first'); return; }
+                        const strips = Core.data?.schedule?.strips || [];
+                        csv = 'Scene,INT/EXT,DAY/NIGHT,Location,Shoot Location,Cast,Pages,Description\n';
                         strips.filter(s => s.type === 'scene').forEach(s => {
-                            csv += `"${s.scene || ''}","${s.intext || ''}","${s.daynight || ''}","${s.location || ''}","${s.cast || ''}","${s.pages || ''}","${s.description || ''}"\n`;
+                            csv += `"${s.scene||''}","${s.intext||''}","${s.daynight||''}","${s.location||''}","${s.shootLocation||''}","${s.cast||''}","${s.pages||''}","${s.description||''}"\n`;
                         });
                         filename = `${clean(Core.currentProduction)}_schedule.csv`;
                         break;
                     case 'cast':
                         const cast = Object.values(Core.bizData.cast || {});
                         csv = 'ID,Name,Role,Phone,Email,Agent\n';
-                        cast.forEach(c => {
-                            csv += `"${c.id || ''}","${c.name || ''}","${c.role || ''}","${c.phone || ''}","${c.email || ''}","${c.agent || ''}"\n`;
-                        });
+                        cast.forEach(c => { csv += `"${c.id||''}","${c.name||''}","${c.role||''}","${c.phone||''}","${c.email||''}","${c.agent||''}"\n`; });
                         filename = 'cast_list.csv';
                         break;
                     case 'crew':
                         const crew = Object.values(Core.bizData.crew || {});
-                        csv = 'ID,Name,Position,Phone,Email\n';
-                        crew.forEach(c => {
-                            csv += `"${c.id || ''}","${c.name || ''}","${c.position || ''}","${c.phone || ''}","${c.email || ''}"\n`;
-                        });
+                        csv = 'ID,Name,Position,Department,Phone,Email\n';
+                        crew.forEach(c => { csv += `"${c.id||''}","${c.name||''}","${c.position||''}","${c.department||''}","${c.phone||''}","${c.email||''}"\n`; });
                         filename = 'crew_list.csv';
                         break;
                 }
-                
+                if (!csv) return;
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
+                a.href = url; a.download = filename; a.click();
                 URL.revokeObjectURL(url);
                 Core.log(`CSV exported: ${filename}`);
             },
-            
-            // Helper function to download JSON
+
+            // Helper: download JSON
             downloadJSON(data, filename) {
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                a.click();
+                a.href = url; a.download = filename; a.click();
                 URL.revokeObjectURL(url);
             },
-            
-            // Helper to get formatted date string
-            getDateString() {
-                return new Date().toISOString().split('T')[0];
-            },
-            
-            // Legacy function for backward compatibility
-            exportAllData() {
-                this.exportEverything();
-            }
+
+            // Helper: date string
+            getDateString() { return new Date().toISOString().split('T')[0]; },
+
+            // Legacy alias
+            exportAllData() { this.exportEverything(); }
         };
+
 
         /* ═══════════════════════════════════════════════════════════════════════
            MOBILE MENU FUNCTIONALITY
@@ -18600,7 +19363,7 @@ const Gantt = GanttEnhanced;
             
             this.currentProduction = id;
             this.save();
-            this.updateProductionSelect();
+            this.renderProductionDropdown();
             alert(`Production "${name}" created successfully!`);
             
             // Offer to upload to cloud if logged in
